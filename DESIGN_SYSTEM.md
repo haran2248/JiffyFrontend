@@ -1,43 +1,48 @@
 # Jiffy Design System
 
 ## 1. Design Philosophy
-## 1. Design Philosophy
 *   **Theme**: "Midnight Luxe" (Premium, Exclusive, Warm).
-*   **Core Concepts**: Passion (Ruby) + Value (Gold).
+*   **Core Concepts**: Passion (Raspberry) + Premium (Violet).
 *   **Vibe**: Expensive, Intimate, confident.
 
 ## 2. Color Palette
 
-### Primary (Passion & Action)
-*   **Deep Ruby**: `#D60046` - Elegant passion. Replaces the neon pink.
-*   **Ruby Dark**: `#9F0033` - For gradients and pressed states.
+### Primary (Rich & Premium)
+*   **Deep Raspberry**: `#D81B60` - Elegant passion. Primary brand color.
+*   **Royal Violet**: `#8E24AA` - Secondary brand color for accents and gradients.
 
-### Secondary (Value & Status)
-*   **Soft Gold**: `#C5A059` - Replaces "Acid Green". Signals premium status.
-*   **Champagne**: `#F3E5AB` - Subtle highlights.
+### Surfaces (Deep & Rich)
+*   **Midnight Plum**: `#0D0B14` - Main background color.
+*   **Noir**: `#1A1125` - Secondary background.
+*   **Surface Plum**: `#2A1B3D` - Cards and input surfaces.
 
-### Neutrals (Backgrounds)
-*   **Charcoal**: `#121212` - A softer, warmer black.
-*   **Porcelain**: `#FAFAFA` - A warm, premium white for light mode.
-*   **Text Primary**: `#FFFFFF` (Dark Mode) / `#1A1A1A` (Light Mode)
+### Text
+*   **Text Primary**: `#FFFFFF` - Primary text color (white).
+*   **Text Secondary**: `#B0A8BF` - Soft lavender gray for secondary text.
 
 ### Accents
-*   **Slate Blue**: `#475569` - Functional elements/info.
+*   **Deep Purple**: `#4A148C` - Tertiary accent color.
+*   **Error Red**: `#CF6679` - Error states and warnings.
 
 ## 3. Typography
-*   **Headings**: *Space Grotesk* or *Syne* (Bold, Expressive).
-*   **Body**: *Inter* or *Roboto* (Clean, Readable).
+*   **Font Family**: *Inter* (used for all text styles - headings and body).
+*   **Display Large**: 32px, Bold (Inter)
+*   **Display Medium**: 24px, Bold (Inter)
+*   **Display Small**: 20px, Semi-Bold (Inter)
+*   **Body Large**: 16px, Medium (Inter)
+*   **Body Medium**: 14px, Regular (Inter)
+*   **Label Large**: 14px, Semi-Bold (Inter)
 
 ## 4. Component Guidelines
 
 ### Buttons
-*   **Primary**: Electric Magenta background, White text.
-*   **Secondary**: Transparent with Digital Lavender/White border.
-*   **Ghost**: Text only, Acid Green hover effect.
+*   **Primary**: Deep Raspberry (`#D81B60`) or gradient (Raspberry to Violet), White text.
+*   **Secondary**: Transparent with Royal Violet/White border.
+*   **Ghost**: Text only, with hover effects using primary colors.
 
 ### Cards
-*   **Style**: Dark Glass (`#1A1A1A` + Backdrop Blur).
-*   **Borders**: Subtle gradients or "Story Ring" animations for active states.
+*   **Style**: Surface Plum (`#2A1B3D`) background with optional backdrop blur.
+*   **Borders**: Subtle gradients or primary color accents for active states.
 *   **Corner Radius**: `24px` (Smooth).
 
 ### Micro-Interactions
