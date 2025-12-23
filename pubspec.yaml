@@ -11,6 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  google_fonts: ^6.3.3
+  flutter_animate: ^4.5.2
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
