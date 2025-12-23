@@ -31,11 +31,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark().copyWith(
         primary: AppColors.primaryRaspberry,
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
+        surfaceVariant: AppColors.surfacePlum,
         onSurface: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),
