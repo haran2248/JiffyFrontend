@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
-class JiffyAvatar extends StatelessWidget {
+class Avatar extends StatelessWidget {
   final double radius;
   final String? imageUrl;
   final VoidCallback? onTap;
 
-  const JiffyAvatar({
+  const Avatar({
     super.key,
     this.radius = 48,
     this.imageUrl,

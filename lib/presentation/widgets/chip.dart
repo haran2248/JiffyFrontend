@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Chip;
 import '../../core/theme/app_colors.dart';
 
-class JiffyChip extends StatelessWidget {
+class Chip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback? onTap;
 
-  const JiffyChip({
+  const Chip({
     super.key,
     required this.label,
     this.isSelected = false,

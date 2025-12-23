@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart' hide Card;
+import 'package:flutter/material.dart' hide Card, Chip;
 import '../../core/theme/app_colors.dart';
 import '../widgets/button.dart';
 import '../widgets/card.dart';
 import '../widgets/input.dart';
 import '../widgets/chat_bubble.dart';
-import '../widgets/jiffy_chip.dart';
-import '../widgets/jiffy_avatar.dart';
+import '../widgets/chip.dart';
+import '../widgets/avatar.dart';
 
 class DesignSystemPage extends StatelessWidget {
   const DesignSystemPage({super.key});
@@ -65,9 +65,9 @@ class DesignSystemPage extends StatelessWidget {
             const SizedBox(height: 8),
             const Row(
               children: [
-                JiffyAvatar(radius: 40),
+                Avatar(radius: 40),
                 SizedBox(width: 16),
-                JiffyAvatar(radius: 30),
+                Avatar(radius: 30),
               ],
             ),
             const SizedBox(height: 24),
@@ -82,9 +82,9 @@ class DesignSystemPage extends StatelessWidget {
             const Wrap(
               spacing: 8,
               children: [
-                JiffyChip(label: "Photography", isSelected: false),
-                JiffyChip(label: "Hiking", isSelected: true),
-                JiffyChip(label: "Coding", isSelected: false),
+                Chip(label: "Photography", isSelected: false),
+                Chip(label: "Hiking", isSelected: true),
+                Chip(label: "Coding", isSelected: false),
               ],
             ),
             const SizedBox(height: 32),
