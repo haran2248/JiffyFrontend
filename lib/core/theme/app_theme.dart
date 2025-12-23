@@ -12,9 +12,7 @@ class AppTheme {
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.textPrimary, // White
-        background: AppColors.textPrimary, // White
         onSurface: AppColors.midnightPlum,
-        onBackground: AppColors.midnightPlum,
         outline: AppColors.primaryViolet,
       ),
       scaffoldBackgroundColor: AppColors.textPrimary,
@@ -38,9 +36,7 @@ class AppTheme {
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
-        background: AppColors.midnightPlum,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),
       scaffoldBackgroundColor: AppColors.midnightPlum,
