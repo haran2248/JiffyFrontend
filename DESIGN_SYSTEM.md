@@ -24,6 +24,16 @@
 *   **Deep Purple**: `#4A148C` - Tertiary accent color.
 *   **Error Red**: `#CF6679` - Error states and warnings.
 
+### Using Colors in Code
+**Always use semantic ColorScheme properties, not direct color names:**
+*   ✅ `Theme.of(context).colorScheme.primary` - for primary actions
+*   ✅ `Theme.of(context).colorScheme.secondary` - for secondary actions
+*   ✅ `Theme.of(context).colorScheme.surface` - for surfaces/cards
+*   ✅ `Theme.of(context).colorScheme.onSurface` - for text on surfaces
+*   ❌ Avoid: `AppColors.primaryRaspberry` (use `colorScheme.primary` instead)
+
+This ensures proper theme support and automatic adaptation to light/dark modes.
+
 ## 3. Typography
 *   **Font Family**: *Inter* (used for all text styles - headings and body).
 *   **Display Large**: 32px, Bold (Inter)
