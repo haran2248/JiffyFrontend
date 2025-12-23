@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:jiffy/main.dart';
+import 'package:jiffy/presentation/widgets/input.dart';
 
 void main() {
   testWidgets('App load smoke test', (WidgetTester tester) async {
