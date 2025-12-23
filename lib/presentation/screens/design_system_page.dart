@@ -3,6 +3,9 @@ import '../../core/theme/app_colors.dart';
 import '../widgets/button.dart';
 import '../widgets/card.dart';
 import '../widgets/input.dart';
+import '../widgets/chat_bubble.dart';
+import '../widgets/jiffy_chip.dart';
+import '../widgets/jiffy_avatar.dart';
 
 class DesignSystemPage extends StatelessWidget {
   const DesignSystemPage({super.key});
@@ -56,6 +59,34 @@ class DesignSystemPage extends StatelessWidget {
             const SizedBox(height: 16),
             const Input(
                 label: "Password", placeholder: "•••••••", obscureText: true),
+            const SizedBox(height: 32),
+            _buildSectionHeader(context, "Onboarding Components"),
+            const Text("Avatar"),
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                JiffyAvatar(radius: 40),
+                SizedBox(width: 16),
+                JiffyAvatar(radius: 30),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text("Chat Bubbles"),
+            const SizedBox(height: 8),
+            const ChatBubble(text: "Hey! I'm your AI assistant.", isMe: false),
+            const ChatBubble(
+                text: "That sounds awesome! Let's go.", isMe: true),
+            const SizedBox(height: 24),
+            const Text("Selection Chips"),
+            const SizedBox(height: 8),
+            const Wrap(
+              spacing: 8,
+              children: [
+                JiffyChip(label: "Photography", isSelected: false),
+                JiffyChip(label: "Hiking", isSelected: true),
+                JiffyChip(label: "Coding", isSelected: false),
+              ],
+            ),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Cards"),
             Card(
