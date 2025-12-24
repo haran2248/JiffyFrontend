@@ -117,7 +117,7 @@ The Android configuration is already set up. However, you may need to:
 
    Or specify Android explicitly:
    ```bash
-   flutter run -d android
+   flutter run -d <android_device/emulator_id>
    ```
 
 ### On iOS Simulator (macOS only)
@@ -137,7 +137,7 @@ The Android configuration is already set up. However, you may need to:
 
 3. **Run the app:**
    ```bash
-   flutter run -d ios
+   flutter run -d <ios_device/emulator_id>
    ```
 
    Or if only iOS simulator is available:
