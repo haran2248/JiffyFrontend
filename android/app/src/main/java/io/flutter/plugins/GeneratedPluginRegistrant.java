@@ -14,6 +14,13 @@ import io.flutter.embedding.engine.FlutterEngine;
 @Keep
 public final class GeneratedPluginRegistrant {
   private static final String TAG = "GeneratedPluginRegistrant";
+  /**
+   * Registers the generated Flutter plugins with the given FlutterEngine.
+   *
+   * Each plugin is added to the engine's plugin registry; if a plugin fails to register the error is logged and registration continues for the remaining plugins.
+   *
+   * @param flutterEngine the FlutterEngine whose plugin registry will receive the generated plugins
+   */
   public static void registerWith(@NonNull FlutterEngine flutterEngine) {
     try {
       flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.auth.FlutterFirebaseAuthPlugin());
