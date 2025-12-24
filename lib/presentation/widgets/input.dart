@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
-class Input extends StatelessWidget {
+class ThemedInput extends StatelessWidget {
   final String label;
   final String? placeholder;
   final TextEditingController? controller;
@@ -9,7 +8,7 @@ class Input extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
 
-  const Input({
+  const ThemedInput({
     super.key,
     required this.label,
     this.placeholder,
@@ -58,8 +57,8 @@ class Input extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.primaryViolet,
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline,
                 width: 1.5,
               ),
             ),

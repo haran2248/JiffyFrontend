@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide Card;
+import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../widgets/button.dart';
 import '../widgets/card.dart';
@@ -52,17 +52,17 @@ class DesignSystemPage extends StatelessWidget {
             // Button(text: "Loading...", isLoading: true, onTap: () {}),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Inputs"),
-            const Input(label: "Username", placeholder: "cool_user_99"),
+            const ThemedInput(label: "Username", placeholder: "cool_user_99"),
             const SizedBox(height: 16),
-            const Input(
+            const ThemedInput(
                 label: "Password", placeholder: "•••••••", obscureText: true),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Cards"),
-            Card(
+            SystemCard(
               child: Column(
                 children: [
                   Row(children: [
-                    const Icon(Icons.bolt, color: AppColors.primaryViolet),
+                    Icon(Icons.bolt, color: Theme.of(context).colorScheme.outline),
                     const SizedBox(width: 8),
                     Text("Electric Card",
                         style: Theme.of(context).textTheme.labelLarge),
@@ -87,7 +87,7 @@ class DesignSystemPage extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.primaryRaspberry,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.5,
             ),
       ),
@@ -103,10 +103,10 @@ class DesignSystemPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

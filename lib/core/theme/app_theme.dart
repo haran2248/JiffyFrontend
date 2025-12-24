@@ -9,10 +9,11 @@ class AppTheme {
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryRaspberry,
+        onPrimary: AppColors.textPrimary, // White text on primary
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
-        surface: AppColors.textPrimary, // White
-        onSurface: AppColors.midnightPlum,
+        surface: AppColors.textPrimary, // White surface
+        onSurface: AppColors.midnightPlum, // Dark text on surface
         outline: AppColors.primaryViolet,
       ),
       scaffoldBackgroundColor: AppColors.textPrimary,
@@ -31,12 +32,13 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark().copyWith(
+      colorScheme: const ColorScheme.dark().copyWith(
         primary: AppColors.primaryRaspberry,
+        onPrimary: AppColors.textPrimary, // White text on primary
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
-        surfaceVariant: AppColors.surfacePlum,
+        surfaceContainerHighest: AppColors.surfacePlum,
         onSurface: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),
@@ -59,7 +61,7 @@ class AppTheme {
       displaySmall: AppTypography.displaySmall.copyWith(color: baseColor),
       bodyLarge: AppTypography.bodyLarge.copyWith(color: baseColor),
       bodyMedium:
-          AppTypography.bodyMedium.copyWith(color: baseColor.withOpacity(0.8)),
+          AppTypography.bodyMedium.copyWith(color: baseColor.withValues(alpha: 0.8)),
       labelLarge: AppTypography.labelLarge.copyWith(color: baseColor),
     );
   }

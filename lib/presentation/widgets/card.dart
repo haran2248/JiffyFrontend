@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart' hide Card;
+import 'package:flutter/material.dart';
 import 'dart:ui';
 
-class Card extends StatelessWidget {
+class SystemCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final bool isGlass;
 
-  const Card({
+  const SystemCard({
     super.key,
     required this.child,
     this.padding,
@@ -23,15 +23,15 @@ class Card extends StatelessWidget {
         color: Theme.of(context)
             .colorScheme
             .surface
-            .withOpacity(isGlass ? 0.7 : 1.0),
+            .withValues(alpha: isGlass ? 0.7 : 1.0),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
         boxShadow: [
           if (!isGlass)
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
