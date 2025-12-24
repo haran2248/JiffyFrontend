@@ -22,13 +22,13 @@ class Chip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primary.withValues(alpha: 0.2)
-              : colorScheme.surfaceContainerHighest,
+              ? Theme.of(context).colorScheme.secondary.withOpacity(0.2)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected
-                ? colorScheme.primary
-                : colorScheme.primary.withValues(alpha: 0.3),
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).colorScheme.secondary.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -36,8 +36,8 @@ class Chip extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isSelected
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurfaceVariant,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
         ),
