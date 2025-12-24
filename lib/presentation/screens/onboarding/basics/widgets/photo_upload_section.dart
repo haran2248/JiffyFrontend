@@ -14,16 +14,21 @@ class PhotoUploadSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Avatar(radius: 60),
-          const SizedBox(height: 16),
+          Avatar(
+            radius: 80,
+            onTap: onTap,
+          ),
+          const SizedBox(height: 24),
           Text(
             "Add your photo to get started",
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.textSecondary,
                 ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           GestureDetector(
             onTap: onTap,
             child: Text(

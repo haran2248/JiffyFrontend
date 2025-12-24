@@ -26,5 +26,25 @@ class BasicsViewModel extends _$BasicsViewModel {
     state = state.copyWith(photoUrl: url);
   }
 
-  bool get isFormValid => state.isValid;
+  void nextStep() {
+    if (state.currentStep < 2) {
+      state = state.copyWith(currentStep: state.currentStep + 1);
+    }
+  }
+
+  void previousStep() {
+    if (state.currentStep > 1) {
+      state = state.copyWith(currentStep: state.currentStep - 1);
+    }
+  }
+
+  bool get isStep1Valid =>
+      state.firstName != null && state.firstName!.isNotEmpty;
+
+  bool get isStep2Valid =>
+      state.dateOfBirth != null &&
+      state.gender != null &&
+      state.gender!.isNotEmpty;
+
+  bool get isFormValid => isStep1Valid && isStep2Valid;
 }

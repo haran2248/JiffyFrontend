@@ -3,12 +3,14 @@ class BasicsFormData {
   final DateTime? dateOfBirth;
   final String? gender;
   final String? photoUrl;
+  final int currentStep;
 
   const BasicsFormData({
     this.firstName,
     this.dateOfBirth,
     this.gender,
     this.photoUrl,
+    this.currentStep = 1,
   });
 
   BasicsFormData copyWith({
@@ -16,12 +18,14 @@ class BasicsFormData {
     DateTime? dateOfBirth,
     String? gender,
     String? photoUrl,
+    int? currentStep,
   }) {
     return BasicsFormData(
       firstName: firstName ?? this.firstName,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       photoUrl: photoUrl ?? this.photoUrl,
+      currentStep: currentStep ?? this.currentStep,
     );
   }
 

@@ -4,8 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
-import 'widgets/photo_upload_section.dart';
-import 'widgets/basics_form.dart';
+import 'widgets/name_photo_step.dart';
+import 'widgets/vitals_step.dart';
 
 class BasicsScreen extends ConsumerWidget {
   const BasicsScreen({super.key});
@@ -17,50 +17,58 @@ class BasicsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const BackButton(color: AppColors.textPrimary),
-        title: const Text("Basics"),
+        leading: BackButton(
+          color: AppColors.textPrimary,
+          onPressed: formData.currentStep > 1
+              ? viewModel.previousStep
+              : () => Navigator.of(context).pop(),
+        ),
+        title: Text(formData.currentStep == 1 ? "Basics" : "A little more"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 1, totalSteps: 3),
+            ProgressBar(currentStep: formData.currentStep, totalSteps: 2),
             const SizedBox(height: 32),
             Expanded(
-              child: ListView(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                children: [
-                  PhotoUploadSection(
-                    onTap: () {
-                      // TODO: Implement photo picker
-                      viewModel.updatePhoto(null);
-                    },
-                  ),
-                  const SizedBox(height: 48),
-                  BasicsForm(
-                    firstName: formData.firstName,
-                    selectedDateOfBirth: formData.dateOfBirth,
-                    selectedGender: formData.gender,
-                    onFirstNameChanged: viewModel.updateFirstName,
-                    onDateOfBirthChanged: viewModel.updateDateOfBirth,
-                    onGenderChanged: viewModel.updateGender,
-                  ),
-                ],
+                child: formData.currentStep == 1
+                    ? NamePhotoStep(
+                        firstName: formData.firstName,
+                        onFirstNameChanged: viewModel.updateFirstName,
+                        onPhotoTap: () {
+                          // TODO: Implement photo picker
+                          viewModel.updatePhoto(null);
+                        },
+                      )
+                    : VitalsStep(
+                        selectedDateOfBirth: formData.dateOfBirth,
+                        selectedGender: formData.gender,
+                        onDateOfBirthChanged: viewModel.updateDateOfBirth,
+                        onGenderChanged: viewModel.updateGender,
+                      ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
-              child: Button(
-                text: "Continue",
-                onTap: formData.isValid
-                    ? () {
-                        // TODO: Navigate to next step
-                        debugPrint('Form is valid');
-                      }
-                    : () {}, // Empty callback instead of null
-              ),
-            ),
+                padding: const EdgeInsets.all(24),
+                child: Button(
+                  text: "Continue",
+                  onTap: (formData.currentStep == 1
+                          ? viewModel.isStep1Valid
+                          : viewModel.isStep2Valid)
+                      ? () {
+                          if (formData.currentStep == 1) {
+                            viewModel.nextStep();
+                          } else {
+                            // TODO: Navigate to next onboarding feature
+                            debugPrint('Final Basics Form: $formData');
+                          }
+                        }
+                      : () {},
+                )),
           ],
         ),
       ),

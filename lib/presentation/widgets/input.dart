@@ -8,6 +8,8 @@ class Input extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final String? initialValue;
+  final ValueChanged<String>? onChanged;
 
   const Input({
     super.key,
@@ -17,6 +19,8 @@ class Input extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.initialValue,
+    this.onChanged,
   });
 
   @override
@@ -32,10 +36,12 @@ class Input extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          initialValue: initialValue,
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
           validator: validator,
+          onChanged: onChanged,
           style: Theme.of(context).textTheme.bodyLarge,
           decoration: InputDecoration(
             hintText: placeholder,
