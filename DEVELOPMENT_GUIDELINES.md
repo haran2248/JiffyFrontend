@@ -303,6 +303,92 @@ These items should be addressed incrementally during feature work:
 
 ---
 
+## 12. Networking Layer
+
+The app uses a production-grade Dio client located in `lib/core/network/`.
+
+### Directory Structure
+```
+lib/core/network/
+├── my_dio.dart                    # Main Dio client (use this)
+├── config/
+│   ├── api_config.dart            # API paths and configuration
+│   └── environment.dart           # Dev/Staging/Prod environments
+├── interceptors/                  # Request/response interceptors
+├── errors/
+│   └── api_error.dart             # Unified error model
+├── cancel/
+│   └── cancel_registry.dart       # Request cancellation
+└── token/
+    ├── token_provider.dart        # Abstract interface
+    └── firebase_token_provider.dart # Firebase implementation
+```
+
+### Critical Rules
+
+**1. Never Expose DioException:**
+```dart
+// ❌ WRONG - DioException leaks to UI
+try {
+  await dio.get('/users');
+} on DioException catch (e) {
+  showError(e.message); // UI sees Dio types!
+}
+
+// ✅ CORRECT - Extract ApiError
+try {
+  await dio.get('/users');
+} catch (e) {
+  if (e is DioException && e.error is ApiError) {
+    final error = e.error as ApiError;
+    showError(error.message);
+  }
+}
+```
+
+**2. Always Use Result Pattern in Repositories:**
+```dart
+// ✅ Repository returns Result<T, ApiError>
+Future<Result<User, ApiError>> getUser(String id) async {
+  try {
+    final response = await _dio.get('/api/users/getUser?uid=$id');
+    return Result.success(User.fromJson(response.data));
+  } catch (e) {
+    return Result.failure(_extractError(e));
+  }
+}
+```
+
+**3. Always Use CancelToken:**
+```dart
+// ✅ Pass cancel token for cancellation support
+await dio.get(
+  '/api/users/getUser',
+  cancelToken: cancelRegistry.createToken('profile_screen'),
+);
+
+// Cancel when leaving screen
+@override
+void dispose() {
+  cancelRegistry.cancelByTag('profile_screen');
+  super.dispose();
+}
+```
+
+### Error Types
+All API errors are normalized to `ApiError` with these types:
+- `network` - No internet
+- `timeout` - Request timeout
+- `unauthorized` - 401
+- `forbidden` - 403
+- `badRequest` - 400
+- `notFound` - 404
+- `server` - 5xx
+- `cancelled` - Request cancelled
+- `unknown` - Other errors
+
+---
+
 ## Additional Resources
 
 - `LINTER_GUIDELINES.md` - Code quality and linter rules
