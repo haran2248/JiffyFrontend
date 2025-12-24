@@ -38,7 +38,6 @@ class AppTheme {
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
-        surfaceContainerHighest: AppColors.surfacePlum,
         onSurface: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),
