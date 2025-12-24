@@ -12,8 +12,8 @@ class AppTheme {
         onPrimary: AppColors.textPrimary, // White text on primary
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
-        surface: AppColors.textPrimary, // White surface
-        onSurface: AppColors.midnightPlum, // Dark text on surface
+        surface: AppColors.textPrimary, // White
+        onSurface: AppColors.midnightPlum,
         outline: AppColors.primaryViolet,
       ),
       scaffoldBackgroundColor: AppColors.textPrimary,
@@ -38,7 +38,6 @@ class AppTheme {
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
-        surfaceContainerHighest: AppColors.surfacePlum,
         onSurface: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),

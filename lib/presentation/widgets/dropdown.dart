@@ -1,51 +1,56 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
-class ThemedInput extends StatelessWidget {
+class Dropdown<T> extends StatefulWidget {
   final String label;
   final String? placeholder;
-  final TextEditingController? controller;
-  final bool obscureText;
-  final TextInputType keyboardType;
-  final String? Function(String?)? validator;
-  final String? initialValue;
-  final ValueChanged<String>? onChanged;
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?>? onChanged;
+  final String? Function(T?)? validator;
 
-  const ThemedInput({
+  const Dropdown({
     super.key,
     required this.label,
+    required this.items,
     this.placeholder,
-    this.controller,
-    this.obscureText = false,
-    this.keyboardType = TextInputType.text,
-    this.validator,
-    this.initialValue,
+    this.value,
     this.onChanged,
+    this.validator,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+  State<Dropdown<T>> createState() => _DropdownState<T>();
+}
 
+class _DropdownState<T> extends State<Dropdown<T>> {
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          initialValue: initialValue,
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          validator: validator,
-          onChanged: onChanged,
+        DropdownButtonFormField<T>(
+          value: widget.value,
+          items: widget.items,
+          onChanged: widget.onChanged,
+          validator: widget.validator,
+          isExpanded: true,
+          menuMaxHeight: 300,
           style: Theme.of(context).textTheme.bodyLarge,
+          dropdownColor: AppColors.surfacePlum,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textSecondary,
+          ),
           decoration: InputDecoration(
-            hintText: placeholder,
+            hintText: widget.placeholder,
             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark ? Colors.white38 : Colors.black38,
+                  color: AppColors.textSecondary,
                 ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surface,
@@ -58,20 +63,20 @@ class ThemedInput extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: isDark ? Colors.white10 : Colors.black12,
+                color: AppColors.textSecondary.withOpacity(0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline,
+              borderSide: const BorderSide(
+                color: AppColors.primaryViolet,
                 width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: Colors.redAccent,
+                color: AppColors.errorRed,
               ),
             ),
           ),
