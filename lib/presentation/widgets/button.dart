@@ -75,7 +75,7 @@ class Button extends StatelessWidget {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryViolet.withOpacity(0.3),
+              color: AppColors.primaryViolet.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -105,7 +105,7 @@ class Button extends StatelessWidget {
       case ButtonType.secondary:
         return Theme.of(context).colorScheme.primary;
       case ButtonType.ghost:
-        return Theme.of(context).colorScheme.onSurface.withOpacity(0.7);
+        return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7);
     }
   }
 }

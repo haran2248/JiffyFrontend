@@ -31,12 +31,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark().copyWith(
+      colorScheme: const ColorScheme.dark().copyWith(
         primary: AppColors.primaryRaspberry,
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
-        surfaceVariant: AppColors.surfacePlum,
+        surfaceContainerHighest: AppColors.surfacePlum,
         onSurface: AppColors.textPrimary,
         outline: AppColors.primaryViolet,
       ),
@@ -59,7 +59,7 @@ class AppTheme {
       displaySmall: AppTypography.displaySmall.copyWith(color: baseColor),
       bodyLarge: AppTypography.bodyLarge.copyWith(color: baseColor),
       bodyMedium:
-          AppTypography.bodyMedium.copyWith(color: baseColor.withOpacity(0.8)),
+          AppTypography.bodyMedium.copyWith(color: baseColor.withValues(alpha: 0.8)),
       labelLarge: AppTypography.labelLarge.copyWith(color: baseColor),
     );
   }
