@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/theme/app_colors.dart';
+import 'package:jiffy/presentation/widgets/progress_bar.dart';
+import 'viewmodels/profile_setup_viewmodel.dart';
+import 'widgets/chat_message_list.dart';
+import 'widgets/suggested_responses.dart';
+import 'widgets/chat_input_field.dart';
+
+class ProfileSetupScreen extends ConsumerStatefulWidget {
+  const ProfileSetupScreen({super.key});
+
+  @override
+  ConsumerState<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+}
+
+class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients && _scrollController.position.hasContentDimensions) {
+      Future.microtask(() {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = ref.read(profileSetupViewModelProvider.notifier);
+    final formData = ref.watch(profileSetupViewModelProvider);
+
+    // Scroll to bottom when new messages arrive
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scrollToBottom();
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(
+          color: AppColors.textPrimary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text("Profile Setup"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          TextButton(
+            onPressed: () {
+              viewModel.skip();
+              // TODO: Navigate to next step
+            },
+            child: Text(
+              "Skip",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            ProgressBar(
+              currentStep: formData.currentStep,
+              totalSteps: 3,
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      reverse: true,
+                      child: Column(
+                        children: [
+                          ChatMessageList(
+                            messages: formData.messages,
+                            isTyping: formData.isTyping,
+                          ),
+                          SuggestedResponses(
+                            responses: formData.suggestedResponses,
+                            onSelect: (response) {
+                              viewModel.selectSuggestedResponse(response);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ChatInputField(
+                    initialValue: formData.userInput,
+                    onSend: (text) {
+                      viewModel.addUserMessage(text);
+                    },
+                    isEnabled: !formData.isTyping,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
