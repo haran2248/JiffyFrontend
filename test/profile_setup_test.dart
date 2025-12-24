@@ -140,6 +140,10 @@ void main() {
       // Verify input field exists (it should be disabled but still visible)
       final inputField = find.byType(TextField);
       expect(inputField, findsOneWidget);
+
+      // Verify field is actually disabled
+      final textFieldWidget = tester.widget<TextField>(inputField);
+      expect(textFieldWidget.enabled, isFalse);
     });
 
     testWidgets('Skip button navigates away', (WidgetTester tester) async {

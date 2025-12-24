@@ -59,7 +59,8 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     state = state.copyWith(isTyping: true);
 
     // Simulate AI response after delay
-    Future.delayed(const Duration(seconds: 2), () {
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () {
       final aiResponse = ChatMessage(
         text: _generateAIResponse(state.messages.last.text),
         isFromUser: false,

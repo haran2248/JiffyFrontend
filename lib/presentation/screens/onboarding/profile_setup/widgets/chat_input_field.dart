@@ -30,7 +30,15 @@ class _ChatInputFieldState extends State<ChatInputField> {
 
   @override
   void dispose() {
-    _controller.dispose();
+  void didUpdateWidget(covariant ChatInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue &&
+        widget.initialValue != _controller.text) {
+      _controller.text = widget.initialValue ?? '';
+    }
+  }
+
+  @override
     _focusNode.dispose();
     super.dispose();
   }
