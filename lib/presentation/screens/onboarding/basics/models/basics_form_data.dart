@@ -13,18 +13,23 @@ class BasicsFormData {
     this.currentStep = 1,
   });
 
+  static const Object _noChange = Object();
+
   BasicsFormData copyWith({
-    String? firstName,
-    DateTime? dateOfBirth,
-    String? gender,
-    String? photoUrl,
+    Object? firstName = _noChange,
+    Object? dateOfBirth = _noChange,
+    Object? gender = _noChange,
+    Object? photoUrl = _noChange,
     int? currentStep,
   }) {
     return BasicsFormData(
-      firstName: firstName ?? this.firstName,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-      gender: gender ?? this.gender,
-      photoUrl: photoUrl ?? this.photoUrl,
+      firstName:
+          firstName == _noChange ? this.firstName : firstName as String?,
+      dateOfBirth: dateOfBirth == _noChange
+          ? this.dateOfBirth
+          : dateOfBirth as DateTime?,
+      gender: gender == _noChange ? this.gender : gender as String?,
+      photoUrl: photoUrl == _noChange ? this.photoUrl : photoUrl as String?,
       currentStep: currentStep ?? this.currentStep,
     );
   }
