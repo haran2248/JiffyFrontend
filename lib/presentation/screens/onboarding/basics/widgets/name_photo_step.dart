@@ -26,7 +26,7 @@ class NamePhotoStep extends StatelessWidget {
           label: "First Name",
           placeholder: "Jane",
           initialValue: firstName,
-          onChanged: onFirstNameChanged,
+          onChanged: (value) => onFirstNameChanged?.call(value),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 8),

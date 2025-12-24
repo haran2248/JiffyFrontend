@@ -26,14 +26,17 @@ class BasicsViewModel extends _$BasicsViewModel {
     state = state.copyWith(photoUrl: url);
   }
 
+  static const int _minStep = 1;
+  static const int _maxStep = 2;
+
   void nextStep() {
-    if (state.currentStep < 2) {
+    if (state.currentStep < _maxStep) {
       state = state.copyWith(currentStep: state.currentStep + 1);
     }
   }
 
   void previousStep() {
-    if (state.currentStep > 1) {
+    if (state.currentStep > _minStep) {
       state = state.copyWith(currentStep: state.currentStep - 1);
     }
   }
@@ -46,5 +49,5 @@ class BasicsViewModel extends _$BasicsViewModel {
       state.gender != null &&
       state.gender!.isNotEmpty;
 
-  bool get isFormValid => isStep1Valid && isStep2Valid;
+  bool get isFormValid => state.isValid;
 }

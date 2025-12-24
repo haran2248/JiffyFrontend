@@ -36,7 +36,7 @@ class Input extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
-          initialValue: initialValue,
+          initialValue: controller == null ? initialValue : null,
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,

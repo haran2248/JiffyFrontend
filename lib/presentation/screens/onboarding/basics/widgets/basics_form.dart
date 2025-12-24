@@ -27,10 +27,11 @@ class BasicsForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Input(
+        Input(
           label: "First Name",
           placeholder: "Jane",
-          // onChanged: onFirstNameChanged, // TODO: Add onChanged to Input widget
+          initialValue: firstName,
+          onChanged: (value) => onFirstNameChanged?.call(value),
         ),
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 24),
