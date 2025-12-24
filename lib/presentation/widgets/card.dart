@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart' hide Card;
+import 'package:flutter/material.dart';
 import 'dart:ui';
 
-class Card extends StatelessWidget {
+class SystemCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final bool isGlass;
 
-  const Card({
+  const SystemCard({
     super.key,
     required this.child,
     this.padding,
@@ -51,9 +51,13 @@ class Card extends StatelessWidget {
     }
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: content,
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: content,
+        ),
       );
     }
 

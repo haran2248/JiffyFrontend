@@ -55,9 +55,9 @@ class DesignSystemPage extends StatelessWidget {
             // Button(text: "Loading...", isLoading: true, onTap: () {}),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Inputs"),
-            const Input(label: "Username", placeholder: "cool_user_99"),
+            const ThemedInput(label: "Username", placeholder: "cool_user_99"),
             const SizedBox(height: 16),
-            const Input(
+            const ThemedInput(
                 label: "Password", placeholder: "•••••••", obscureText: true),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Onboarding Components"),
@@ -89,11 +89,11 @@ class DesignSystemPage extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildSectionHeader(context, "Cards"),
-            Card(
+            SystemCard(
               child: Column(
                 children: [
                   Row(children: [
-                    const Icon(Icons.bolt, color: AppColors.primaryViolet),
+                    Icon(Icons.bolt, color: Theme.of(context).colorScheme.outline),
                     const SizedBox(width: 8),
                     Text("Electric Card",
                         style: Theme.of(context).textTheme.labelLarge),
@@ -118,7 +118,7 @@ class DesignSystemPage extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.primaryRaspberry,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.5,
             ),
       ),

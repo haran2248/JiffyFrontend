@@ -9,6 +9,7 @@ class AppTheme {
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryRaspberry,
+        onPrimary: AppColors.textPrimary, // White text on primary
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.textPrimary, // White
@@ -33,6 +34,7 @@ class AppTheme {
       brightness: Brightness.dark,
       colorScheme: const ColorScheme.dark().copyWith(
         primary: AppColors.primaryRaspberry,
+        onPrimary: AppColors.textPrimary, // White text on primary
         secondary: AppColors.primaryViolet,
         tertiary: AppColors.deepPurple,
         surface: AppColors.surfacePlum,
