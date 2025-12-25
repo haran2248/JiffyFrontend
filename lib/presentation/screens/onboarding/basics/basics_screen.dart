@@ -5,7 +5,7 @@ import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
 import 'widgets/name_photo_step.dart';
 import 'widgets/vitals_step.dart';
-import '../profile_setup/profile_setup_screen.dart';
+import '../co_pilot_intro/co_pilot_intro_screen.dart';
 
 class BasicsScreen extends ConsumerWidget {
   const BasicsScreen({super.key});
@@ -62,11 +62,10 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            // Navigate to Profile Setup (Step 2 of 3)
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const ProfileSetupScreen(),
+                                    const CoPilotIntroScreen(),
                               ),
                             );
                           }
