@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../widgets/input.dart';
 import '../../../../widgets/date_picker_field.dart';
 import '../../../../widgets/option_picker_field.dart';
@@ -27,7 +26,7 @@ class BasicsForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Input(
+        const ThemedInput(
           label: "First Name",
           placeholder: "Jane",
           // onChanged: onFirstNameChanged, // TODO: Add onChanged to Input widget
@@ -37,7 +36,7 @@ class BasicsForm extends StatelessWidget {
           child: Text(
             "This is how it will appear on your profile",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ),

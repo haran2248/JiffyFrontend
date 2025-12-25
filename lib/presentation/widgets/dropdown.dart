@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class Dropdown<T> extends StatefulWidget {
   final String label;
@@ -35,6 +34,9 @@ class _DropdownState<T> extends State<Dropdown<T>> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
+          // Using value (not initialValue) to create a controlled component
+          // that updates when external value changes (e.g., form resets)
+          // ignore: deprecated_member_use
           value: widget.value,
           items: widget.items,
           onChanged: widget.onChanged,
@@ -42,15 +44,15 @@ class _DropdownState<T> extends State<Dropdown<T>> {
           isExpanded: true,
           menuMaxHeight: 300,
           style: Theme.of(context).textTheme.bodyLarge,
-          dropdownColor: AppColors.surfacePlum,
-          icon: const Icon(
+          dropdownColor: Theme.of(context).colorScheme.surface,
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           decoration: InputDecoration(
             hintText: widget.placeholder,
             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surface,
@@ -63,20 +65,23 @@ class _DropdownState<T> extends State<Dropdown<T>> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
-                color: AppColors.textSecondary.withOpacity(0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.primaryViolet,
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline,
                 width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.errorRed,
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
           ),

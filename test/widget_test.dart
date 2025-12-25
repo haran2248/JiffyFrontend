@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:jiffy/main.dart';
 import 'package:jiffy/presentation/widgets/input.dart';
+import 'package:jiffy/presentation/widgets/button.dart';
 
 void main() {
   testWidgets('Basics multi-step flow test', (WidgetTester tester) async {
@@ -19,7 +20,7 @@ void main() {
     expect(find.text('Basics'), findsOneWidget);
 
     // Verify Step 1 elements
-    expect(find.byType(Input), findsOneWidget); // Name
+    expect(find.byType(ThemedInput), findsOneWidget); // Name
     expect(find.text('Date of Birth'), findsNothing); // Should not be on Step 1
 
     // Enter Name
@@ -68,10 +69,10 @@ void main() {
 
     // Verify button is displayed with correct text
     expect(find.text('Test Button'), findsOneWidget);
-    
+
     // Verify InkWell is present (for accessibility)
     expect(find.byType(InkWell), findsOneWidget);
-    
+
     // Verify loading indicator is NOT shown
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
@@ -83,9 +84,14 @@ void main() {
 
     // Verify callback was called immediately
     expect(wasTapped, isTrue);
+
+    // Clear the widget tree to stop animations and timers
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('Button does not respond when loading', (WidgetTester tester) async {
+  testWidgets('Button does not respond when loading',
+      (WidgetTester tester) async {
     bool wasTapped = false;
 
     // Build a button in loading state
@@ -106,10 +112,10 @@ void main() {
 
     // Verify loading indicator is shown
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    
+
     // Verify button text is NOT displayed when loading
     expect(find.text('Loading Button'), findsNothing);
-    
+
     // Verify InkWell is NOT present when loading (button is disabled)
     expect(find.byType(InkWell), findsNothing);
 
@@ -120,5 +126,9 @@ void main() {
 
     // Verify callback was NOT called (button is disabled when loading)
     expect(wasTapped, isFalse);
+
+    // Clear the widget tree to stop animations and timers
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 3));
   });
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jiffy/core/theme/app_colors.dart';
 
 class SuggestedResponses extends StatelessWidget {
   final List<String> responses;
@@ -42,26 +41,28 @@ class _SuggestedResponseChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surfacePlum,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.primaryViolet.withOpacity(0.3),
-            width: 1,
-          ),
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          width: 1,
         ),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textPrimary,
-              ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
         ),
       ),
     );
   }
 }
-

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/widgets/chat_bubble.dart';
 import '../models/profile_setup_form_data.dart';
 
@@ -68,12 +67,19 @@ class _AIAvatar extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         shape: BoxShape.circle,
       ),
-      child: const Icon(
+      child: Icon(
         Icons.auto_awesome,
-        color: AppColors.textPrimary,
+        color: Theme.of(context).colorScheme.onPrimary,
         size: 18,
       ),
     );
@@ -94,21 +100,27 @@ class _TypingIndicator extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 4),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.surfacePlum,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
                 bottomLeft: Radius.circular(4),
                 bottomRight: Radius.circular(20),
               ),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.1),
+              ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _TypingDot(delay: 0),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _TypingDot(delay: 200),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _TypingDot(delay: 400),
               ],
             ),
@@ -167,8 +179,8 @@ class _TypingDotState extends State<_TypingDot>
           child: Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.textSecondary,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               shape: BoxShape.circle,
             ),
           ),
