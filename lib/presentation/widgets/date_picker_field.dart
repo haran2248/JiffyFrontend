@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class DatePickerField extends StatelessWidget {
   final String label;
@@ -32,13 +31,14 @@ class DatePickerField extends StatelessWidget {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primaryViolet,
-              onPrimary: AppColors.textPrimary,
-              surface: AppColors.surfacePlum,
-              onSurface: AppColors.textPrimary,
+            colorScheme: ColorScheme.dark(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
+              surface: Theme.of(context).colorScheme.surface,
+              onSurface: Theme.of(context).colorScheme.onSurface,
             ),
-            dialogBackgroundColor: AppColors.surfacePlum,
+            dialogTheme: DialogThemeData(
+                backgroundColor: Theme.of(context).colorScheme.surface),
           ),
           child: child!,
         );
@@ -87,7 +87,10 @@ class DatePickerField extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.textSecondary.withOpacity(0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -97,13 +100,13 @@ class DatePickerField extends StatelessWidget {
                   value != null ? _formatDate(value!) : (placeholder ?? ''),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: value != null
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
-                const Icon(
+                Icon(
                   Icons.calendar_today_rounded,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
               ],

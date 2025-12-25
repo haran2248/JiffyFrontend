@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/profile_setup_viewmodel.dart';
 import 'widgets/chat_message_list.dart';
@@ -24,7 +23,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients && _scrollController.position.hasContentDimensions) {
+    if (_scrollController.hasClients &&
+        _scrollController.position.hasContentDimensions) {
       Future.microtask(() {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -52,7 +52,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-          color: AppColors.textPrimary,
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text("Profile Setup"),
@@ -67,7 +66,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             child: Text(
               "Skip",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
           ),
@@ -120,4 +119,3 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 }
-

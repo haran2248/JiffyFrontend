@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart' hide Chip;
-import '../../core/theme/app_colors.dart';
 
 class Chip extends StatelessWidget {
   final String label;
@@ -21,13 +20,16 @@ class Chip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryViolet.withOpacity(0.2)
-              : AppColors.surfacePlum,
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected
-                ? AppColors.primaryViolet
-                : AppColors.primaryViolet.withOpacity(0.3),
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context)
+                    .colorScheme
+                    .secondary
+                    .withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -35,8 +37,8 @@ class Chip extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isSelected
-                    ? AppColors.primaryRaspberry
-                    : AppColors.textSecondary,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
         ),

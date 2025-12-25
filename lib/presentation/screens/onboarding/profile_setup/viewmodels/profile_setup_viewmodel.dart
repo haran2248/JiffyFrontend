@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/profile_setup_form_data.dart';
 
@@ -5,11 +6,14 @@ part 'profile_setup_viewmodel.g.dart';
 
 @riverpod
 class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+  Timer? _typingTimer;
+
   @override
   ProfileSetupFormData build() {
     // Initialize with first AI message
     final initialMessage = ChatMessage(
-      text: "Hey there! 👋 I'm here to help create your perfect profile. Let's start easy - what do you love doing on a lazy Sunday?",
+      text:
+          "Hey there! 👋 I'm here to help create your perfect profile. Let's start easy - what do you love doing on a lazy Sunday?",
       isFromUser: false,
       timestamp: DateTime.now(),
     );
@@ -83,15 +87,20 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
 
     if (lowerMessage.contains('hiking') || lowerMessage.contains('nature')) {
       return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('brunch') || lowerMessage.contains('coffee')) {
+    } else if (lowerMessage.contains('brunch') ||
+        lowerMessage.contains('coffee')) {
       return "Love that! What's your ideal way to spend a weekend morning?";
-    } else if (lowerMessage.contains('reading') || lowerMessage.contains('book')) {
+    } else if (lowerMessage.contains('reading') ||
+        lowerMessage.contains('book')) {
       return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('exploring') || lowerMessage.contains('places')) {
+    } else if (lowerMessage.contains('exploring') ||
+        lowerMessage.contains('places')) {
       return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('food') || lowerMessage.contains('sleep')) {
+    } else if (lowerMessage.contains('food') ||
+        lowerMessage.contains('sleep')) {
       return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('work') || lowerMessage.contains('project')) {
+    } else if (lowerMessage.contains('work') ||
+        lowerMessage.contains('project')) {
       return "That's awesome! What drives you to work on side projects?";
     } else {
       return "That sounds amazing! What kind of activities make you lose track of time?";
@@ -102,7 +111,8 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     // Generate contextual suggested responses based on AI message
     final lowerMessage = aiMessage.toLowerCase();
 
-    if (lowerMessage.contains('lose track of time') || lowerMessage.contains('activities')) {
+    if (lowerMessage.contains('lose track of time') ||
+        lowerMessage.contains('activities')) {
       return const [
         "Working on side projects 💻",
         "Cooking new recipes 🍳",
@@ -137,11 +147,14 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     // Extract question from AI message for context
     if (aiMessage.contains('?')) {
       final questionIndex = aiMessage.indexOf('?');
-      final startIndex = aiMessage.lastIndexOf(RegExp(r'[.!?]\s+'), questionIndex - 20);
-      return aiMessage.substring(
-        startIndex > 0 ? startIndex + 2 : 0,
-        questionIndex + 1,
-      ).trim();
+      final startIndex =
+          aiMessage.lastIndexOf(RegExp(r'[.!?]\s+'), questionIndex - 20);
+      return aiMessage
+          .substring(
+            startIndex > 0 ? startIndex + 2 : 0,
+            questionIndex + 1,
+          )
+          .trim();
     }
     return null;
   }
@@ -156,4 +169,3 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     nextStep();
   }
 }
-

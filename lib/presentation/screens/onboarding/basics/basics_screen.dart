@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
@@ -19,7 +18,6 @@ class BasicsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-          color: AppColors.textPrimary,
           onPressed: formData.currentStep > 1
               ? viewModel.previousStep
               : () => Navigator.of(context).pop(),

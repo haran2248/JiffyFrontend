@@ -25,7 +25,7 @@ class ProgressBar extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: isCompleted ? AppColors.primaryGradient : null,
                 color:
-                    isCompleted ? null : AppColors.surfacePlum.withOpacity(0.5),
+                    isCompleted ? null : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
