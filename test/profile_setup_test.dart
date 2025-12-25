@@ -272,6 +272,10 @@ void main() {
 
       // Verify user message appears
       expect(find.text('Test message'), findsOneWidget);
+
+      // Clear the widget tree to stop animations and timers
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
     });
   });
 }

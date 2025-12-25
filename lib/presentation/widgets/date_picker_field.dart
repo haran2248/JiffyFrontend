@@ -29,16 +29,26 @@ class DatePickerField extends StatelessWidget {
       firstDate: min,
       lastDate: max,
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final colorScheme = Theme.of(context).colorScheme;
+        
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: colorScheme.primary,
+                    onPrimary: colorScheme.onPrimary,
+                    surface: colorScheme.surface,
+                    onSurface: colorScheme.onSurface,
+                  )
+                : ColorScheme.light(
+                    primary: colorScheme.primary,
+                    onPrimary: colorScheme.onPrimary,
+                    surface: colorScheme.surface,
+                    onSurface: colorScheme.onSurface,
+                  ),
             dialogTheme: DialogThemeData(
-                backgroundColor: Theme.of(context).colorScheme.surface),
+                backgroundColor: colorScheme.surface),
           ),
           child: child!,
         );

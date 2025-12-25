@@ -34,7 +34,10 @@ class _DropdownState<T> extends State<Dropdown<T>> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<T>(
-          initialValue: widget.value,
+          // Using value (not initialValue) to create a controlled component
+          // that updates when external value changes (e.g., form resets)
+          // ignore: deprecated_member_use
+          value: widget.value,
           items: widget.items,
           onChanged: widget.onChanged,
           validator: widget.validator,

@@ -150,7 +150,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _handleSend,
+                  onTap: widget.isEnabled ? _handleSend : null,
                   borderRadius: BorderRadius.circular(24),
                   child: Icon(
                     Icons.send_rounded,

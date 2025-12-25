@@ -10,6 +10,10 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
 
   @override
   ProfileSetupFormData build() {
+    ref.onDispose(() {
+      _typingTimer?.cancel();
+      _typingTimer = null;
+    });
     // Initialize with first AI message
     final initialMessage = ChatMessage(
       text:
@@ -62,8 +66,9 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     // Set typing indicator
     state = state.copyWith(isTyping: true);
 
-    // Simulate AI response after delay
+    // Cancel any existing timer before creating a new one
     _typingTimer?.cancel();
+    // Simulate AI response after delay
     _typingTimer = Timer(const Duration(seconds: 2), () {
       final aiResponse = ChatMessage(
         text: _generateAIResponse(state.messages.last.text),
