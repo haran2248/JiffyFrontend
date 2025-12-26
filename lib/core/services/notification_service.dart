@@ -74,6 +74,6 @@ class NotificationService {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Ensure Firebase is initialized for background tasks if needed
-  // await Firebase.initializeApp();
+  await Firebase.initializeApp();
   debugPrint("Handling a background message: ${message.messageId}");
 }
