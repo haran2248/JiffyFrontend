@@ -5,9 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
 import 'package:jiffy/presentation/widgets/progress_bar.dart';
 
+import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
+import 'mocks.dart';
+
 void main() {
   group('ProfileSetupScreen Tests', () {
-    testWidgets('ProfileSetupScreen displays correctly', (WidgetTester tester) async {
+    testWidgets('ProfileSetupScreen displays correctly',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -39,7 +44,8 @@ void main() {
 
       // Verify initial AI message
       expect(
-        find.textContaining("Hey there! 👋 I'm here to help create your perfect profile"),
+        find.textContaining(
+            "Hey there! 👋 I'm here to help create your perfect profile"),
         findsOneWidget,
       );
 
@@ -50,7 +56,8 @@ void main() {
       expect(find.text('Exploring new places 🏞️'), findsOneWidget);
     });
 
-    testWidgets('User can select suggested response', (WidgetTester tester) async {
+    testWidgets('User can select suggested response',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -62,14 +69,16 @@ void main() {
 
       // Tap on a suggested response
       await tester.tap(find.text('Hiking in nature ⛰️'));
-      await tester.pumpAndSettle();
+      await tester
+          .pump(); // Use pump instead of pumpAndSettle to catch the typing state
 
       // Verify user message appears
-      expect(find.text('Hiking in nature ⛰️'), findsWidgets); // Should appear in chat
+      expect(find.text('Hiking in nature ⛰️'),
+          findsWidgets); // Should appear in chat
 
       // Wait for AI typing indicator
       await tester.pump(const Duration(milliseconds: 100));
-      
+
       // Wait for AI response (simulated delay is 2 seconds)
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
@@ -79,9 +88,14 @@ void main() {
         find.textContaining('That sounds amazing'),
         findsWidgets,
       );
+
+      // Clear the widget tree to stop animations and timers
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('User can type and send custom message', (WidgetTester tester) async {
+    testWidgets('User can type and send custom message',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -118,9 +132,14 @@ void main() {
         find.textContaining('That sounds amazing'),
         findsWidgets,
       );
+
+      // Clear the widget tree to stop animations and timers
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('Input field is disabled during AI typing', (WidgetTester tester) async {
+    testWidgets('Input field is disabled during AI typing',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -132,7 +151,8 @@ void main() {
 
       // Send a message to trigger typing
       await tester.tap(find.text('Hiking in nature ⛰️'));
-      await tester.pumpAndSettle();
+      await tester
+          .pump(); // Use pump instead of pumpAndSettle to catch the typing state
 
       // Wait a bit for typing to start
       await tester.pump(const Duration(milliseconds: 100));
@@ -144,12 +164,22 @@ void main() {
       // Verify field is actually disabled
       final textFieldWidget = tester.widget<TextField>(inputField);
       expect(textFieldWidget.enabled, isFalse);
+
+      // Clear the widget tree to stop animations and timers
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
     });
 
     testWidgets('Skip button navigates away', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
+        ProviderScope(
+          overrides: [
+            permissionServiceProvider
+                .overrideWithValue(MockPermissionService()),
+            notificationServiceProvider
+                .overrideWithValue(MockNotificationService()),
+          ],
+          child: const MaterialApp(
             home: ProfileSetupScreen(),
           ),
         ),
@@ -158,11 +188,11 @@ void main() {
 
       // Tap Skip button
       await tester.tap(find.text('Skip'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1)); // Wait for transition
 
-      // The skip action should be called (navigation would happen in real app)
-      // For now, we just verify the button is tappable
-      expect(find.text('Skip'), findsOneWidget);
+      // The skip action should navigate to PermissionsScreen
+      expect(find.byType(PermissionsScreen), findsOneWidget);
     });
 
     testWidgets('Progress bar shows correct step', (WidgetTester tester) async {
@@ -185,7 +215,8 @@ void main() {
       expect(progressBarWidget.totalSteps, equals(3));
     });
 
-    testWidgets('Chat input field has correct placeholder', (WidgetTester tester) async {
+    testWidgets('Chat input field has correct placeholder',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -202,7 +233,8 @@ void main() {
   });
 
   group('ProfileSetupViewModel Tests', () {
-    testWidgets('ViewModel initializes with correct state', (WidgetTester tester) async {
+    testWidgets('ViewModel initializes with correct state',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -214,7 +246,8 @@ void main() {
 
       // Verify initial AI message is displayed
       expect(
-        find.textContaining("Hey there! 👋 I'm here to help create your perfect profile"),
+        find.textContaining(
+            "Hey there! 👋 I'm here to help create your perfect profile"),
         findsOneWidget,
       );
 
@@ -222,7 +255,8 @@ void main() {
       expect(find.text('Hiking in nature ⛰️'), findsOneWidget);
     });
 
-    testWidgets('User can send message and see it in chat', (WidgetTester tester) async {
+    testWidgets('User can send message and see it in chat',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -248,7 +282,10 @@ void main() {
 
       // Verify user message appears
       expect(find.text('Test message'), findsOneWidget);
+
+      // Clear the widget tree to stop animations and timers
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
     });
   });
 }
-

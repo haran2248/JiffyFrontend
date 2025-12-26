@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../widgets/input.dart';
 import 'photo_upload_section.dart';
 
@@ -22,7 +21,7 @@ class NamePhotoStep extends StatelessWidget {
       children: [
         PhotoUploadSection(onTap: onPhotoTap),
         const SizedBox(height: 48),
-        Input(
+        ThemedInput(
           label: "First Name",
           placeholder: "Jane",
           initialValue: firstName,
@@ -33,7 +32,7 @@ class NamePhotoStep extends StatelessWidget {
           child: Text(
             "This is how it will appear on your profile",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class OptionPickerField extends StatelessWidget {
   final String label;
@@ -20,7 +19,7 @@ class OptionPickerField extends StatelessWidget {
   void _showPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfacePlum,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -33,7 +32,7 @@ class OptionPickerField extends StatelessWidget {
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.primaryRaspberry,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
               ),
             ),
@@ -57,15 +56,18 @@ class OptionPickerField extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primaryViolet.withOpacity(0.1)
+                            ? Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .withValues(alpha: 0.1)
                             : null,
                       ),
                       child: Text(
                         option,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: isSelected
-                                  ? AppColors.primaryViolet
-                                  : AppColors.textPrimary,
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -102,7 +104,10 @@ class OptionPickerField extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.textSecondary.withOpacity(0.3),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -112,13 +117,13 @@ class OptionPickerField extends StatelessWidget {
                   value ?? (placeholder ?? ''),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: value != null
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
-                const Icon(
+                Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
             ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../widgets/avatar.dart';
 
 class PhotoUploadSection extends StatelessWidget {
@@ -25,16 +24,16 @@ class PhotoUploadSection extends StatelessWidget {
             "Add your photo to get started",
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: onTap,
+          TextButton(
+            onPressed: onTap,
             child: Text(
               "Change Photo",
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.primaryRaspberry,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
             ),

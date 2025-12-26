@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jiffy/core/theme/app_colors.dart';
 
 class ChatInputField extends StatefulWidget {
   final String? initialValue;
@@ -29,7 +28,6 @@ class _ChatInputFieldState extends State<ChatInputField> {
   }
 
   @override
-  void dispose() {
   void didUpdateWidget(covariant ChatInputField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialValue != widget.initialValue &&
@@ -39,7 +37,9 @@ class _ChatInputFieldState extends State<ChatInputField> {
   }
 
   @override
+  void dispose() {
     _focusNode.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -60,7 +60,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: AppColors.surfacePlum.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -78,10 +78,10 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 decoration: InputDecoration(
                   hintText: "Type your response...",
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                   filled: true,
-                  fillColor: AppColors.surfacePlum,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -93,14 +93,17 @@ class _ChatInputFieldState extends State<ChatInputField> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide(
-                      color: AppColors.primaryViolet.withOpacity(0.3),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryViolet,
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline,
                       width: 1.5,
                     ),
                   ),
@@ -110,24 +113,52 @@ class _ChatInputFieldState extends State<ChatInputField> {
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _handleSend,
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: widget.isEnabled ? AppColors.primaryGradient : null,
-                  color: widget.isEnabled
-                      ? null
-                      : AppColors.surfacePlum.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.send_rounded,
-                  color: widget.isEnabled
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
-                  size: 20,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: widget.isEnabled
+                    ? LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      )
+                    : null,
+                color: widget.isEnabled
+                    ? null
+                    : Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+                boxShadow: widget.isEnabled
+                    ? [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.isEnabled ? _handleSend : null,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: widget.isEnabled
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
                 ),
               ),
             ),

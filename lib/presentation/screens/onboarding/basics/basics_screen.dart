@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
 import 'widgets/name_photo_step.dart';
 import 'widgets/vitals_step.dart';
-import '../profile_setup/profile_setup_screen.dart';
+import '../co_pilot_intro/co_pilot_intro_screen.dart';
 
 class BasicsScreen extends ConsumerWidget {
   const BasicsScreen({super.key});
@@ -19,7 +18,6 @@ class BasicsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-          color: AppColors.textPrimary,
           onPressed: formData.currentStep > 1
               ? viewModel.previousStep
               : () => Navigator.of(context).pop(),
@@ -64,11 +62,10 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            // Navigate to Profile Setup (Step 2 of 3)
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const ProfileSetupScreen(),
+                                    const CoPilotIntroScreen(),
                               ),
                             );
                           }

@@ -23,16 +23,6 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
 # Symbolication related
 app.*.symbols
 
@@ -61,4 +51,34 @@ ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+
+# iOS User specific
+ios/**/xcuserdata/
+ios/**/project.xcworkspace/
+!ios/**/project.xcworkspace/contents.xcworkspacedata
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+*.g.dart
+*.freezed.dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Web related
+build/web/
+
+# Exceptions to above rules
+!**/ios/Runner/Info.plist
+!**/ios/Runner/Assets.xcassets/
+!**/ios/Runner/Base.lproj/
 
