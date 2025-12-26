@@ -107,9 +107,9 @@ class RetryInterceptor extends Interceptor {
       final response = await dio.fetch(options);
       return handler.resolve(response);
     } on DioException catch (e) {
-      // If retry also fails, pass error to next handler
-      // This will trigger another retry if under max
-      return handler.next(e);
+      // Re-enter retry logic to evaluate if we should retry again
+      // The updated retry count in options.extra will be checked
+      return onError(e, handler);
     }
   }
 
