@@ -179,11 +179,18 @@ class ApiError implements Exception {
   }
 
   /// Creates an unknown error from any exception.
+  ///
+  /// If [originalError] is already an [ApiError], it is returned as-is
+  /// to preserve the original error type information.
   factory ApiError.unknown({
     required String message,
     dynamic originalError,
     String? requestPath,
   }) {
+    // Preserve existing ApiError to avoid losing specific error types
+    if (originalError is ApiError) {
+      return originalError;
+    }
     return ApiError(
       message: message,
       type: ApiErrorType.unknown,
@@ -194,7 +201,8 @@ class ApiError implements Exception {
 
   /// Creates a network error.
   factory ApiError.network({
-    String message = 'Unable to connect. Please check your internet connection.',
+    String message =
+        'Unable to connect. Please check your internet connection.',
     dynamic originalError,
     String? requestPath,
   }) {
