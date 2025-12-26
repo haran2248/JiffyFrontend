@@ -97,6 +97,10 @@ class MyDio with DioMixin implements Dio {
     // This prevents infinite loops and interceptor conflicts
     final refreshDio = _createRefreshDio();
 
+    // Create a separate Dio instance for retries
+    // Has auth/error interceptors but NO retry interceptor (avoids loops)
+    final retryDio = _createRetryDio();
+
     interceptors.addAll([
       // 1. Logging - first to log raw request
       if (_config.environment.enableLogging) LoggingInterceptor(),
@@ -105,7 +109,7 @@ class MyDio with DioMixin implements Dio {
       AuthInterceptor(tokenProvider: _tokenProvider),
 
       // 3. Retry - handle transient failures
-      RetryInterceptor(),
+      RetryInterceptor(retryDio: retryDio),
 
       // 4. Refresh - handle 401 with token refresh
       RefreshTokenInterceptor(
@@ -141,5 +145,31 @@ class MyDio with DioMixin implements Dio {
     }
 
     return refreshDio;
+  }
+
+  /// Creates a separate Dio instance for retry requests.
+  ///
+  /// This instance:
+  /// - Uses the same base URL and configuration
+  /// - Has logging, auth, and error interceptors
+  /// - Does NOT have retry or refresh interceptors (prevents loops)
+  Dio _createRetryDio() {
+    final retryDio = Dio(BaseOptions(
+      baseUrl: _config.environment.baseUrl,
+      connectTimeout: _config.environment.connectTimeout,
+      receiveTimeout: _config.environment.receiveTimeout,
+      headers: _config.defaultHeaders,
+      validateStatus: (status) =>
+          status != null && status >= 200 && status < 300,
+    ));
+
+    // Add interceptors that should run on retried requests
+    retryDio.interceptors.addAll([
+      if (_config.environment.enableLogging) LoggingInterceptor(),
+      AuthInterceptor(tokenProvider: _tokenProvider),
+      ErrorInterceptor(),
+    ]);
+
+    return retryDio;
   }
 }

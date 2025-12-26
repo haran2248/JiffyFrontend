@@ -30,6 +30,10 @@ class RetryInterceptor extends Interceptor {
   /// Maximum delay between retries (cap for exponential backoff).
   final Duration maxDelay;
 
+  /// Dio instance for retrying requests.
+  /// Should have all interceptors EXCEPT RetryInterceptor to avoid loops.
+  final Dio _retryDio;
+
   /// Random instance for jitter calculation.
   final Random _random = Random();
 
@@ -40,10 +44,11 @@ class RetryInterceptor extends Interceptor {
   static const List<int> _retryableStatusCodes = [502, 503, 504];
 
   RetryInterceptor({
+    required Dio retryDio,
     this.maxRetries = 3,
     this.initialDelay = const Duration(milliseconds: 500),
     this.maxDelay = const Duration(seconds: 10),
-  });
+  }) : _retryDio = retryDio;
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
@@ -94,17 +99,8 @@ class RetryInterceptor extends Interceptor {
     options.extra[_retryCountKey] = currentRetry + 1;
 
     try {
-      // Create a new Dio instance to avoid interceptor loops
-      // The request will go through all interceptors again
-      final dio = Dio(BaseOptions(
-        baseUrl: options.baseUrl,
-        headers: options.headers,
-        connectTimeout: options.connectTimeout,
-        receiveTimeout: options.receiveTimeout,
-        sendTimeout: options.sendTimeout,
-      ));
-
-      final response = await dio.fetch(options);
+      // Use injected Dio that has auth/error interceptors but no retry interceptor
+      final response = await _retryDio.fetch(options);
       return handler.resolve(response);
     } on DioException catch (e) {
       // Re-enter retry logic to evaluate if we should retry again
