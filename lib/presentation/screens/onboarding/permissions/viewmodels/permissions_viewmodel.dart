@@ -15,16 +15,11 @@ class PermissionsViewModel extends _$PermissionsViewModel {
       ref.read(notificationServiceProvider);
 
   @override
-  PermissionsState build() {
-    _checkInitialStatus();
-    return const PermissionsState();
-  }
-
-  Future<void> _checkInitialStatus() async {
+  Future<PermissionsState> build() async {
     final locationStatus = await _permissionService.checkLocationStatus();
     final notificationStatus =
         await _permissionService.checkNotificationStatus();
-    state = state.copyWith(
+    return PermissionsState(
       locationGranted: locationStatus,
       notificationsGranted: notificationStatus,
     );
@@ -33,7 +28,8 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   Future<void> requestLocation() async {
     final granted = await _permissionService.requestLocationPermission();
     debugPrint('Location permission status: ${granted ? 'Granted' : 'Denied'}');
-    state = state.copyWith(locationGranted: granted);
+    final currentState = state.value ?? const PermissionsState();
+    state = AsyncData(currentState.copyWith(locationGranted: granted));
   }
 
   Future<void> requestNotifications() async {
@@ -63,7 +59,8 @@ class PermissionsViewModel extends _$PermissionsViewModel {
       }
     }
 
-    state = state.copyWith(notificationsGranted: granted);
+    final currentState = state.value ?? const PermissionsState();
+    state = AsyncData(currentState.copyWith(notificationsGranted: granted));
   }
 
   void skip() {

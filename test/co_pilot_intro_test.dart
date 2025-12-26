@@ -23,7 +23,7 @@ void main() {
 
     // Cleanup
     await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('CoPilotIntroScreen navigate to ProfileSetup on button tap',
@@ -39,13 +39,12 @@ void main() {
     final button = find.text("Got it, Let's Continue");
     await tester.ensureVisible(button);
     await tester.tap(button);
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1)); // Wait for transition
+    await tester.pumpAndSettle(); // Wait for transition and animations
 
     expect(find.byType(ProfileSetupScreen), findsOneWidget);
 
     // Cleanup
     await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 }

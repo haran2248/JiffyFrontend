@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 class NotificationService {
   FirebaseMessaging get _messaging {
     if (Firebase.apps.isEmpty) {
-      throw Exception(
-          'Firebase not initialized. This usually means the GoogleService-Info.plist (iOS) or google-services.json (Android) is missing.');
+      debugPrint(
+          'ERROR: Firebase not initialized. Ensure Firebase.initializeApp() is called before accessing NotificationService.');
+      throw StateError(
+          'Firebase must be initialized before using NotificationService');
     }
     return FirebaseMessaging.instance;
   }

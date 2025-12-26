@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/permissions_viewmodel.dart';
+import 'models/permissions_state.dart';
 import 'widgets/permission_card.dart';
 
 class PermissionsScreen extends ConsumerWidget {
@@ -10,7 +11,8 @@ class PermissionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(permissionsViewModelProvider);
+    final stateAsync = ref.watch(permissionsViewModelProvider);
+    final state = stateAsync.valueOrNull ?? const PermissionsState();
     final viewModel = ref.read(permissionsViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
