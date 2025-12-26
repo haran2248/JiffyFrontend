@@ -5,6 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
 import 'package:jiffy/presentation/widgets/progress_bar.dart';
 
+import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
+import 'mocks.dart';
+
 void main() {
   group('ProfileSetupScreen Tests', () {
     testWidgets('ProfileSetupScreen displays correctly',
@@ -168,8 +172,14 @@ void main() {
 
     testWidgets('Skip button navigates away', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
+        ProviderScope(
+          overrides: [
+            permissionServiceProvider
+                .overrideWithValue(MockPermissionService()),
+            notificationServiceProvider
+                .overrideWithValue(MockNotificationService()),
+          ],
+          child: const MaterialApp(
             home: ProfileSetupScreen(),
           ),
         ),
@@ -178,11 +188,11 @@ void main() {
 
       // Tap Skip button
       await tester.tap(find.text('Skip'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1)); // Wait for transition
 
-      // The skip action should be called (navigation would happen in real app)
-      // For now, we just verify the button is tappable
-      expect(find.text('Skip'), findsOneWidget);
+      // The skip action should navigate to PermissionsScreen
+      expect(find.byType(PermissionsScreen), findsOneWidget);
     });
 
     testWidgets('Progress bar shows correct step', (WidgetTester tester) async {

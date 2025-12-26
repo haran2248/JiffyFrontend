@@ -47,6 +47,12 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app uses the local network for debugging and development purposes.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Jiffy needs your location to show you matches nearby and calculate distances.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Jiffy needs your location to show you matches nearby even when the app is in background.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Jiffy needs access to your photos to let you upload a profile picture.</string>
 	<key>NSBonjourServices</key>
 	<array>
 	</array>

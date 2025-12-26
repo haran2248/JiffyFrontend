@@ -5,6 +5,7 @@ import 'viewmodels/profile_setup_viewmodel.dart';
 import 'widgets/chat_message_list.dart';
 import 'widgets/suggested_responses.dart';
 import 'widgets/chat_input_field.dart';
+import '../permissions/permissions_screen.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -61,7 +62,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           TextButton(
             onPressed: () {
               viewModel.skip();
-              // TODO: Navigate to next step
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PermissionsScreen(),
+                ),
+              );
             },
             child: Text(
               "Skip",
