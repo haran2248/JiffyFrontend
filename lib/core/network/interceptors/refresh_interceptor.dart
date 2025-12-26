@@ -141,7 +141,7 @@ class RefreshTokenInterceptor extends Interceptor {
 
     // Get the fresh access token
     final newToken = await _tokenProvider.getAccessToken();
-    if (newToken != null) {
+    if (newToken != null && newToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $newToken';
     }
 
