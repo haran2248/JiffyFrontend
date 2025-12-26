@@ -6,22 +6,56 @@ part of 'profile_setup_viewmodel.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileSetupViewModelHash() =>
-    r'54b0fceb43a81b8058fdc9733df058fd4b19431f';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [ProfileSetupViewModel].
 @ProviderFor(ProfileSetupViewModel)
-final profileSetupViewModelProvider = AutoDisposeNotifierProvider<
-    ProfileSetupViewModel, ProfileSetupFormData>.internal(
-  ProfileSetupViewModel.new,
-  name: r'profileSetupViewModelProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$profileSetupViewModelHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const profileSetupViewModelProvider = ProfileSetupViewModelProvider._();
 
-typedef _$ProfileSetupViewModel = AutoDisposeNotifier<ProfileSetupFormData>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class ProfileSetupViewModelProvider
+    extends $NotifierProvider<ProfileSetupViewModel, ProfileSetupFormData> {
+  const ProfileSetupViewModelProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'profileSetupViewModelProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileSetupViewModelHash();
+
+  @$internal
+  @override
+  ProfileSetupViewModel create() => ProfileSetupViewModel();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProfileSetupFormData value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProfileSetupFormData>(value),
+    );
+  }
+}
+
+String _$profileSetupViewModelHash() =>
+    r'cbb9fc5c772d613e2c58f3631ef1a6fa17a22840';
+
+abstract class _$ProfileSetupViewModel extends $Notifier<ProfileSetupFormData> {
+  ProfileSetupFormData build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ProfileSetupFormData, ProfileSetupFormData>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<ProfileSetupFormData, ProfileSetupFormData>,
+        ProfileSetupFormData,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}

@@ -12,7 +12,11 @@ class PermissionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(permissionsViewModelProvider);
-    final state = stateAsync.valueOrNull ?? const PermissionsState();
+    final state = stateAsync.when(
+      data: (data) => data,
+      loading: () => const PermissionsState(),
+      error: (_, __) => const PermissionsState(),
+    );
     final viewModel = ref.read(permissionsViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -88,8 +92,22 @@ class PermissionsScreen extends ConsumerWidget {
                       : "Maybe Later",
                   onTap: () {
                     // Final Step - Complete Onboarding
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil("/", (route) => false);
+                    // TODO: Navigate to home screen when implemented
+                    // For now, stay on permissions screen after completion
+                    // context.goToRoute(AppRoutes.home);
+
+                    // Show completion message or stay on screen
+                    // Don't navigate to root as it redirects back to basics (circular)
+                    final bothGranted =
+                        state.locationGranted && state.notificationsGranted;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(bothGranted
+                            ? 'Onboarding complete! Home screen coming soon.'
+                            : 'You can continue setup later from settings.'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
               ),

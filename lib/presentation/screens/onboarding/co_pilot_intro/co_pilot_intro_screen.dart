@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
 import '../../../widgets/button.dart';
-import '../profile_setup/profile_setup_screen.dart';
 import 'widgets/feature_item.dart';
 import 'widgets/demo_section.dart';
 
@@ -63,11 +64,7 @@ class CoPilotIntroScreen extends StatelessWidget {
               Button(
                 text: "Got it, Let's Continue",
                 onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileSetupScreen(),
-                    ),
-                  );
+                  context.replaceRoute(AppRoutes.onboardingProfileSetup);
                 },
               ),
             ],
