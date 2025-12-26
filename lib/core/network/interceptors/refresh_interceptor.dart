@@ -49,6 +49,12 @@ class RefreshTokenInterceptor extends Interceptor {
       return handler.next(err);
     }
 
+    // Skip refresh for requests that opted out of auth (e.g., login, register)
+    // A 401 on these endpoints means invalid credentials, not expired token
+    if (err.requestOptions.extra['skipAuth'] == true) {
+      return handler.next(err);
+    }
+
     // If already retried, don't retry again (prevents infinite loop)
     if (err.requestOptions.extra[_retryKey] == true) {
       _tokenProvider.onTokenRefreshFailed();
