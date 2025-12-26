@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/permissions_viewmodel.dart';
@@ -92,22 +94,21 @@ class PermissionsScreen extends ConsumerWidget {
                       : "Maybe Later",
                   onTap: () {
                     // Final Step - Complete Onboarding
-                    // TODO: Navigate to home screen when implemented
-                    // For now, stay on permissions screen after completion
-                    // context.goToRoute(AppRoutes.home);
-
-                    // Show completion message or stay on screen
-                    // Don't navigate to root as it redirects back to basics (circular)
                     final bothGranted =
                         state.locationGranted && state.notificationsGranted;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(bothGranted
-                            ? 'Onboarding complete! Home screen coming soon.'
-                            : 'You can continue setup later from settings.'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+
+                    if (bothGranted) {
+                      // Navigate to home screen when both permissions are granted
+                      context.goToRoute(AppRoutes.home);
+                    } else {
+                      // Show snackbar if permissions are not granted
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please resolve permission'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),
