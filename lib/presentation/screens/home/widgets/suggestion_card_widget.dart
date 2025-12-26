@@ -39,6 +39,7 @@ class SuggestionCardWidget extends StatelessWidget {
                   // Image section with name overlay
                   Stack(
                     children: [
+                      // Base layer: Always show fallback icon
                       Container(
                         width: double.infinity,
                         height: 200,
@@ -47,29 +48,36 @@ class SuggestionCardWidget extends StatelessWidget {
                             top: Radius.circular(24),
                           ),
                           color: colorScheme.surfaceContainerHighest,
-                          image: suggestion.imageUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(
-                                    suggestion.imageUrl!,
-                                  ),
-                                  fit: BoxFit.cover,
-                                  onError: (exception, stackTrace) {
-                                    // Silently handle image load errors
-                                    // The fallback icon will be shown instead
-                                  },
-                                )
-                              : null,
                         ),
-                        child: suggestion.imageUrl == null
-                            ? Center(
-                                child: Icon(
-                                  Icons.person,
-                                  size: 64,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              )
-                            : null,
+                        child: Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 64,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
+                      // Overlay: Network image if URL is available
+                      if (suggestion.imageUrl != null)
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
+                          child: Image.network(
+                            suggestion.imageUrl!,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Return transparent sized widget to maintain layout
+                              // Base icon will show through from the layer below
+                              return SizedBox(
+                                width: double.infinity,
+                                height: 200,
+                              );
+                            },
+                          ),
+                        ),
                       // Gradient overlay at bottom for name
                       Positioned(
                         bottom: 0,
