@@ -54,6 +54,13 @@ class RetryInterceptor extends Interceptor {
       return handler.next(err);
     }
 
+    // Only retry idempotent methods by default (prevents duplicate side effects)
+    // POST and PATCH can be explicitly enabled via 'forceRetry' extra
+    if (!_isIdempotentMethod(options.method) &&
+        options.extra['forceRetry'] != true) {
+      return handler.next(err);
+    }
+
     // Don't retry if not a retryable error
     if (!_isRetryable(err)) {
       return handler.next(err);
@@ -161,5 +168,14 @@ class RetryInterceptor extends Interceptor {
         : Duration(milliseconds: delayWithJitter.inMilliseconds.toInt());
 
     return cappedDelay;
+  }
+
+  /// Checks if the HTTP method is idempotent (safe to retry).
+  ///
+  /// Idempotent methods can be retried without causing duplicate side effects.
+  /// POST and PATCH are excluded as they may create duplicate resources.
+  bool _isIdempotentMethod(String method) {
+    const idempotentMethods = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
+    return idempotentMethods.contains(method.toUpperCase());
   }
 }
