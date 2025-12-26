@@ -9,6 +9,7 @@ class StoryItem {
   final String? name;
   final String? imageUrl;
   final bool isUserStory; // If true, shows "Your Story" with + icon
+  final StoryType? storyType; // Type of story (dating, regular, etc.)
   final DateTime? createdAt;
 
   const StoryItem({
@@ -17,8 +18,15 @@ class StoryItem {
     this.name,
     this.imageUrl,
     this.isUserStory = false,
+    this.storyType,
     this.createdAt,
   });
+}
+
+/// Type of story for styling purposes
+enum StoryType {
+  dating, // Shows heart icon
+  regular, // Shows avatar
 }
 
 /// Suggestion card data for "Suggestions for the Day"

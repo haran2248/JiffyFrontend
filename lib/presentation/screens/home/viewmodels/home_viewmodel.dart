@@ -46,12 +46,27 @@ class HomeViewModel extends _$HomeViewModel {
     try {
       final homeService = ref.read(homeServiceProvider);
       final data = await homeService.fetchHomeData();
-      state = state.copyWith(data: data, isLoading: false);
+      // Check if notifier is still valid before updating state
+      // In Riverpod 3.0, we can check if the provider is still active
+      try {
+        state = state.copyWith(data: data, isLoading: false);
+      } catch (e) {
+        // Provider was disposed, ignore state update
+        if (e.toString().contains('disposed')) return;
+        rethrow;
+      }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: () => e.toString(),
-      );
+      // Check if notifier is still valid before updating state
+      try {
+        state = state.copyWith(
+          isLoading: false,
+          error: () => e.toString(),
+        );
+      } catch (stateError) {
+        // Provider was disposed, ignore state update
+        if (stateError.toString().contains('disposed')) return;
+        rethrow;
+      }
     }
   }
 

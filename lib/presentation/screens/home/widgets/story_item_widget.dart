@@ -39,7 +39,7 @@ class StoryItemWidget extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: story.isUserStory
                           ? null
-                          : (story.name?.startsWith('Dating') ?? false)
+                          : (story.storyType == StoryType.dating)
                               ? null
                               : LinearGradient(
                                   colors: [
@@ -51,7 +51,7 @@ class StoryItemWidget extends StatelessWidget {
                                 ),
                       color: story.isUserStory
                           ? colorScheme.surfaceContainerHighest
-                          : (story.name?.startsWith('Dating') ?? false)
+                          : (story.storyType == StoryType.dating)
                               ? colorScheme.secondary
                               : null,
                       border: Border.all(
@@ -60,8 +60,8 @@ class StoryItemWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Show heart icon for "Dating" story, avatar otherwise
-                  if (story.name?.startsWith('Dating') ?? false)
+                  // Show heart icon for dating story, avatar otherwise
+                  if (story.storyType == StoryType.dating)
                     Icon(
                       Icons.favorite,
                       color: colorScheme.onSurface,
@@ -71,7 +71,8 @@ class StoryItemWidget extends StatelessWidget {
                     Avatar(
                       radius: 24,
                       imageUrl: story.imageUrl,
-                      onTap: onTap,
+                      onTap:
+                          null, // Let InkWell handle taps to avoid double invocation
                     ),
                   if (story.isUserStory)
                     Positioned(

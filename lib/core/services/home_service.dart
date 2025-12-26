@@ -13,6 +13,7 @@ class HomeService {
   Future<HomeData> fetchHomeData() async {
     // TODO: Replace with actual API call
     // For now, return mock data
+    // TODO: Remove or replace debugPrint with proper logging framework before production
     debugPrint('HomeService: Fetching home data from backend...');
     
     // Simulate network delay
@@ -32,6 +33,7 @@ class HomeService {
           userId: 'user-2',
           name: 'Dating A...',
           imageUrl: null, // Placeholder
+          storyType: StoryType.dating,
         ),
         StoryItem(
           id: 'story-3',
@@ -100,6 +102,7 @@ class HomeService {
     int page = 1,
     int limit = 10,
   }) async {
+    // TODO: Remove or replace debugPrint with proper logging framework before production
     debugPrint('HomeService: Fetching more suggestions (page: $page)...');
     await Future.delayed(const Duration(milliseconds: 500));
     

@@ -50,15 +50,16 @@ class MatchPromptCardWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Answer button
-          SizedBox(
-            width: double.infinity,
-            child: Button(
-              text: 'Answer Now',
-              onTap: onAnswerTap ?? () {},
-              type: ButtonType.primary,
+          // Answer button - only show if callback is provided
+          if (onAnswerTap != null)
+            SizedBox(
+              width: double.infinity,
+              child: Button(
+                text: 'Answer Now',
+                onTap: onAnswerTap!,
+                type: ButtonType.primary,
+              ),
             ),
-          ),
         ],
       ),
     );

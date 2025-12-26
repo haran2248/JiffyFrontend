@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
@@ -23,63 +24,110 @@ class HomeScreen extends ConsumerWidget {
           onRefresh: () => viewModel.refresh(),
           child: state.isLoading && state.data == null
               ? const Center(child: CircularProgressIndicator())
-              : state.error != null
-                  ? _buildErrorState(context, state.error!, viewModel)
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Stories Section - scrollable
-                          _buildStoriesSection(
-                              context, state.data?.stories ?? []),
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Show error banner if error exists but data is available
+                      if (state.error != null && state.data != null)
+                        _buildErrorBanner(context, state.error!, viewModel),
 
-                          const SizedBox(height: 16),
+                      // Show full error state only if no data exists
+                      if (state.error != null && state.data == null)
+                        _buildErrorState(context, state.error!, viewModel)
+                      else if (state.data != null) ...[
+                        // Stories Section - scrollable
+                        _buildStoriesSection(context, state.data!.stories),
 
-                          // New Prompt Section - at top after stories
-                          if (state.data?.currentPrompt != null)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              child: _buildNewPromptSection(
-                                context,
-                                state.data!.currentPrompt!,
-                              ),
-                            ),
+                        const SizedBox(height: 16),
 
-                          const SizedBox(height: 24),
-
-                          // Suggestions for the Day Section
-                          if (state.data?.suggestions.isNotEmpty ?? false)
-                            _buildSuggestionsSection(
+                        // New Prompt Section - at top after stories
+                        if (state.data!.currentPrompt != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildNewPromptSection(
                               context,
-                              state.data!.suggestions,
+                              state.data!.currentPrompt!,
                             ),
-
-                          const SizedBox(height: 24),
-
-                          // Trending in your area Section
-                          if (state.data?.trendingItems.isNotEmpty ?? false)
-                            _buildTrendingSection(
-                              context,
-                              state.data!.trendingItems,
-                            ),
-
-                          const SizedBox(height: 24),
-
-                          // Current Matches Section
-                          _buildCurrentMatchesSection(
-                            context,
-                            state.data?.suggestions ?? [],
                           ),
 
-                          const SizedBox(height: 80), // Space for bottom nav
-                        ],
-                      ),
-                    ),
+                        const SizedBox(height: 24),
+
+                        // Suggestions for the Day Section
+                        if (state.data!.suggestions.isNotEmpty)
+                          _buildSuggestionsSection(
+                            context,
+                            state.data!.suggestions,
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // Trending in your area Section
+                        if (state.data!.trendingItems.isNotEmpty)
+                          _buildTrendingSection(
+                            context,
+                            state.data!.trendingItems,
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // Current Matches Section
+                        _buildCurrentMatchesSection(
+                          context,
+                          state.data!.suggestions,
+                        ),
+
+                        const SizedBox(height: 80), // Space for bottom nav
+                      ],
+                    ],
+                  ),
+                ),
         ),
       ),
       bottomNavigationBar: const BottomNavigationBarWidget(
         currentRoute: AppRoutes.home,
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(
+    BuildContext context,
+    String error,
+    HomeViewModel viewModel,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: colorScheme.onErrorContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Failed to refresh: $error',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onErrorContainer,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            onPressed: () => viewModel.loadHomeData(),
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -92,39 +140,45 @@ class HomeScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading content',
-            style: textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: colorScheme.error,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => viewModel.loadHomeData(),
-            child: const Text('Retry'),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              'Error loading content',
+              style: textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                error,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => viewModel.loadHomeData(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStoriesSection(BuildContext context, List stories) {
+  Widget _buildStoriesSection(BuildContext context, List<StoryItem> stories) {
     if (stories.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -147,7 +201,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSuggestionsSection(BuildContext context, List suggestions) {
+  Widget _buildSuggestionsSection(
+      BuildContext context, List<SuggestionCard> suggestions) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -183,7 +238,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrendingSection(BuildContext context, List trendingItems) {
+  Widget _buildTrendingSection(
+      BuildContext context, List<TrendingItem> trendingItems) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -222,7 +278,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCurrentMatchesSection(BuildContext context, List matches) {
+  Widget _buildCurrentMatchesSection(
+      BuildContext context, List<SuggestionCard> matches) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -265,7 +322,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNewPromptSection(BuildContext context, prompt) {
+  Widget _buildNewPromptSection(BuildContext context, MatchPrompt prompt) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 

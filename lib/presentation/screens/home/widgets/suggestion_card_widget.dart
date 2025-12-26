@@ -30,7 +30,8 @@ class SuggestionCardWidget extends StatelessWidget {
             margin: const EdgeInsets.only(right: 16),
             child: SystemCard(
               padding: EdgeInsets.zero,
-              onTap: onTap,
+              onTap:
+                  null, // Let InkWell handle taps to avoid duplicate gesture detection
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -48,8 +49,14 @@ class SuggestionCardWidget extends StatelessWidget {
                           color: colorScheme.surfaceContainerHighest,
                           image: suggestion.imageUrl != null
                               ? DecorationImage(
-                                  image: NetworkImage(suggestion.imageUrl!),
+                                  image: NetworkImage(
+                                    suggestion.imageUrl!,
+                                  ),
                                   fit: BoxFit.cover,
+                                  onError: (exception, stackTrace) {
+                                    // Silently handle image load errors
+                                    // The fallback icon will be shown instead
+                                  },
                                 )
                               : null,
                         ),
