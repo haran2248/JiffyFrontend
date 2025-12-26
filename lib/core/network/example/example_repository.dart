@@ -244,8 +244,18 @@ class ExampleRepository {
   /// The networking layer ensures [DioException.error] contains [ApiError],
   /// but we still handle edge cases gracefully.
   ApiError _extractError(Object error) {
-    if (error is DioException && error.error is ApiError) {
-      return error.error as ApiError;
+    // Already an ApiError - return as-is
+    if (error is ApiError) {
+      return error;
+    }
+
+    // DioException - check for embedded ApiError or convert
+    if (error is DioException) {
+      if (error.error is ApiError) {
+        return error.error as ApiError;
+      }
+      // Convert DioException to ApiError (preserves HTTP status classification)
+      return ApiError.fromDioException(error);
     }
 
     // Fallback for unexpected errors
