@@ -56,6 +56,8 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
+      // Record start time for duration calculation in response logging
+      options.extra['_startTime'] = DateTime.now();
       _logRequest(options);
     }
     handler.next(options);
@@ -79,7 +81,8 @@ class LoggingInterceptor extends Interceptor {
 
   void _logRequest(RequestOptions options) {
     final buffer = StringBuffer();
-    buffer.writeln('┌─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('┌─────────────────────────────────────────────────────────');
     buffer.writeln('│ 📤 REQUEST: ${options.method} ${options.uri}');
 
     if (logHeaders) {
@@ -92,7 +95,8 @@ class LoggingInterceptor extends Interceptor {
       buffer.writeln('│ Body: $body');
     }
 
-    buffer.writeln('└─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('└─────────────────────────────────────────────────────────');
     debugPrint(buffer.toString());
   }
 
@@ -103,7 +107,8 @@ class LoggingInterceptor extends Interceptor {
         : null;
 
     final buffer = StringBuffer();
-    buffer.writeln('┌─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('┌─────────────────────────────────────────────────────────');
     buffer.writeln(
       '│ 📥 RESPONSE: ${response.statusCode} ${response.requestOptions.method} ${response.requestOptions.uri}',
     );
@@ -117,13 +122,15 @@ class LoggingInterceptor extends Interceptor {
       buffer.writeln('│ Body: $body');
     }
 
-    buffer.writeln('└─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('└─────────────────────────────────────────────────────────');
     debugPrint(buffer.toString());
   }
 
   void _logError(DioException err) {
     final buffer = StringBuffer();
-    buffer.writeln('┌─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('┌─────────────────────────────────────────────────────────');
     buffer.writeln(
       '│ ❌ ERROR: ${err.type.name} ${err.requestOptions.method} ${err.requestOptions.uri}',
     );
@@ -132,14 +139,16 @@ class LoggingInterceptor extends Interceptor {
       buffer.writeln('│ Status: ${err.response!.statusCode}');
     }
 
-    buffer.writeln('│ Message: ${err.message ?? err.error?.toString() ?? "Unknown error"}');
+    buffer.writeln(
+        '│ Message: ${err.message ?? err.error?.toString() ?? "Unknown error"}');
 
     if (logBody && err.response?.data != null) {
       final body = _formatBody(err.response!.data);
       buffer.writeln('│ Response: $body');
     }
 
-    buffer.writeln('└─────────────────────────────────────────────────────────');
+    buffer
+        .writeln('└─────────────────────────────────────────────────────────');
     debugPrint(buffer.toString());
   }
 
