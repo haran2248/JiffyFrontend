@@ -35,15 +35,27 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    // Get the access token
-    final accessToken = await _tokenProvider.getAccessToken();
+    try {
+      // Get the access token
+      final accessToken = await _tokenProvider.getAccessToken();
 
-    // If we have a token, add it to the request
-    if (accessToken != null && accessToken.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $accessToken';
+      // If we have a token, add it to the request
+      if (accessToken != null && accessToken.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $accessToken';
+      }
+
+      handler.next(options);
+    } catch (e) {
+      // Ensure handler is always called to prevent request from hanging
+      handler.reject(
+        DioException(
+          requestOptions: options,
+          error: e,
+          message: 'Failed to retrieve access token',
+          type: DioExceptionType.unknown,
+        ),
+      );
     }
-
-    handler.next(options);
   }
 
   /// Determines if a request should skip authentication.
