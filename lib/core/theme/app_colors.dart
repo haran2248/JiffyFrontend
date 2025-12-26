@@ -13,6 +13,7 @@ class AppColors {
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0A8BF); // Soft Lavender Gray
+  static const Color textSecondaryLight = Color(0xFF6B6578); // Darker gray for light mode readability
 
   // Accents
   static const Color deepPurple = Color(0xFF4A148C);

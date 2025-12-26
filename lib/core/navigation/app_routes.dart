@@ -13,7 +13,7 @@ class AppRoutes {
   static const String onboardingProfileSetup = '/onboarding/profile-setup';
   static const String onboardingPermissions = '/onboarding/permissions';
 
-  // Main app screens (add as needed)
+  // Main app screens (home is defined above in root section)
   // static const String matches = '/matches';
   // static const String messages = '/messages';
   // static const String profile = '/profile';

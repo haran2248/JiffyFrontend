@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 // ignore: unused_import
 import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:jiffy/presentation/screens/design_system_page.dart';
+import 'package:jiffy/presentation/screens/home/home_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
@@ -20,7 +21,8 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    initialLocation: AppRoutes.onboardingBasics,
+    initialLocation: AppRoutes
+        .home, // Start at home for testing - change to onboardingBasics for production
     debugLogDiagnostics: true,
     routes: [
       // Root redirect
@@ -75,18 +77,18 @@ GoRouter appRouter(Ref ref) {
         ),
       ),
 
-      // Main app screens (uncomment and configure as needed)
-      // GoRoute(
-      //   path: AppRoutes.home,
-      //   name: 'home',
-      //   pageBuilder: (context, state) => CustomTransitionPage(
-      //     key: state.pageKey,
-      //     child: const HomeScreen(),
-      //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      //       return FadeTransition(opacity: animation, child: child);
-      //     },
-      //   ),
-      // ),
+      // Main app screens
+      GoRoute(
+        path: AppRoutes.home,
+        name: 'home',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
 
       // Utility screens
       GoRoute(
