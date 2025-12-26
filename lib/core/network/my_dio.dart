@@ -130,6 +130,9 @@ class MyDio with DioMixin implements Dio {
       connectTimeout: _config.environment.connectTimeout,
       receiveTimeout: _config.environment.receiveTimeout,
       headers: _config.defaultHeaders,
+      // Match main Dio's validateStatus to ensure consistent error handling
+      validateStatus: (status) =>
+          status != null && status >= 200 && status < 300,
     ));
 
     // Only add logging to refresh dio (no auth, retry, or refresh interceptors)
