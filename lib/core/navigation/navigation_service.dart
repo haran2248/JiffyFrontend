@@ -101,20 +101,34 @@ class NavigationService {
   ) {
     String location = route;
 
-    // Replace path parameters
+    // Replace path parameters with proper URL encoding
     if (pathParameters != null && pathParameters.isNotEmpty) {
-      pathParameters.forEach((key, value) {
-        location = location.replaceAll(':$key', value);
-      });
+      // Sort by key length (longest first) to avoid partial replacements
+      final sortedParams = pathParameters.entries.toList()
+        ..sort((a, b) => b.key.length.compareTo(a.key.length));
+      
+      for (final entry in sortedParams) {
+        final encodedValue = Uri.encodeComponent(entry.value);
+        // Use word boundaries to avoid partial matches
+        location = location.replaceAll(':${entry.key}', encodedValue);
+      }
     }
 
-    // Add query parameters
+    // Add query parameters, preserving existing ones
     if (queryParameters != null && queryParameters.isNotEmpty) {
       final uri = Uri.parse(location);
       final queryMap = <String, String>{};
+      
+      // Preserve existing query parameters
+      uri.queryParameters.forEach((key, value) {
+        queryMap[key] = value;
+      });
+      
+      // Add/override with new query parameters
       queryParameters.forEach((key, value) {
         queryMap[key] = value.toString();
       });
+      
       location = uri.replace(queryParameters: queryMap).toString();
     }
 
