@@ -94,7 +94,21 @@ class PermissionsScreen extends ConsumerWidget {
                       : "Maybe Later",
                   onTap: () {
                     // Final Step - Complete Onboarding
-                    context.goToRoute(AppRoutes.home);
+                    final bothGranted =
+                        state.locationGranted && state.notificationsGranted;
+
+                    if (bothGranted) {
+                      // Navigate to home screen when both permissions are granted
+                      context.goToRoute(AppRoutes.home);
+                    } else {
+                      // Show snackbar if permissions are not granted
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please resolve permission'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),

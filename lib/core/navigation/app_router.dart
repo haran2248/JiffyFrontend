@@ -21,9 +21,9 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    // TODO: Change initialLocation back to AppRoutes.onboardingBasics before production
-    // Currently set to AppRoutes.home for testing purposes
-    initialLocation: AppRoutes.home,
+    // Start from onboarding for new users
+    // TODO: Add authentication check later to redirect to home if user is signed in
+    initialLocation: AppRoutes.onboardingBasics,
     debugLogDiagnostics: true,
     routes: [
       // Root redirect
