@@ -7,6 +7,7 @@ This document outlines architectural standards, state management patterns, and t
 **Related Documents:**
 - `LINTER_GUIDELINES.md` - Code quality, deprecation fixes, and linter rules
 - `DESIGN_SYSTEM.md` - Design tokens, colors, and typography
+- `lib/core/navigation/README.md` - Navigation framework documentation
 
 ---
 
@@ -41,12 +42,18 @@ This document outlines architectural standards, state management patterns, and t
 - Use `copyWith` for all state updates
 - Validation logic goes in model class
 
-**5. Testing:**
+**5. Navigation:**
+- ❌ Never use `Navigator.push/pop` directly
+- ✅ Always use navigation extension methods: `context.pushRoute()`, `context.replaceRoute()`, `context.goToRoute()`, `context.popRoute()`
+- ✅ Use route constants from `AppRoutes` class (never hardcode route strings)
+- ✅ For modal bottom sheets, `Navigator.pop()` is acceptable (not routing)
+
+**6. Testing:**
 - Wrap test widgets with `ProviderScope`
 - Use `pump()` not `pumpAndSettle()` for animated widgets
 - Test both success and failure states
 
-**6. Generated Files:**
+**7. Generated Files:**
 - ❌ Never edit `GeneratedPluginRegistrant.java`
 - ❌ Never edit `*.g.dart` or `*.freezed.dart` files
 - ✅ Regenerate with `dart run build_runner build`
@@ -67,6 +74,7 @@ This document outlines architectural standards, state management patterns, and t
 - Check widget names don't conflict with Flutter widgets
 - Use `colorScheme` not `AppColors` in widgets
 - Use `Material` + `InkWell` for interactive elements
+- Use navigation extension methods (never `Navigator.push` directly)
 - Guard platform-specific code
 - Follow feature-first architecture
 
@@ -74,7 +82,80 @@ This document outlines architectural standards, state management patterns, and t
 
 ---
 
-## 1. Feature-First Architecture
+## 1. Navigation Framework
+
+We use a **lightweight, type-safe navigation framework** built on `go_router` with a clear screen graph definition.
+
+### Quick Navigation Guide
+
+**Always use route constants from `AppRoutes` class:**
+```dart
+// ✅ Correct
+context.pushRoute(AppRoutes.onboardingCoPilotIntro);
+context.replaceRoute(AppRoutes.onboardingPermissions);
+context.goToRoute(AppRoutes.home);
+context.popRoute();
+
+// ❌ Wrong - Never do this
+Navigator.of(context).push(MaterialPageRoute(...));
+context.push('/onboarding/co-pilot-intro'); // Don't hardcode strings
+```
+
+### Navigation Patterns
+
+- **`pushRoute()`** - Add a new screen to the stack (user can go back)
+- **`replaceRoute()`** - Swap current screen (no back navigation)
+- **`goToRoute()`** - Navigate and clear entire stack (use after completing flows)
+- **`popRoute()`** - Go back one screen
+
+### Adding New Routes
+
+1. **Define the route** in `lib/core/navigation/app_routes.dart`:
+   ```dart
+   static const String myNewScreen = '/my-new-screen';
+   ```
+
+2. **Add route configuration** in `lib/core/navigation/app_router.dart`:
+   ```dart
+   GoRoute(
+     path: AppRoutes.myNewScreen,
+     name: 'my-new-screen',
+     pageBuilder: (context, state) => CustomTransitionPage(
+       key: state.pageKey,
+       child: const MyNewScreen(),
+       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+         return FadeTransition(opacity: animation, child: child);
+       },
+     ),
+   ),
+   ```
+
+3. **Regenerate router code**:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. **Navigate to it**:
+   ```dart
+   context.pushRoute(AppRoutes.myNewScreen);
+   ```
+
+### Screen Graph
+
+The complete screen graph is documented in `lib/core/navigation/SCREEN_GRAPH.md`. Current onboarding flow:
+
+```
+/onboarding/basics → /onboarding/co-pilot-intro → /onboarding/profile-setup → /onboarding/permissions → /home
+```
+
+### Documentation
+
+- **Full Documentation**: See `lib/core/navigation/README.md` for detailed usage, route parameters, and advanced patterns
+- **Screen Graph**: See `lib/core/navigation/SCREEN_GRAPH.md` for visual navigation structure
+
+---
+
+## 2. Feature-First Architecture
 
 We organize code by feature. Each major feature resides in `lib/presentation/screens/[feature_name]/`.
 
@@ -96,7 +177,7 @@ We organize code by feature. Each major feature resides in `lib/presentation/scr
 
 ---
 
-## 2. State Management (Riverpod)
+## 3. State Management (Riverpod)
 
 We use **Riverpod** with **Code Generation**.
 
@@ -112,7 +193,7 @@ We use **Riverpod** with **Code Generation**.
 
 ---
 
-## 3. UI & Design System
+## 4. UI & Design System
 
 ### Design Tokens
 Always use semantic tokens from `Theme.of(context).colorScheme` for colors:
@@ -143,7 +224,7 @@ Always use semantic tokens from `Theme.of(context).colorScheme` for colors:
 
 ---
 
-## 4. Testing & Regression
+## 5. Testing & Regression
 
 ### Test Commands
 - **Run all tests**: `flutter test`
@@ -184,7 +265,7 @@ testWidgets('[Feature] multi-step flow test', (WidgetTester tester) async {
 
 ---
 
-## 5. Dependency Management
+## 6. Dependency Management
 
 ### Adding Dependencies
 - **Before Adding**: Verify the package is actually used in the codebase.
@@ -200,7 +281,7 @@ testWidgets('[Feature] multi-step flow test', (WidgetTester tester) async {
 
 ---
 
-## 6. Generated Files & Platform Code
+## 7. Generated Files & Platform Code
 
 ### Never Edit Generated Files
 - **Android**: `android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java` - This is auto-generated by Flutter. If you see manual edits, revert them.
@@ -212,7 +293,7 @@ testWidgets('[Feature] multi-step flow test', (WidgetTester tester) async {
 
 ---
 
-## 7. Theme Consistency
+## 8. Theme Consistency
 
 ### ColorScheme Configuration
 - **Light/Dark Themes**: Always define both `lightTheme` and `darkTheme` in `app_theme.dart`.
@@ -228,7 +309,7 @@ testWidgets('[Feature] multi-step flow test', (WidgetTester tester) async {
 
 ---
 
-## 8. Code Quality & Linting
+## 9. Code Quality & Linting
 
 ### Linter Guidelines
 **Always refer to `LINTER_GUIDELINES.md` before writing code.** This document contains:
@@ -251,7 +332,7 @@ dart fix --apply
 
 ---
 
-## 9. Incremental Development Safeguards
+## 10. Incremental Development Safeguards
 
 ### Pre-Commit Checklist
 Before committing changes, verify:
@@ -260,6 +341,8 @@ Before committing changes, verify:
 - [ ] No manual edits to generated files (`GeneratedPluginRegistrant.java`, `*.g.dart`)
 - [ ] Widget names don't conflict with Flutter widgets (no `hide` imports needed)
 - [ ] All interactive widgets use `Material` + `InkWell` (not `GestureDetector`)
+- [ ] Navigation uses extension methods (`context.pushRoute()`) not `Navigator.push()` directly
+- [ ] Route constants from `AppRoutes` are used (no hardcoded route strings)
 - [ ] Platform-specific code is properly guarded (see `LINTER_GUIDELINES.md`)
 - [ ] Colors use `colorScheme` (not `AppColors` directly) in widgets
 - [ ] Unused dependencies removed from `pubspec.yaml`
@@ -278,7 +361,7 @@ Before committing changes, verify:
 
 ---
 
-## 10. Known Technical Debt (Incremental Fixes)
+## 11. Known Technical Debt (Incremental Fixes)
 
 These items should be addressed incrementally during feature work:
 
@@ -289,7 +372,7 @@ These items should be addressed incrementally during feature work:
 
 ---
 
-## 11. Deployment & Maintenance Checklist
+## 12. Deployment & Maintenance Checklist
 - [ ] Run `flutter test` to ensure no regressions.
 - [ ] Run `flutter analyze` to ensure no lint errors (see `LINTER_GUIDELINES.md`).
 - [ ] Verify no generated files were manually edited.
@@ -307,6 +390,9 @@ These items should be addressed incrementally during feature work:
 
 - `LINTER_GUIDELINES.md` - Code quality and linter rules
 - `DESIGN_SYSTEM.md` - Design tokens and visual guidelines
+- `lib/core/navigation/README.md` - Navigation framework documentation
+- `lib/core/navigation/SCREEN_GRAPH.md` - Visual screen graph
 - [Flutter Riverpod Documentation](https://riverpod.dev/)
 - [Flutter Testing Guide](https://docs.flutter.dev/testing)
+- [GoRouter Documentation](https://pub.dev/documentation/go_router/latest/)
 

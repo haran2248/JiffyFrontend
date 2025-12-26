@@ -88,8 +88,18 @@ class PermissionsScreen extends ConsumerWidget {
                       : "Maybe Later",
                   onTap: () {
                     // Final Step - Complete Onboarding
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil("/", (route) => false);
+                    // TODO: Navigate to home screen when implemented
+                    // For now, stay on permissions screen after completion
+                    // context.goToRoute(AppRoutes.home);
+                    
+                    // Show completion message or stay on screen
+                    // Don't navigate to root as it redirects back to basics (circular)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Onboarding complete! Home screen coming soon.'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
               ),
