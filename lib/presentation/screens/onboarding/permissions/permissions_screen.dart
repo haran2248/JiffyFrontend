@@ -14,7 +14,11 @@ class PermissionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(permissionsViewModelProvider);
-    final state = stateAsync.valueOrNull ?? const PermissionsState();
+    final state = stateAsync.when(
+      data: (data) => data,
+      loading: () => const PermissionsState(),
+      error: (_, __) => const PermissionsState(),
+    );
     final viewModel = ref.read(permissionsViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
