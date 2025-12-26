@@ -65,19 +65,25 @@ class RefreshTokenInterceptor extends Interceptor {
       // Wait for any in-progress token fetch or start a new one
       final refreshSuccess = await _ensureTokenRefreshed();
 
-      if (refreshSuccess) {
-        // Retry the original request with new token
-        final response = await _retryRequest(err.requestOptions);
-        return handler.resolve(response);
-      } else {
+      if (!refreshSuccess) {
         // Token fetch failed, trigger logout
         _tokenProvider.onTokenRefreshFailed();
         return handler.next(err);
       }
     } catch (e) {
-      // Unexpected error during refresh
+      // Token refresh threw an error, trigger logout
       _tokenProvider.onTokenRefreshFailed();
       return handler.next(err);
+    }
+
+    // Token refresh succeeded, retry the request
+    // Retry errors (network, timeout, 5xx) should NOT trigger logout
+    try {
+      final response = await _retryRequest(err.requestOptions);
+      return handler.resolve(response);
+    } on DioException catch (retryErr) {
+      // Retry failed for non-auth reasons - propagate the error normally
+      return handler.next(retryErr);
     }
   }
 
