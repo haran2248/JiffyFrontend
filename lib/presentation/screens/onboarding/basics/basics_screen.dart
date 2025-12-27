@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
 import 'widgets/name_photo_step.dart';
 import 'widgets/vitals_step.dart';
-import '../co_pilot_intro/co_pilot_intro_screen.dart';
 
 class BasicsScreen extends ConsumerWidget {
   const BasicsScreen({super.key});
@@ -20,7 +21,7 @@ class BasicsScreen extends ConsumerWidget {
         leading: BackButton(
           onPressed: formData.currentStep > 1
               ? viewModel.previousStep
-              : () => Navigator.of(context).pop(),
+              : () => context.popRoute(),
         ),
         title: Text(formData.currentStep == 1 ? "Basics" : "A little more"),
         backgroundColor: Colors.transparent,
@@ -62,12 +63,7 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const CoPilotIntroScreen(),
-                              ),
-                            );
+                            context.pushRoute(AppRoutes.onboardingCoPilotIntro);
                           }
                         }
                       : () {},

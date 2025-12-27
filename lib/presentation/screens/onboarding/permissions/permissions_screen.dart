@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/permissions_viewmodel.dart';
@@ -12,7 +14,11 @@ class PermissionsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(permissionsViewModelProvider);
-    final state = stateAsync.valueOrNull ?? const PermissionsState();
+    final state = stateAsync.when(
+      data: (data) => data,
+      loading: () => const PermissionsState(),
+      error: (_, __) => const PermissionsState(),
+    );
     final viewModel = ref.read(permissionsViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -88,8 +94,21 @@ class PermissionsScreen extends ConsumerWidget {
                       : "Maybe Later",
                   onTap: () {
                     // Final Step - Complete Onboarding
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil("/", (route) => false);
+                    final bothGranted =
+                        state.locationGranted && state.notificationsGranted;
+
+                    if (bothGranted) {
+                      // Navigate to home screen when both permissions are granted
+                      context.goToRoute(AppRoutes.home);
+                    } else {
+                      // Show snackbar if permissions are not granted
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please resolve permission'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),

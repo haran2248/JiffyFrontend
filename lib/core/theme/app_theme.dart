@@ -14,7 +14,7 @@ class AppTheme {
         tertiary: AppColors.deepPurple,
         surface: AppColors.textPrimary, // White
         onSurface: AppColors.midnightPlum,
-        onSurfaceVariant: AppColors.textSecondary,
+        onSurfaceVariant: AppColors.textSecondaryLight,
         outline: AppColors.primaryViolet,
       ),
       scaffoldBackgroundColor: AppColors.textPrimary,

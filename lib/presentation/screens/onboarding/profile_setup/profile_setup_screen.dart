@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/profile_setup_viewmodel.dart';
 import 'widgets/chat_message_list.dart';
 import 'widgets/suggested_responses.dart';
 import 'widgets/chat_input_field.dart';
-import '../permissions/permissions_screen.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -53,7 +54,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.popRoute(),
         ),
         title: const Text("Profile Setup"),
         backgroundColor: Colors.transparent,
@@ -62,11 +63,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           TextButton(
             onPressed: () {
               viewModel.skip();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const PermissionsScreen(),
-                ),
-              );
+              context.pushRoute(AppRoutes.onboardingPermissions);
             },
             child: Text(
               "Skip",
