@@ -26,6 +26,8 @@ This document provides comprehensive guidelines for writing code that passes `fl
 7. **No Hide Imports**: Never use `hide WidgetName` - rename the widget instead
 8. **Print Statements**: Use `debugPrint()` NOT `print()`
 9. **Variables**: Use `final` instead of `var` when value doesn't change
+10. **Dio Errors**: Never expose `DioException` to UI - extract `ApiError` from `error` field
+11. **API Calls**: Always use `CancelToken` from `CancelRegistry` for cancellable requests
 
 ### Quick Code Patterns
 
@@ -71,12 +73,27 @@ EdgeInsets.all(16)
 const EdgeInsets.all(16)
 ```
 
+**Dio Error Handling:**
+```dart
+// ❌ WRONG - DioException leaks to UI
+} on DioException catch (e) {
+  showError(e.message);
+}
+// ✅ CORRECT - Extract ApiError
+} catch (e) {
+  if (e is DioException && e.error is ApiError) {
+    showError((e.error as ApiError).message);
+  }
+}
+```
+
 ### Before Generating Code
 - Check for `withOpacity` usage → replace with `withValues(alpha:)`
 - Check for `surfaceVariant` → replace with `surfaceContainerHighest`
 - Check for missing `const` on constructors
 - Check for `AppColors` in widgets → replace with `colorScheme`
 - Check for unguarded platform code
+- Check for `DioException` handling → extract `ApiError` instead
 
 **For detailed examples and edge cases, see sections below.**
 
