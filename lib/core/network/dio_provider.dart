@@ -24,7 +24,7 @@ part 'dio_provider.g.dart';
 @riverpod
 Dio dio(Ref ref) {
   // Get the token provider
-  final tokenProvider = ref.watch(firebaseTokenProviderProvider.notifier);
+  final tokenProvider = ref.read(firebaseTokenProviderProvider.notifier);
 
   // Create the API config with the current environment
   // TODO: Make environment configurable via a provider
