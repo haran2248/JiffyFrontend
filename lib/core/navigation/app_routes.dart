@@ -7,6 +7,7 @@ class AppRoutes {
   static const String root = '/';
   static const String home = '/home';
   static const String login = '/login';
+  static const String matches = '/matches';
 
   // Onboarding flow
   static const String onboardingBasics = '/onboarding/basics';
@@ -21,7 +22,6 @@ class AppRoutes {
   static const String profileSelf = '/profile/self';
   static const String profileCurated = '/onboarding/profile-curated';
   static const String discover = '/discover';
-  // static const String matches = '/matches';
   // static const String messages = '/messages';
   // static const String settings = '/settings';
 
@@ -45,6 +45,7 @@ class RouteNames {
   static const String phoneVerification = 'phone-verification';
   static const String otpVerification = 'otp-verification';
   static const String discover = 'discover';
+  static const String matches = 'matches';
   static const String designSystem = 'design-system';
 }
 
