@@ -114,7 +114,7 @@ class AuthState {
       photoUrl: photoUrl ?? this.photoUrl,
       isGoogleLoading: isGoogleLoading ?? this.isGoogleLoading,
       isAppleLoading: isAppleLoading ?? this.isAppleLoading,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
