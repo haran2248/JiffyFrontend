@@ -148,15 +148,15 @@ class SuggestionCardWidget extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Tags
-                          if (suggestion.tags.isNotEmpty)
+                          // Interests (not comparison insights - those are shown in full profile)
+                          if (suggestion.interests.isNotEmpty)
                             Wrap(
                               spacing: 4,
                               runSpacing: 2,
-                              children: suggestion.tags
+                              children: suggestion.interests
                                   .take(2)
                                   .map(
-                                    (tag) => Container(
+                                    (interest) => Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 10,
                                         vertical: 4,
@@ -172,7 +172,7 @@ class SuggestionCardWidget extends StatelessWidget {
                                         ),
                                       ),
                                       child: Text(
-                                        tag,
+                                        interest,
                                         style: textTheme.labelSmall?.copyWith(
                                           color: colorScheme.primary,
                                           fontSize: 11,

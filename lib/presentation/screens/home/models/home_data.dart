@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 
 /// Models for home screen server-driven data
 
@@ -37,8 +38,10 @@ class SuggestionCard {
   final int age;
   final String? imageUrl;
   final String bio; // Short bio text
-  final String relationshipPreview; // "Expect lots of outdoor dates..."
-  final List<String> tags; // e.g., ["Hiking", "Photography"]
+  final String relationshipPreview; // Full relationship preview text
+  final List<ComparisonInsight>
+      comparisonInsights; // Profile comparison insights
+  final List<String> interests; // e.g., ["Hiking", "Photography"]
 
   const SuggestionCard({
     required this.id,
@@ -48,7 +51,8 @@ class SuggestionCard {
     this.imageUrl,
     required this.bio,
     required this.relationshipPreview,
-    this.tags = const [],
+    this.comparisonInsights = const [],
+    this.interests = const [],
   });
 }
 

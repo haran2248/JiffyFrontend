@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' show debugPrint, Icons;
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
+import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 
 /// Service for fetching home screen data from backend
 class HomeService {
@@ -55,8 +56,22 @@ class HomeService {
           name: 'Alex',
           age: 24,
           bio: 'Weekend adventurer, weekday coffee...',
-          relationshipPreview: 'Expect lots of outdoor dates, spontaneous road trips, and...',
-          tags: ['Hiking', 'Photography'],
+          relationshipPreview: 'Expect lots of outdoor dates, spontaneous road trips, and deep conversations under the stars. You\'ll bond over shared love for adventure and discovering hidden gems in the city.',
+          comparisonInsights: [
+            ComparisonInsight(
+              label: 'Similar conversation style',
+              type: InsightType.common,
+            ),
+            ComparisonInsight(
+              label: 'Shared sense of humor',
+              type: InsightType.common,
+            ),
+            ComparisonInsight(
+              label: 'Similar activity levels',
+              type: InsightType.common,
+            ),
+          ],
+          interests: ['Hiking', 'Photography'],
         ),
         SuggestionCard(
           id: 'suggestion-2',
@@ -64,8 +79,18 @@ class HomeService {
           name: 'Jordan',
           age: 26,
           bio: 'Art gallery regular, live music fanatic. Foodie...',
-          relationshipPreview: 'Think art exhibitions, live concerts, cooking together, and trying...',
-          tags: ['Art', 'Live Music'],
+          relationshipPreview: 'Think art exhibitions, live concerts, cooking together, and trying new restaurants. Your creative energies will complement each other beautifully.',
+          comparisonInsights: [
+            ComparisonInsight(
+              label: 'Complementary creative interests',
+              type: InsightType.uncommon,
+            ),
+            ComparisonInsight(
+              label: 'Shared appreciation for arts',
+              type: InsightType.common,
+            ),
+          ],
+          interests: ['Art', 'Live Music'],
         ),
       ],
       trendingItems: [
