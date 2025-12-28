@@ -12,6 +12,13 @@ enum AuthStatus {
   unauthenticated,
 }
 
+/// Sentinel class to distinguish "not provided" from "explicitly null" in copyWith.
+class _Unset {
+  const _Unset();
+}
+
+const _unset = _Unset();
+
 /// Immutable authentication state.
 ///
 /// Contains the current auth status and user information if authenticated.
@@ -95,7 +102,10 @@ class AuthState {
         errorMessage: message,
       );
 
-  /// Copy with new values
+  /// Copy with new values.
+  ///
+  /// For nullable fields like [errorMessage], passing `null` explicitly
+  /// will clear the value. Omitting the parameter preserves the existing value.
   AuthState copyWith({
     AuthStatus? status,
     String? userId,
@@ -104,7 +114,7 @@ class AuthState {
     String? photoUrl,
     bool? isGoogleLoading,
     bool? isAppleLoading,
-    String? errorMessage,
+    Object? errorMessage = _unset,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -114,7 +124,8 @@ class AuthState {
       photoUrl: photoUrl ?? this.photoUrl,
       isGoogleLoading: isGoogleLoading ?? this.isGoogleLoading,
       isAppleLoading: isAppleLoading ?? this.isAppleLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage:
+          errorMessage == _unset ? this.errorMessage : errorMessage as String?,
     );
   }
 
