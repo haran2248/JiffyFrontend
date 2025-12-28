@@ -74,6 +74,9 @@ class FirebaseTokenProvider extends _$FirebaseTokenProvider
   @override
   void onTokenRefreshFailed() {
     // Sign out and let the auth state listener handle navigation
-    FirebaseAuth.instance.signOut();
+    // Using catchError to prevent unhandled async exceptions since this is fire-and-forget
+    FirebaseAuth.instance.signOut().catchError((_) {
+      // Best-effort sign out - errors are ignored since auth already failed
+    });
   }
 }
