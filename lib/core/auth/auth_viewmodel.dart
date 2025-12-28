@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'auth_repository.dart' show AuthRepository, authRepositoryProvider;
+import 'auth_repository.dart'
+    show AuthException, AuthRepository, authRepositoryProvider;
 import 'auth_state.dart';
 
 part 'auth_viewmodel.g.dart';
@@ -90,8 +91,8 @@ class AuthViewModel extends _$AuthViewModel {
       await _verifyWithBackend(repository);
 
       return true;
-    } on FirebaseAuthException catch (e) {
-      state = state.copyWithError(e.message ?? 'Authentication failed');
+    } on AuthException catch (e) {
+      state = state.copyWithError(e.message);
       return false;
     } catch (e) {
       state = state.copyWithError('Sign-in failed. Please try again.');
@@ -121,8 +122,8 @@ class AuthViewModel extends _$AuthViewModel {
       await _verifyWithBackend(repository);
 
       return true;
-    } on FirebaseAuthException catch (e) {
-      state = state.copyWithError(e.message ?? 'Authentication failed');
+    } on AuthException catch (e) {
+      state = state.copyWithError(e.message);
       return false;
     } catch (e) {
       state = state.copyWithError('Sign-in failed. Please try again.');
