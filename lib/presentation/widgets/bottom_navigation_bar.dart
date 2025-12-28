@@ -46,10 +46,8 @@ class BottomNavigationBarWidget extends StatelessWidget {
               _NavItem(
                 icon: Icons.chat_bubble_outline_rounded,
                 label: 'Chats',
-                isActive: false, // TODO: Update when chats route is added
-                onTap: () {
-                  // TODO: Navigate to chats
-                },
+                isActive: currentRoute == AppRoutes.matches,
+                onTap: () => context.goToRoute(AppRoutes.matches),
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,

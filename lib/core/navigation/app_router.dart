@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/design_system_page.dart';
@@ -13,6 +14,7 @@ import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
 import 'package:jiffy/presentation/screens/profile_self/profile_self_screen.dart';
 import 'package:jiffy/presentation/screens/profile_curated/profile_curated_screen.dart';
+import 'package:jiffy/presentation/screens/matches/matches_screen.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -150,6 +152,17 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const DiscoverScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.matches,
+        name: 'matches',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const MatchesScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
