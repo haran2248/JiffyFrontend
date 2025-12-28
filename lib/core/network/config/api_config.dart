@@ -53,6 +53,7 @@ class ApiConfig {
   static const List<String> publicPaths = [
     '/health',
     '/login',
+    '/auth/verifyToken',
   ];
 
   /// Checks if a path should skip authentication.
