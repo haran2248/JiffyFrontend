@@ -83,3 +83,9 @@ build/web/
 !**/ios/Runner/Assets.xcassets/
 !**/ios/Runner/Base.lproj/
 
+
+# Firebase configuration files
+firebase.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+android/app/google-services.json
