@@ -61,8 +61,6 @@ class AuthRepository {
           await FirebaseAuth.instance.signInWithCredential(credential);
 
       return userCredential.user;
-    } on AuthException {
-      rethrow;
     } catch (e) {
       throw AuthException(
         code: 'google-sign-in-failed',
