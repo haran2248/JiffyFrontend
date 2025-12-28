@@ -118,7 +118,7 @@ GoRouter appRouter(Ref ref) {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.root),
+              onPressed: () => context.go(AppRoutes.home),
               child: const Text('Go Home'),
             ),
           ],
