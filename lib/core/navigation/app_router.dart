@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-// ignore: unused_import
-import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:jiffy/presentation/screens/design_system_page.dart';
 import 'package:jiffy/presentation/screens/home/home_screen.dart';
-import 'package:jiffy/presentation/screens/login/login_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
+import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
+import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
+import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -22,24 +21,15 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    // Start from login screen
-    initialLocation: AppRoutes.login,
+    // Start from onboarding for new users
+    // TODO: Add authentication check later to redirect to home if user is signed in
+    initialLocation: AppRoutes.onboardingBasics,
     debugLogDiagnostics: true,
     routes: [
       // Root redirect
       GoRoute(
         path: AppRoutes.root,
-        redirect: (context, state) => AppRoutes.login,
-      ),
-
-      // Login screen
-      GoRoute(
-        path: AppRoutes.login,
-        name: 'login',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const LoginScreen(),
-        ),
+        redirect: (context, state) => AppRoutes.onboardingBasics,
       ),
 
       // Onboarding flow - defines the user journey
@@ -88,6 +78,46 @@ GoRouter appRouter(Ref ref) {
           },
         ),
       ),
+      GoRoute(
+        path: AppRoutes.profileView,
+        name: 'profile-view',
+        pageBuilder: (context, state) {
+          final profile = state.extra as ProfileData?;
+          if (profile == null) {
+            // Fallback if no profile data provided
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: Scaffold(
+                body: Center(
+                  child: Text(
+                    'Profile not found',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ProfileViewScreen(profile: profile),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.discover,
+        name: 'discover',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const DiscoverScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
 
       // Utility screens
       GoRoute(
@@ -118,7 +148,7 @@ GoRouter appRouter(Ref ref) {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.home),
+              onPressed: () => context.go(AppRoutes.root),
               child: const Text('Go Home'),
             ),
           ],

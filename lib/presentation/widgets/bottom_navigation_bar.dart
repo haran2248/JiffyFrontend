@@ -40,10 +40,8 @@ class BottomNavigationBarWidget extends StatelessWidget {
               _NavItem(
                 icon: Icons.explore_rounded,
                 label: 'Discover',
-                isActive: false, // TODO: Update when discover route is added
-                onTap: () {
-                  // TODO: Navigate to discover
-                },
+                isActive: currentRoute == AppRoutes.discover,
+                onTap: () => context.goToRoute(AppRoutes.discover),
               ),
               _NavItem(
                 icon: Icons.chat_bubble_outline_rounded,
@@ -121,4 +119,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-

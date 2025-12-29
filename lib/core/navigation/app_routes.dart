@@ -6,7 +6,6 @@ class AppRoutes {
   // Root and main navigation
   static const String root = '/';
   static const String home = '/home';
-  static const String login = '/login';
 
   // Onboarding flow
   static const String onboardingBasics = '/onboarding/basics';
@@ -15,13 +14,29 @@ class AppRoutes {
   static const String onboardingPermissions = '/onboarding/permissions';
 
   // Main app screens (home is defined above in root section)
+  static const String profileView = '/profile/:userId';
+  static const String discover = '/discover';
   // static const String matches = '/matches';
   // static const String messages = '/messages';
-  // static const String profile = '/profile';
   // static const String settings = '/settings';
 
   // Utility/debug screens
   static const String designSystem = '/design-system';
+}
+
+/// Route names used in go_router configuration.
+///
+/// These correspond to the 'name' parameter in GoRoute definitions.
+/// Use these when calling pushNamed, replaceNamed, or goNamed.
+class RouteNames {
+  static const String basics = 'basics';
+  static const String coPilotIntro = 'co-pilot-intro';
+  static const String profileSetup = 'profile-setup';
+  static const String permissions = 'permissions';
+  static const String home = 'home';
+  static const String profileView = 'profile-view';
+  static const String discover = 'discover';
+  static const String designSystem = 'design-system';
 }
 
 /// Route parameters used in dynamic routes.
