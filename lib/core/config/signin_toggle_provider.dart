@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'signin_toggle_provider.g.dart';
@@ -32,7 +33,7 @@ class SigninToggleConfig {
 
 /// Provider that streams the sign-in toggle config from Firestore.
 @riverpod
-Stream<SigninToggleConfig> signinToggleConfig(SigninToggleConfigRef ref) {
+Stream<SigninToggleConfig> signinToggleConfig(Ref ref) {
   return FirebaseFirestore.instance
       .collection('config')
       .doc('signin_toggle')
