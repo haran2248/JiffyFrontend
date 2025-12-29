@@ -90,6 +90,9 @@ class AuthViewModel extends _$AuthViewModel {
       // Verify token with backend
       await _verifyWithBackend(repository);
 
+      // Reset loading state - auth state listener will update status
+      state = state.copyWith(isGoogleLoading: false);
+
       return true;
     } on AuthException catch (e) {
       state = state.copyWithError(e.message);
@@ -120,6 +123,9 @@ class AuthViewModel extends _$AuthViewModel {
 
       // Verify token with backend
       await _verifyWithBackend(repository);
+
+      // Reset loading state - auth state listener will update status
+      state = state.copyWith(isAppleLoading: false);
 
       return true;
     } on AuthException catch (e) {

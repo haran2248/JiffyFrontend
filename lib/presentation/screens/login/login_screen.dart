@@ -43,6 +43,14 @@ class LoginScreen extends ConsumerWidget {
       }
     });
 
+    // Check if already authenticated (e.g., returning user with persisted session)
+    // This handles the case where user is already logged in when opening the app
+    if (authState.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.goToRoute(AppRoutes.onboardingBasics);
+      });
+    }
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
