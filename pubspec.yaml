@@ -36,5 +36,8 @@ dev_dependencies:
   riverpod_generator: ^4.0.0
   build_runner: ^2.4.0
 
+dependency_overrides: 
+  riverpod: ^3.1.0
+
 flutter:
   uses-material-design: true
