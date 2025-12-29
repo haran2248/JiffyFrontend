@@ -6,7 +6,6 @@ class AppRoutes {
   // Root and main navigation
   static const String root = '/';
   static const String home = '/home';
-  static const String login = '/login';
 
   // Onboarding flow
   static const String onboardingBasics = '/onboarding/basics';
