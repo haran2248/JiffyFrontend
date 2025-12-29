@@ -56,6 +56,17 @@
 	<key>NSBonjourServices</key>
 	<array>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj</string>
+			</array>
+		</dict>
+	</array>
+	<key>GIDClientID</key>
+	<string>923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj.apps.googleusercontent.com</string>
 </dict>
 </plist>
 
