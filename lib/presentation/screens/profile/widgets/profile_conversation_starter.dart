@@ -15,9 +15,11 @@ class ProfileConversationStarter extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Always show this section (use default text if not provided)
-    final conversationStarterText = profile.conversationStarter ??
-        "Ask me about my most recent travel mishap!";
+    // Always show this section (use default text if not provided or empty/whitespace)
+    final conversationStarterText =
+        (profile.conversationStarter?.trim().isNotEmpty ?? false)
+            ? profile.conversationStarter!
+            : "Ask me about my most recent travel mishap!";
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -57,4 +59,3 @@ class ProfileConversationStarter extends StatelessWidget {
     );
   }
 }
-

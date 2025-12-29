@@ -24,6 +24,21 @@ class AppRoutes {
   static const String designSystem = '/design-system';
 }
 
+/// Route names used in go_router configuration.
+///
+/// These correspond to the 'name' parameter in GoRoute definitions.
+/// Use these when calling pushNamed, replaceNamed, or goNamed.
+class RouteNames {
+  static const String basics = 'basics';
+  static const String coPilotIntro = 'co-pilot-intro';
+  static const String profileSetup = 'profile-setup';
+  static const String permissions = 'permissions';
+  static const String home = 'home';
+  static const String profileView = 'profile-view';
+  static const String discover = 'discover';
+  static const String designSystem = 'design-system';
+}
+
 /// Route parameters used in dynamic routes.
 ///
 /// Example: '/user/:userId' -> RouteParams.userId

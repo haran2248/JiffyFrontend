@@ -233,9 +233,9 @@ class HomeScreen extends ConsumerWidget {
                       suggestions[index],
                     );
                     context.navigation.pushNamed(
-                      'profile-view',
+                      RouteNames.profileView,
                       pathParameters: {
-                        'userId': suggestions[index].userId,
+                        RouteParams.userId: suggestions[index].userId,
                       },
                       extra: profile,
                     );
@@ -326,9 +326,9 @@ class HomeScreen extends ConsumerWidget {
                       matchUsers[index],
                     );
                     context.navigation.pushNamed(
-                      'profile-view',
+                      RouteNames.profileView,
                       pathParameters: {
-                        'userId': matchUsers[index].userId,
+                        RouteParams.userId: matchUsers[index].userId,
                       },
                       extra: profile,
                     );

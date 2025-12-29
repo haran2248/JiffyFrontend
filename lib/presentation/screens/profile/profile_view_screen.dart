@@ -42,8 +42,30 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
   }
 
   void _handleSparkConversation() {
-    // TODO: Show conversation starter dialog
-    _handleLike();
+    // Show conversation starter dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Conversation Starter"),
+        content: Text(
+          widget.profile.conversationStarter ??
+              "Ask me about my most recent travel mishap!",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _handleLike();
+            },
+            child: const Text("Start Conversation"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -97,12 +119,21 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                         // Interest Photos - using PhotoWithCaption component
                         if (widget.profile.interests.isNotEmpty)
                           Column(
-                            children: widget.profile.interests.map((interest) {
+                            children: widget.profile.interests
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                              final index = entry.key;
+                              final interest = entry.value;
+                              // Use profile photos if available, otherwise use placeholder
+                              final photoUrl = widget.profile.photos.length >
+                                      index + 1
+                                  ? widget.profile.photos[index + 1].url
+                                  : "https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400";
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: PhotoWithCaption(
-                                  photoUrl:
-                                      "https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400",
+                                  photoUrl: photoUrl,
                                   caption: interest,
                                 ),
                               );

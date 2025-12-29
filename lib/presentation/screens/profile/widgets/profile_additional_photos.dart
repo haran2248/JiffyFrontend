@@ -73,9 +73,9 @@ class PhotoWithCaption extends StatelessWidget {
                   );
                 },
               ),
-              // Caption overlay if caption exists
-              if (caption != null && caption!.isNotEmpty)
-                PhotoCaptionOverlay(caption: caption!),
+              // Caption overlay if caption exists and is not just whitespace
+              if (caption != null && caption!.trim().isNotEmpty)
+                PhotoCaptionOverlay(caption: caption!.trim()),
             ],
           ),
         ),
@@ -96,30 +96,33 @@ class PhotoCaptionOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Positioned(
       bottom: 16,
       left: 0,
       right: 0,
       child: Center(
-        child: Container(
-          width: screenWidth * 0.8,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            caption,
-            style: textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Container(
+              width: constraints.maxWidth * 0.8,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                caption,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            );
+          },
         ),
       ),
     );

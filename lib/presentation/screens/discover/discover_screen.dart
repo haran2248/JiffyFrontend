@@ -69,9 +69,9 @@ class DiscoverScreen extends ConsumerWidget {
                       mockProfiles[index],
                     );
                     context.navigation.pushNamed(
-                      'profile-view',
+                      RouteNames.profileView,
                       pathParameters: {
-                        'userId': mockProfiles[index].userId,
+                        RouteParams.userId: mockProfiles[index].userId,
                       },
                       extra: profile,
                     );
