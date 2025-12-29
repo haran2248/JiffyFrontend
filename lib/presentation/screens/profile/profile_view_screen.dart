@@ -12,6 +12,7 @@ import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_
 import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_starter.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_sticky_actions.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_close_button.dart";
+import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/conversation_starter_dialog.dart";
 
 /// Profile view screen showing full profile details
 class ProfileViewScreen extends ConsumerStatefulWidget {
@@ -41,31 +42,18 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
     _handleClose();
   }
 
-  void _handleSparkConversation() {
+  void _handleSparkConversation() async {
     // Show conversation starter dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Conversation Starter"),
-        content: Text(
-          widget.profile.conversationStarter ??
-              "Ask me about my most recent travel mishap!",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _handleLike();
-            },
-            child: const Text("Start Conversation"),
-          ),
-        ],
-      ),
+    final result = await ConversationStarterDialog.show(
+      context,
+      widget.profile,
     );
+
+    // If user sent a message, proceed with like
+    if (result != null && result.isNotEmpty) {
+      // TODO: Send the spark message to backend
+      _handleLike();
+    }
   }
 
   @override

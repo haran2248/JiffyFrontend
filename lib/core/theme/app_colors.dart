@@ -9,6 +9,7 @@ class AppColors {
   static const Color midnightPlum = Color(0xFF0D0B14); // Main Background
   static const Color noir = Color(0xFF1A1125); // Secondary Bg
   static const Color surfacePlum = Color(0xFF2A1B3D); // Cards/Inputs
+  static const Color surfacePlumLight = Color(0xFF3D2A5A); // Lighter variant for elevated surfaces
 
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
