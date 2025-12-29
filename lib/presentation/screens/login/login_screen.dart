@@ -32,8 +32,7 @@ class LoginScreen extends ConsumerWidget {
 
     // Watch the sign-in toggle config from Firestore
     final signinToggleAsync = ref.watch(signinToggleConfigProvider);
-    final signinToggle =
-        signinToggleAsync.valueOrNull ?? const SigninToggleConfig();
+    final signinToggle = signinToggleAsync.value ?? const SigninToggleConfig();
 
     // Listen for auth state changes and navigate
     ref.listen(authViewModelProvider, (previous, next) {
