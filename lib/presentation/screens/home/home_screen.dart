@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/trending_card_widget.dart';
+import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
 
@@ -227,7 +229,16 @@ class HomeScreen extends ConsumerWidget {
                 return SuggestionCardWidget(
                   suggestion: suggestions[index],
                   onTap: () {
-                    // TODO: Navigate to profile detail
+                    final profile = ProfileHelpers.suggestionCardToProfileData(
+                      suggestions[index],
+                    );
+                    context.navigation.pushNamed(
+                      RouteNames.profileView,
+                      pathParameters: {
+                        RouteParams.userId: suggestions[index].userId,
+                      },
+                      extra: profile,
+                    );
                   },
                 );
               },
@@ -311,7 +322,16 @@ class HomeScreen extends ConsumerWidget {
                 return SuggestionCardWidget(
                   suggestion: matchUsers[index],
                   onTap: () {
-                    // TODO: Navigate to match profile
+                    final profile = ProfileHelpers.suggestionCardToProfileData(
+                      matchUsers[index],
+                    );
+                    context.navigation.pushNamed(
+                      RouteNames.profileView,
+                      pathParameters: {
+                        RouteParams.userId: matchUsers[index].userId,
+                      },
+                      extra: profile,
+                    );
                   },
                 );
               },

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-// ignore: unused_import
-import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
 import 'package:jiffy/presentation/screens/design_system_page.dart';
 import 'package:jiffy/presentation/screens/home/home_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
+import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
+import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
+import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -73,6 +73,46 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.profileView,
+        name: 'profile-view',
+        pageBuilder: (context, state) {
+          final profile = state.extra as ProfileData?;
+          if (profile == null) {
+            // Fallback if no profile data provided
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: Scaffold(
+                body: Center(
+                  child: Text(
+                    'Profile not found',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ProfileViewScreen(profile: profile),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.discover,
+        name: 'discover',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const DiscoverScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
