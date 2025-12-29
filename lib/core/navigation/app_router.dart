@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/design_system_page.dart';
 import 'package:jiffy/presentation/screens/home/home_screen.dart';
+import 'package:jiffy/presentation/screens/login/login_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
@@ -21,15 +22,24 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    // Start from onboarding for new users
-    // TODO: Add authentication check later to redirect to home if user is signed in
-    initialLocation: AppRoutes.onboardingBasics,
+    // Start from login screen
+    initialLocation: AppRoutes.login,
     debugLogDiagnostics: true,
     routes: [
       // Root redirect
       GoRoute(
         path: AppRoutes.root,
-        redirect: (context, state) => AppRoutes.onboardingBasics,
+        redirect: (context, state) => AppRoutes.login,
+      ),
+
+      // Login screen
+      GoRoute(
+        path: AppRoutes.login,
+        name: 'login',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
 
       // Onboarding flow - defines the user journey
@@ -148,7 +158,7 @@ GoRouter appRouter(Ref ref) {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go(AppRoutes.root),
+              onPressed: () => context.go(AppRoutes.home),
               child: const Text('Go Home'),
             ),
           ],
