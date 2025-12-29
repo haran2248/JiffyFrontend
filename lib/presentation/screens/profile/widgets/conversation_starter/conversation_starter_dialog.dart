@@ -1,6 +1,7 @@
 import "dart:ui";
 import "package:flutter/material.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
+import "package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/conversation_starter_header.dart";
 import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/conversation_starter_profile_info.dart";
 import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/conversation_starter_spark_ideas.dart";
@@ -10,10 +11,12 @@ import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/
 /// Conversation starter dialog with blurred background
 class ConversationStarterDialog extends StatefulWidget {
   final ProfileData profile;
+  final ConversationStarterData conversationData;
 
   const ConversationStarterDialog({
     super.key,
     required this.profile,
+    required this.conversationData,
   });
 
   @override
@@ -21,21 +24,27 @@ class ConversationStarterDialog extends StatefulWidget {
       _ConversationStarterDialogState();
 
   /// Show the dialog
-  static Future<String?> show(BuildContext context, ProfileData profile) {
+  static Future<String?> show(
+    BuildContext context,
+    ProfileData profile,
+    ConversationStarterData conversationData,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: colorScheme.surface.withValues(alpha: 0),
       barrierColor: colorScheme.surface.withValues(alpha: 0.5),
-      builder: (context) => ConversationStarterDialog(profile: profile),
+      builder: (context) => ConversationStarterDialog(
+        profile: profile,
+        conversationData: conversationData,
+      ),
     );
   }
 }
 
 class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
   final TextEditingController _messageController = TextEditingController();
-  final int _maxLength = 300;
 
   @override
   void dispose() {
@@ -76,7 +85,10 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
               ),
 
               // Profile info
-              ConversationStarterProfileInfo(profile: widget.profile),
+              ConversationStarterProfileInfo(
+                profile: widget.profile,
+                isOnline: widget.conversationData.isOnline,
+              ),
 
               const SizedBox(height: 24),
 
@@ -88,7 +100,7 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ConversationStarterSparkIdeas(
-                        profile: widget.profile,
+                        conversationData: widget.conversationData,
                         onCardTap: (message) {
                           _messageController.text = message;
                           setState(() {});
@@ -100,7 +112,7 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
                       // Custom message input
                       ConversationStarterMessageInput(
                         controller: _messageController,
-                        maxLength: _maxLength,
+                        maxLength: widget.conversationData.maxMessageLength,
                         onChanged: () => setState(() {}),
                       ),
 

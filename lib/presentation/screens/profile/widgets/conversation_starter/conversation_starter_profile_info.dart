@@ -4,10 +4,12 @@ import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 /// Profile information section with avatar and status
 class ConversationStarterProfileInfo extends StatelessWidget {
   final ProfileData profile;
+  final bool isOnline;
 
   const ConversationStarterProfileInfo({
     super.key,
     required this.profile,
+    this.isOnline = false,
   });
 
   @override
@@ -46,12 +48,13 @@ class ConversationStarterProfileInfo extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Text(
-                "Online now",
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.primary,
+              if (isOnline)
+                Text(
+                  "Online now",
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                  ),
                 ),
-              ),
             ],
           ),
         ],

@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
+import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
@@ -43,11 +44,24 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
   }
 
   void _handleSparkConversation() async {
+    // Fetch conversation starter data from backend
+    final profileService = ref.read(profileServiceProvider);
+    final conversationData = await profileService.fetchConversationStarterData(
+      widget.profile.userId,
+    );
+
+    // Check if widget is still mounted before using context
+    if (!mounted) return;
+
     // Show conversation starter dialog
     final result = await ConversationStarterDialog.show(
       context,
       widget.profile,
+      conversationData,
     );
+
+    // Check again after async operation
+    if (!mounted) return;
 
     // If user sent a message, proceed with like
     if (result != null && result.isNotEmpty) {

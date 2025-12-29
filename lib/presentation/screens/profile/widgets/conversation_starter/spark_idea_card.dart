@@ -1,17 +1,14 @@
 import "package:flutter/material.dart";
+import "package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart";
 
 /// Individual spark idea card
 class SparkIdeaCard extends StatelessWidget {
-  final IconData icon;
-  final String category;
-  final String message;
+  final SparkIdea sparkIdea;
   final VoidCallback? onTap;
 
   const SparkIdeaCard({
     super.key,
-    required this.icon,
-    required this.category,
-    required this.message,
+    required this.sparkIdea,
     this.onTap,
   });
 
@@ -35,13 +32,13 @@ class SparkIdeaCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                icon,
+                sparkIdea.iconData,
                 size: 12,
                 color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Text(
-                category,
+                sparkIdea.category,
                 style: textTheme.labelSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 10,
@@ -52,7 +49,7 @@ class SparkIdeaCard extends StatelessWidget {
           const SizedBox(height: 10),
           Expanded(
             child: Text(
-              message,
+              sparkIdea.message,
               style: textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurface,
                 fontSize: 13,
@@ -79,4 +76,3 @@ class SparkIdeaCard extends StatelessWidget {
     return content;
   }
 }
-
