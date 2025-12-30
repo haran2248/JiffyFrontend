@@ -91,9 +91,13 @@ class MatchesState {
 class MatchesViewModel extends _$MatchesViewModel {
   @override
   MatchesState build() {
-    // Schedule mock data loading after initial state is set
-    Future.microtask(() => _loadMockData());
-    return const MatchesState(isLoading: true);
+    // Initialize with mock data directly (synchronous)
+    // This avoids side-effects in build() and usage of Future.microtask
+    final mockMatches = _createMockData();
+    return MatchesState(
+      matches: mockMatches,
+      isLoading: false,
+    );
   }
 
   /// Set the current filter tab
@@ -112,7 +116,13 @@ class MatchesViewModel extends _$MatchesViewModel {
     try {
       // TODO: Replace with API call
       await Future.delayed(const Duration(milliseconds: 300));
-      _loadMockData();
+
+      final mockMatches = _createMockData();
+      state = state.copyWith(
+        matches: mockMatches,
+        isLoading: false,
+        error: () => null,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -121,9 +131,9 @@ class MatchesViewModel extends _$MatchesViewModel {
     }
   }
 
-  void _loadMockData() {
+  List<MatchItem> _createMockData() {
     final now = DateTime.now();
-    final mockMatches = [
+    return [
       // Jiffy AI Assistant
       MatchItem(
         id: 'jiffy-ai',
@@ -206,11 +216,5 @@ class MatchesViewModel extends _$MatchesViewModel {
         bio: 'Living for live music and spontaneous trips',
       ),
     ];
-
-    state = state.copyWith(
-      matches: mockMatches,
-      isLoading: false,
-      error: () => null,
-    );
   }
 }
