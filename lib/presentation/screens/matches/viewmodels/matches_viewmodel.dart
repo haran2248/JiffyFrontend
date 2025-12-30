@@ -47,9 +47,6 @@ class MatchesState {
         case MatchesFilter.matches:
           // All matches
           return true;
-        case MatchesFilter.mostCompatible:
-          // Has compatibility score
-          return match.compatibilityScore != null || match.isJiffyAi;
       }
     }).toList();
 
@@ -82,16 +79,6 @@ class MatchesState {
           final aTime = a.matchedAt ?? DateTime(1970);
           final bTime = b.matchedAt ?? DateTime(1970);
           return bTime.compareTo(aTime);
-        });
-        break;
-      case MatchesFilter.mostCompatible:
-        // Sort by compatibility score (highest first)
-        result.sort((a, b) {
-          if (a.isJiffyAi) return -1;
-          if (b.isJiffyAi) return 1;
-          final aScore = a.compatibilityScore ?? 0;
-          final bScore = b.compatibilityScore ?? 0;
-          return bScore.compareTo(aScore);
         });
         break;
     }
