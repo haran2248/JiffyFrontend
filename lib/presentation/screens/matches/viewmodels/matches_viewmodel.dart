@@ -44,7 +44,7 @@ class MatchesState {
         case MatchesFilter.currentChats:
           // Only matches with existing conversations
           return match.hasConversation || match.isJiffyAi;
-        case MatchesFilter.matches:
+        case MatchesFilter.waitingForYou:
           // All matches
           return true;
       }
@@ -71,7 +71,7 @@ class MatchesState {
           return bTime.compareTo(aTime);
         });
         break;
-      case MatchesFilter.matches:
+      case MatchesFilter.waitingForYou:
         // Sort by match date (newest first)
         result.sort((a, b) {
           if (a.isJiffyAi) return -1;

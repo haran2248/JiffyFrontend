@@ -4,7 +4,7 @@ enum MatchesFilter {
   currentChats,
 
   /// All matched users (new and existing)
-  matches,
+  waitingForYou,
 }
 
 /// Extension to provide display labels for each filter.
@@ -13,8 +13,8 @@ extension MatchesFilterExtension on MatchesFilter {
     switch (this) {
       case MatchesFilter.currentChats:
         return 'Current Chats';
-      case MatchesFilter.matches:
-        return 'Matches';
+      case MatchesFilter.waitingForYou:
+        return 'Waiting For You';
     }
   }
 }
