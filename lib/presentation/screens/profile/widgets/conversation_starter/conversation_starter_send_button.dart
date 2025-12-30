@@ -15,7 +15,6 @@ class ConversationStarterSendButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final hasMessage = messageController.text.trim().isNotEmpty;
 
     return Container(
       padding: EdgeInsets.only(
@@ -29,52 +28,58 @@ class ConversationStarterSendButton extends StatelessWidget {
       ),
       child: SizedBox(
         width: double.infinity,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primary,
-                  colorScheme.secondary,
-                ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-            child: Material(
-              color: colorScheme.surface.withValues(alpha: 0),
-              child: InkWell(
-                onTap: hasMessage ? onSend : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        color: hasMessage
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurfaceVariant,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Send Spark",
-                        style: textTheme.labelLarge?.copyWith(
-                          color: hasMessage
-                              ? colorScheme.onPrimary
-                              : colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+        child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: messageController,
+          builder: (context, value, _) {
+            final hasMessage = value.text.trim().isNotEmpty;
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.secondary,
                     ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: Material(
+                  color: colorScheme.surface.withValues(alpha: 0),
+                  child: InkWell(
+                    onTap: hasMessage ? onSend : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: hasMessage
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Send Spark",
+                            style: textTheme.labelLarge?.copyWith(
+                              color: hasMessage
+                                  ? colorScheme.onPrimary
+                                  : colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

@@ -38,24 +38,28 @@ class ConversationStarterProfileInfo extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           // Name and status
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                profile.name,
-                style: textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (isOnline)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  "Online now",
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
+                  profile.name,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-            ],
+                if (isOnline)
+                  Text(
+                    "Online now",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.primary,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

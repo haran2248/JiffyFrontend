@@ -35,23 +35,32 @@ class ConversationStarterSparkIdeas extends StatelessWidget {
         // Spark idea cards (horizontal scrollable)
         conversationData.sparkIdeas.isEmpty
             ? const SizedBox.shrink()
-            : SizedBox(
-                height: 110,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: conversationData.sparkIdeas.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final sparkIdea = conversationData.sparkIdeas[index];
-                    return SparkIdeaCard(
-                      sparkIdea: sparkIdea,
-                      onTap: onCardTap != null
-                          ? () => onCardTap!(sparkIdea.message)
-                          : null,
-                    );
-                  },
-                ),
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final textScaler = MediaQuery.of(context).textScaler;
+                  final baseHeight = 110.0;
+                  final scaleFactor = textScaler.scale(1.0);
+                  final adaptiveHeight =
+                      (baseHeight * scaleFactor).clamp(110.0, 200.0);
+                  return SizedBox(
+                    height: adaptiveHeight,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: conversationData.sparkIdeas.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final sparkIdea = conversationData.sparkIdeas[index];
+                        return SparkIdeaCard(
+                          sparkIdea: sparkIdea,
+                          onTap: onCardTap != null
+                              ? () => onCardTap!(sparkIdea.message)
+                              : null,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
       ],
     );

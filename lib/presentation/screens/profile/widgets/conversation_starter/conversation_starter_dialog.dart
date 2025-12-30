@@ -63,71 +63,83 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final screenHeight = MediaQuery.of(context).size.height;
+    final viewInsets = MediaQuery.of(context).viewInsets;
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-      child: Container(
-        height: screenHeight * 0.75,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: screenHeight * 0.75,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              ConversationStarterHeader(
-                profileName: widget.profile.name,
-                onClose: () => Navigator.of(context).pop(),
-              ),
-
-              // Profile info
-              ConversationStarterProfileInfo(
-                profile: widget.profile,
-                isOnline: widget.conversationData.isOnline,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Spark Ideas section
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ConversationStarterSparkIdeas(
-                        conversationData: widget.conversationData,
-                        onCardTap: (message) {
-                          _messageController.text = message;
-                          setState(() {});
-                        },
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Custom message input
-                      ConversationStarterMessageInput(
-                        controller: _messageController,
-                        maxLength: widget.conversationData.maxMessageLength,
-                        onChanged: () => setState(() {}),
-                      ),
-
-                      const SizedBox(height: 24),
-                    ],
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: viewInsets.bottom),
+              child: Column(
+                children: [
+                  // Header
+                  ConversationStarterHeader(
+                    profileName: widget.profile.name,
+                    onClose: () => Navigator.of(context).pop(),
                   ),
-                ),
-              ),
 
-              // Send Spark button
-              ConversationStarterSendButton(
-                messageController: _messageController,
-                onSend: _handleSendSpark,
+                  // Profile info
+                  ConversationStarterProfileInfo(
+                    profile: widget.profile,
+                    isOnline: widget.conversationData.isOnline,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Spark Ideas section
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ConversationStarterSparkIdeas(
+                            conversationData: widget.conversationData,
+                            onCardTap: (message) {
+                              final maxLength =
+                                  widget.conversationData.maxMessageLength;
+                              final truncatedMessage = message.length > maxLength
+                                  ? message.substring(0, maxLength)
+                                  : message;
+                              _messageController.text = truncatedMessage;
+                              setState(() {});
+                            },
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Custom message input
+                          ConversationStarterMessageInput(
+                            controller: _messageController,
+                            maxLength: widget.conversationData.maxMessageLength,
+                            onChanged: () => setState(() {}),
+                          ),
+
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Send Spark button
+                  ConversationStarterSendButton(
+                    messageController: _messageController,
+                    onSend: _handleSendSpark,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

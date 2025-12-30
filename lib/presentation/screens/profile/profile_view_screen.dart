@@ -44,29 +44,48 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
   }
 
   void _handleSparkConversation() async {
-    // Fetch conversation starter data from backend
-    final profileService = ref.read(profileServiceProvider);
-    final conversationData = await profileService.fetchConversationStarterData(
-      widget.profile.userId,
-    );
+    try {
+      // Fetch conversation starter data from backend
+      final profileService = ref.read(profileServiceProvider);
+      final conversationData =
+          await profileService.fetchConversationStarterData(
+        widget.profile.userId,
+      );
 
-    // Check if widget is still mounted before using context
-    if (!mounted) return;
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
 
-    // Show conversation starter dialog
-    final result = await ConversationStarterDialog.show(
-      context,
-      widget.profile,
-      conversationData,
-    );
+      // Show conversation starter dialog
+      final result = await ConversationStarterDialog.show(
+        context,
+        widget.profile,
+        conversationData,
+      );
 
-    // Check again after async operation
-    if (!mounted) return;
+      // Check again after async operation
+      if (!mounted) return;
 
-    // If user sent a message, proceed with like
-    if (result != null && result.isNotEmpty) {
-      // TODO: Send the spark message to backend
-      _handleLike();
+      // If user sent a message, proceed with like
+      if (result != null && result.isNotEmpty) {
+        // TODO: Send the spark message to backend
+        _handleLike();
+      }
+    } catch (e) {
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
+
+      // Show error feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Failed to load conversation starters. Please try again.',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
