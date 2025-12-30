@@ -102,7 +102,7 @@ class MatchCardWidget extends StatelessWidget {
           ]
         : [
             colorScheme.outline.withValues(alpha: 0.3),
-            colorScheme.outline.withValues(alpha: 0.3),
+            colorScheme.outline.withValues(alpha: 0.3)
           ];
 
     return Container(
