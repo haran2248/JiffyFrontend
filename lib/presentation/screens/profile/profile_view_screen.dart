@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
+import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
@@ -12,6 +13,7 @@ import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_
 import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_starter.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_sticky_actions.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_close_button.dart";
+import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/conversation_starter_dialog.dart";
 
 /// Profile view screen showing full profile details
 class ProfileViewScreen extends ConsumerStatefulWidget {
@@ -41,31 +43,50 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
     _handleClose();
   }
 
-  void _handleSparkConversation() {
-    // Show conversation starter dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Conversation Starter"),
-        content: Text(
-          widget.profile.conversationStarter ??
-              "Ask me about my most recent travel mishap!",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
+  void _handleSparkConversation() async {
+    try {
+      // Fetch conversation starter data from backend
+      final profileService = ref.read(profileServiceProvider);
+      final conversationData =
+          await profileService.fetchConversationStarterData(
+        widget.profile.userId,
+      );
+
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
+
+      // Show conversation starter dialog
+      final result = await ConversationStarterDialog.show(
+        context,
+        widget.profile,
+        conversationData,
+      );
+
+      // Check again after async operation
+      if (!mounted) return;
+
+      // If user sent a message, proceed with like
+      if (result != null && result.isNotEmpty) {
+        // TODO: Send the spark message to backend
+        _handleLike();
+      }
+    } catch (e) {
+      // Check if widget is still mounted before using context
+      if (!mounted) return;
+
+      // Show error feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Failed to load conversation starters. Please try again.',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _handleLike();
-            },
-            child: const Text("Start Conversation"),
-          ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
   @override
