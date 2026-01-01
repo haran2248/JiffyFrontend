@@ -85,8 +85,7 @@ class ProfileSelfData {
   /// Returns secondary photos (non-primary)
   List<ProfileSelfPhoto> get secondaryPhotos {
     if (photos.isEmpty) return [];
-    final primary = primaryPhoto;
-    if (primary == null) return photos;
+    final primary = primaryPhoto!;
     return photos.where((photo) => photo.id != primary.id).toList();
   }
 }
