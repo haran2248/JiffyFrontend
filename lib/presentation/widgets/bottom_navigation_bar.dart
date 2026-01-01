@@ -54,10 +54,8 @@ class BottomNavigationBarWidget extends StatelessWidget {
               _NavItem(
                 icon: Icons.person_outline_rounded,
                 label: 'Profile',
-                isActive: false, // TODO: Update when profile route is added
-                onTap: () {
-                  // TODO: Navigate to profile
-                },
+                isActive: currentRoute == AppRoutes.profileSelf,
+                onTap: () => context.goToRoute(AppRoutes.profileSelf),
               ),
             ],
           ),
