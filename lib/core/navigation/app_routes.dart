@@ -17,6 +17,7 @@ class AppRoutes {
   // Main app screens (home is defined above in root section)
   static const String profileView = '/profile/:userId';
   static const String profileSelf = '/profile/self';
+  static const String profileCurated = '/onboarding/profile-curated';
   static const String discover = '/discover';
   // static const String matches = '/matches';
   // static const String messages = '/messages';
@@ -38,6 +39,7 @@ class RouteNames {
   static const String home = 'home';
   static const String profileView = 'profile-view';
   static const String profileSelf = 'profile-self';
+  static const String profileCurated = 'profile-curated';
   static const String discover = 'discover';
   static const String designSystem = 'design-system';
 }
