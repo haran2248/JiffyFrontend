@@ -10,13 +10,8 @@ part "profile_self_viewmodel.g.dart";
 /// Manages loading, error handling, and state for the user's own profile.
 @riverpod
 class ProfileSelfViewModel extends _$ProfileSelfViewModel {
-  bool _isDisposed = false;
-
   @override
   ProfileSelfState build() {
-    _isDisposed = false;
-    ref.onDispose(() => _isDisposed = true);
-
     // Load data on initialization after build completes
     Future.microtask(() => loadProfileData());
     return const ProfileSelfState(isLoading: true);
@@ -24,7 +19,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
 
   /// Load profile data from backend
   Future<void> loadProfileData() async {
-    if (_isDisposed) return;
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, error: () => null);
 
     try {
@@ -62,11 +57,11 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
             "You love clever banter and asking questions that make others think.",
       );
 
-      if (_isDisposed) return;
+      if (!ref.mounted) return;
       state = state.copyWith(data: mockData, isLoading: false);
     } catch (e) {
       debugPrint("ProfileSelfViewModel: Error loading profile - $e");
-      if (_isDisposed) return;
+      if (!ref.mounted) return;
       state = state.copyWith(
         isLoading: false,
         error: () => "Failed to load profile. Please try again.",
