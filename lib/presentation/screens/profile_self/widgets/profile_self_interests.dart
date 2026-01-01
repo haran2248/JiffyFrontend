@@ -20,18 +20,35 @@ class ProfileSelfInterests extends StatelessWidget {
     return ProfileSelfSectionCard(
       title: "Interests",
       onEdit: onEdit,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: interests
-            .map(
-              (interest) => Chip(
-                label: interest,
-                isSelected: false,
-              ),
+      child: interests.isEmpty
+          ? Row(
+              children: [
+                Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "No interests added yet",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             )
-            .toList(),
-      ),
+          : Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: interests
+                  .map(
+                    (interest) => Chip(
+                      label: interest,
+                      isSelected: true,
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 }
