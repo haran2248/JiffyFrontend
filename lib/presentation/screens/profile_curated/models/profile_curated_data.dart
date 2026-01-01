@@ -21,12 +21,18 @@ class ProfileCuratedData {
     required this.conversationStyleDescription,
   });
 
-  /// Creates a copy with modified fields
+  /// Creates a copy with modified fields.
+  ///
+  /// For [avatarUrl], use a function to distinguish between "not provided"
+  /// and "explicitly set to null". Example:
+  /// - `copyWith()` - keeps existing avatarUrl
+  /// - `copyWith(avatarUrl: () => 'new_url')` - sets new URL
+  /// - `copyWith(avatarUrl: () => null)` - clears the avatar URL
   ProfileCuratedData copyWith({
     String? name,
     int? age,
     String? subtitle,
-    String? avatarUrl,
+    String? Function()? avatarUrl,
     List<String>? personalityTraits,
     List<String>? interests,
     String? conversationStyleDescription,
@@ -35,7 +41,7 @@ class ProfileCuratedData {
       name: name ?? this.name,
       age: age ?? this.age,
       subtitle: subtitle ?? this.subtitle,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarUrl: avatarUrl != null ? avatarUrl() : this.avatarUrl,
       personalityTraits: personalityTraits ?? this.personalityTraits,
       interests: interests ?? this.interests,
       conversationStyleDescription:
