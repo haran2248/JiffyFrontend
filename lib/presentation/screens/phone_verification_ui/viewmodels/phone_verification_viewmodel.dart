@@ -118,7 +118,7 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
     }
 
     if (!state.canVerifyOtp) {
-      state = state.copyWith(errorMessage: 'Please enter a 6-digit code');
+      state = state.copyWith(errorMessage: 'Please enter a 4-digit code');
       return false;
     }
 
