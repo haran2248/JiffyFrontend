@@ -86,7 +86,8 @@ class ChatService {
         return null;
       }
     } catch (e) {
-      return null;
+      debugPrint("Error fetching last message: $e");
+      rethrow;
     }
   }
 
