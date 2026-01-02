@@ -10,7 +10,7 @@ import 'widgets/info_notice_card.dart';
 import 'widgets/resend_code_text.dart';
 import 'widgets/verification_primary_button.dart';
 
-/// OTP verification screen for entering the 6-digit code.
+/// OTP verification screen for entering the 4-digit code.
 ///
 /// Verifies the OTP code via API.
 /// Navigation: Back → Phone Number Screen, Forward → Profile Setup
