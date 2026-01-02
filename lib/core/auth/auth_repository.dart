@@ -33,6 +33,9 @@ class AuthRepository {
 
   AuthRepository({required Dio dio}) : _dio = dio;
 
+  /// Get the current authenticated user value
+  User? get currentUser => FirebaseAuth.instance.currentUser;
+
   /// Sign in with Google.
   ///
   /// Opens the Google Sign-In flow, then authenticates with Firebase.
