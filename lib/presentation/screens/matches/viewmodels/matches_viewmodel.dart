@@ -91,7 +91,7 @@ class MatchesState {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class MatchesViewModel extends _$MatchesViewModel {
   @override
   MatchesState build() {
@@ -118,6 +118,11 @@ class MatchesViewModel extends _$MatchesViewModel {
 
   /// Load matches from API and Firestore
   Future<void> loadMatches() async {
+    // If we already have data, don't show full loading spinner unless forced (optional)
+    // For now, keeping original behavior but using cached state if valid?
+    // Actually, force refresh usually wants logic.
+    // Let's keep it simple: set loading true (which shows spinner) then update.
+    // With keepAlive, this method acts as a "hard refresh" when called manually.
     state = state.copyWith(isLoading: true, error: () => null);
     try {
       final matchesRepo = ref.read(matchesRepositoryProvider);
@@ -125,22 +130,19 @@ class MatchesViewModel extends _$MatchesViewModel {
 
       final rawMatches = await matchesRepo.fetchMatches();
 
-      final List<MatchItem> matchItems = [];
-
-      // Process each match
-      for (final matchData in rawMatches) {
+      // Parallelize checking for last messages
+      final matchFutures = rawMatches.map((matchData) async {
         final String uid = matchData['uid']?.toString() ?? '';
-        if (uid.isEmpty) continue;
+        if (uid.isEmpty) return null;
 
         final String name = matchData['name'] ?? 'User';
         final String? imageUrl = _getImageUrl(matchData);
 
-        // Fetch last message to determine "Current Chats" vs "Matches"
+        // Fetch last message
         String? lastMessage;
         DateTime? lastMessageTime;
 
         try {
-          // This returns "Start your conversation" if no message
           final ChatMessage? msg = await chatRepo.getLastMessage(uid);
           if (msg != null) {
             lastMessage = msg.message;
@@ -148,18 +150,22 @@ class MatchesViewModel extends _$MatchesViewModel {
           }
         } catch (_) {}
 
-        matchItems.add(MatchItem(
+        return MatchItem(
           id: uid,
           name: name,
           imageUrl: imageUrl,
           lastMessage: lastMessage,
           lastMessageTime: lastMessageTime,
-          isJiffyAi: false, // Jiffy AI logic to be added later if needed
-          compatibilityScore: 0.0, // Not available in basic endpoint
+          isJiffyAi: false,
+          compatibilityScore: 0.0,
           matchedAt: DateTime.now(), // Not available in basic endpoint
-          hasUnread: false, // Need separate call
-        ));
-      }
+          hasUnread: false,
+        );
+      });
+
+      final results = await Future.wait(matchFutures);
+      final List<MatchItem> matchItems =
+          results.whereType<MatchItem>().toList();
 
       // Add Jiffy AI manually if desired (keeping mock logic for it)
       final now = DateTime.now();
