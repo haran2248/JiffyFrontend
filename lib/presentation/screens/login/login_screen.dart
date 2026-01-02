@@ -70,20 +70,15 @@ class LoginScreen extends ConsumerWidget {
     final signinToggleAsync = ref.watch(signinToggleConfigProvider);
     final signinToggle = signinToggleAsync.value ?? const SigninToggleConfig();
 
-    // Listen for auth state changes and navigate
+    // Listen for auth state changes and navigate.
+    // This handles both fresh sign-ins AND session restoration from Firebase,
+    // since restored sessions trigger a state change from initial -> authenticated.
     ref.listen(authViewModelProvider, (previous, next) {
       if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
         // User just authenticated - check phone verification status
         _handlePostLoginNavigation(context, ref, next.userId);
       }
     });
-
-    // Check if already authenticated (e.g., returning user with persisted session)
-    if (authState.isAuthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handlePostLoginNavigation(context, ref, authState.userId);
-      });
-    }
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
