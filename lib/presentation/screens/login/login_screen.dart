@@ -32,7 +32,8 @@ class LoginScreen extends ConsumerWidget {
     String? userId,
   ) async {
     if (userId == null) {
-      context.goToRoute(AppRoutes.phoneVerification);
+      // No user ID means not authenticated - stay on login screen
+      debugPrint('LoginScreen: No userId, cannot proceed with navigation');
       return;
     }
 
