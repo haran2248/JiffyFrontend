@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -39,14 +40,18 @@ class ChatService {
 
       // TODO: Update last message in chat_rooms document for list view optimization if needed
     } catch (e) {
-      print("Error sending message: $e");
+      debugPrint("Error sending message: $e");
       rethrow;
     }
   }
 
   // Get messages stream
   Stream<QuerySnapshot> getMessages(String otherUserID) {
-    String currentUserID = _auth.currentUser!.uid;
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception("No authenticated user found.");
+    }
+    String currentUserID = currentUser.uid;
     List<String> ids = [currentUserID, otherUserID];
     ids.sort();
     String chatroomID = ids.join("_");
@@ -60,7 +65,7 @@ class ChatService {
   }
 
   // Get last message
-  Future<String> getLastMessage(
+  Future<Map<String, dynamic>?> getLastMessage(
       String currentUserID, String otherUserID) async {
     List<String> ids = [currentUserID, otherUserID];
     ids.sort();
@@ -76,38 +81,54 @@ class ChatService {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        return snapshot.docs.first['message'] as String;
+        return snapshot.docs.first.data();
       } else {
-        return "Start your conversation";
+        return null;
       }
     } catch (e) {
-      return "Start your conversation";
+      return null;
     }
   }
 
   // Mark messages as read
   Future<void> markMessagesAsRead(String otherUserID) async {
     try {
-      String currentUserID = _auth.currentUser!.uid;
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        throw Exception("No authenticated user found.");
+      }
+
+      String currentUserID = currentUser.uid;
       List<String> ids = [currentUserID, otherUserID];
       ids.sort();
       String chatroomID = ids.join("_");
 
+      // Querying by isRead: false first to likely avoid composite index issues.
+      // Then filtering by receiverID in memory to ensure we only update messages meant for us.
       final messages = await _firestore
           .collection("chat_rooms")
           .doc(chatroomID)
           .collection("messages")
-          .where('receiverID', isEqualTo: currentUserID)
           .where('isRead', isEqualTo: false)
           .get();
 
       final batch = _firestore.batch();
+      bool hasUpdates = false;
+
       for (var doc in messages.docs) {
-        batch.update(doc.reference, {'isRead': true});
+        // Ensure we only mark messages sent to US as read
+        if (doc['receiverID'] == currentUserID) {
+          batch.update(doc.reference, {'isRead': true});
+          hasUpdates = true;
+        }
       }
-      await batch.commit();
+
+      if (hasUpdates) {
+        await batch.commit();
+      }
     } catch (e) {
-      print('Error marking messages as read: $e');
+      debugPrint('Error marking messages as read: $e');
+      rethrow;
     }
   }
 }

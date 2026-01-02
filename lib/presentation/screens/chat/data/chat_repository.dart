@@ -22,9 +22,14 @@ class ChatRepository {
     });
   }
 
-  Future<String> getLastMessage(String otherUserId) {
-    return _chatService.getLastMessage(
+  Future<ChatMessage?> getLastMessage(String otherUserId) async {
+    final data = await _chatService.getLastMessage(
         _chatService.currentUserId ?? '', otherUserId);
+    if (data != null) {
+      return ChatMessage.fromMap(
+          data, ''); // ID not strictly needed for preview
+    }
+    return null;
   }
 
   Future<void> markAsRead(String otherUserId) async {

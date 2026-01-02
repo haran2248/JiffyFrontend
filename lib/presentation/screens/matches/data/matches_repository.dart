@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
@@ -22,7 +21,7 @@ class MatchesRepository {
 
   Future<List<Map<String, dynamic>>> fetchMatches() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = _authRepo.currentUser;
       if (user == null) {
         throw Exception("User not authenticated");
       }
