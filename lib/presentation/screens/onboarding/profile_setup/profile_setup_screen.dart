@@ -63,7 +63,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           TextButton(
             onPressed: () {
               viewModel.skip();
-              context.pushRoute(AppRoutes.onboardingPermissions);
+              context.pushRoute(AppRoutes.profileCurated);
             },
             child: Text(
               "Skip",

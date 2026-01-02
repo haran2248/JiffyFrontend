@@ -11,6 +11,8 @@ import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setu
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
+import 'package:jiffy/presentation/screens/profile_self/profile_self_screen.dart';
+import 'package:jiffy/presentation/screens/profile_curated/profile_curated_screen.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -83,6 +85,31 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      // Profile Self (Editable View) - user's own profile
+      // IMPORTANT: This must come BEFORE profileView to match correctly
+      GoRoute(
+        path: AppRoutes.profileSelf,
+        name: RouteNames.profileSelf,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfileSelfScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      // Profile Curated (Review & Finalize) - curated profile review screen
+      GoRoute(
+        path: AppRoutes.profileCurated,
+        name: RouteNames.profileCurated,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfileCuratedScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
