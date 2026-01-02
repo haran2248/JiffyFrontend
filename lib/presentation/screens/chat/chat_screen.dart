@@ -111,18 +111,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   itemCount: displayMessages.length,
                   itemBuilder: (context, index) {
                     final msg = displayMessages[index];
-                    final isMe = msg.isFromUser(
-                        // We assume current user ID is handled in logic, checking how isFromUser works
-                        // Model method: isFromUser(String currentUserId)
-                        // We need access to currentUserId.
-                        // It's in ChatService. But we don't expose it easily here.
-                        // Let's assume the messages from stream are correct.
-                        // Actually, we need to pass currentUserId to isMe.
-                        // We can get it from FirebaseAuth instance or similar provider.
-                        // For now we'll check if senderId != otherUserId.
-                        // Since it's a 1-on-1 chat, if it's not them, it's me.
-                        msg.senderId // logic below
-                        );
 
                     final isSender = msg.senderId != widget.otherUserId;
 
