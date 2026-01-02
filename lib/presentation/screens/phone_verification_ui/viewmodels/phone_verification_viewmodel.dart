@@ -135,7 +135,12 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
         uid: uid,
       );
 
-      if (result.isSuccess) {
+      // Check both HTTP success AND verification status from the response data.
+      // The API may return 200 but with a non-completed verification status.
+      final isActuallyVerified =
+          result.isSuccess && (result.data?.isVerified ?? false);
+
+      if (isActuallyVerified) {
         state = state.copyWith(
           isVerifyingOtp: false,
           isVerified: true,
@@ -143,9 +148,11 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
         _resendTimer?.cancel();
         return true;
       } else {
+        // Use error message from data if available, otherwise from result
+        final errorMsg = result.data?.errorMessage ?? result.message;
         state = state.copyWith(
           isVerifyingOtp: false,
-          errorMessage: result.message,
+          errorMessage: errorMsg,
         );
         return false;
       }
