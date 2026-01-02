@@ -78,13 +78,6 @@ class LoginScreen extends ConsumerWidget {
       }
     });
 
-    // Check if already authenticated (e.g., returning user with persisted session)
-    if (authState.isAuthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handlePostLoginNavigation(context, ref, authState.userId);
-      });
-    }
-
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
