@@ -28,6 +28,16 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
     _controllers =
         List.generate(widget.boxCount, (_) => TextEditingController());
     _focusNodes = List.generate(widget.boxCount, (_) => FocusNode());
+
+    // Add listeners to trigger rebuilds when focus changes
+    for (final node in _focusNodes) {
+      node.addListener(_onFocusChange);
+    }
+  }
+
+  void _onFocusChange() {
+    // Rebuild to update border styling when focus changes
+    setState(() {});
   }
 
   @override
@@ -36,6 +46,7 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
       controller.dispose();
     }
     for (final node in _focusNodes) {
+      node.removeListener(_onFocusChange);
       node.dispose();
     }
     super.dispose();
