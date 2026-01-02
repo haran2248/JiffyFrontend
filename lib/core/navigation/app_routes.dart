@@ -14,6 +14,8 @@ class AppRoutes {
   static const String onboardingCoPilotIntro = '/onboarding/co-pilot-intro';
   static const String onboardingProfileSetup = '/onboarding/profile-setup';
   static const String onboardingPermissions = '/onboarding/permissions';
+  static const String phoneVerification = '/onboarding/phone-verification';
+  static const String otpVerification = '/onboarding/otp-verification';
 
   // Main app screens (home is defined above in root section)
   static const String profileView = '/profile/:userId';
@@ -40,6 +42,8 @@ class RouteNames {
   static const String profileView = 'profile-view';
   static const String profileSelf = 'profile-self';
   static const String profileCurated = 'profile-curated';
+  static const String phoneVerification = 'phone-verification';
+  static const String otpVerification = 'otp-verification';
   static const String discover = 'discover';
   static const String chat = 'chat';
   static const String matches = 'matches';
