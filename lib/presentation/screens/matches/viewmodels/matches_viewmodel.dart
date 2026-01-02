@@ -2,6 +2,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/match_item.dart';
 import '../models/matches_filter.dart';
 
+import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
+import '../../chat/data/chat_repository.dart';
+import '../data/matches_repository.dart';
+
 part 'matches_viewmodel.g.dart';
 
 /// State for the matches screen
@@ -42,11 +46,11 @@ class MatchesState {
       // Apply filter
       switch (currentFilter) {
         case MatchesFilter.currentChats:
-          // Only matches with existing conversations
+          // Only matches with existing conversations, plus Jiffy AI
           return match.hasConversation || match.isJiffyAi;
         case MatchesFilter.waitingForYou:
-          // All matches
-          return true;
+          // Matches WITHOUT conversations (excluding Jiffy AI as it's a "chat")
+          return !match.hasConversation && !match.isJiffyAi;
       }
     }).toList();
 
@@ -90,13 +94,16 @@ class MatchesState {
 @riverpod
 class MatchesViewModel extends _$MatchesViewModel {
   @override
+  @override
   MatchesState build() {
-    // Initialize with mock data directly (synchronous)
-    // This avoids side-effects in build() and usage of Future.microtask
-    final mockMatches = _createMockData();
-    return MatchesState(
-      matches: mockMatches,
-      isLoading: false,
+    // Determine initial state. We can trigger loadMatches immediately or wait.
+    // Ideally we should start loading mock data is removed.
+    // But build cannot be async.
+    // We can return a loading state and trigger loadMatches in a microtask.
+    Future.microtask(() => loadMatches());
+
+    return const MatchesState(
+      isLoading: true,
     );
   }
 
@@ -110,16 +117,72 @@ class MatchesViewModel extends _$MatchesViewModel {
     state = state.copyWith(searchQuery: query);
   }
 
-  /// Load matches (mock data for now, API-ready interface)
+  /// Load matches from API and Firestore
   Future<void> loadMatches() async {
     state = state.copyWith(isLoading: true, error: () => null);
     try {
-      // TODO: Replace with API call
-      await Future.delayed(const Duration(milliseconds: 300));
+      final matchesRepo = ref.read(matchesRepositoryProvider);
+      final chatRepo = ref.read(chatRepositoryProvider);
 
-      final mockMatches = _createMockData();
+      final rawMatches = await matchesRepo.fetchMatches();
+
+      final List<MatchItem> matchItems = [];
+
+      // Process each match
+      for (final matchData in rawMatches) {
+        final String uid = matchData['uid']?.toString() ?? '';
+        if (uid.isEmpty) continue;
+
+        final String name = matchData['name'] ?? 'User';
+        final String? imageUrl = _getImageUrl(matchData);
+
+        // Fetch last message to determine "Current Chats" vs "Matches"
+        String? lastMessage;
+        DateTime? lastMessageTime;
+
+        try {
+          // This returns "Start your conversation" if no message
+          final msg = await chatRepo.getLastMessage(uid);
+          if (msg != "Start your conversation") {
+            lastMessage = msg;
+            // We don't have timestamp from this simple call,
+            // ideally getLastMessage should return a Message object or we assume now for sorting if needed,
+            // but sorting might be wrong.
+            // For V1 let's accept this limitation or update ChatRepository to return Message object.
+            lastMessageTime = DateTime.now(); // Placeholder
+          }
+        } catch (_) {}
+
+        matchItems.add(MatchItem(
+          id: uid,
+          name: name,
+          imageUrl: imageUrl,
+          lastMessage: lastMessage,
+          lastMessageTime: lastMessageTime,
+          isJiffyAi: false, // Jiffy AI logic to be added later if needed
+          compatibilityScore: 0.0, // Not available in basic endpoint
+          matchedAt: DateTime.now(), // Not available in basic endpoint
+          hasUnread: false, // Need separate call
+        ));
+      }
+
+      // Add Jiffy AI manually if desired (keeping mock logic for it)
+      final now = DateTime.now();
+      matchItems.insert(
+          0,
+          MatchItem(
+            id: 'jiffy-ai',
+            name: 'Jiffy AI',
+            imageUrl: null,
+            lastMessage: "Hey! 👋 I'm here to help you ...",
+            lastMessageTime: now.subtract(const Duration(hours: 12)),
+            isJiffyAi: true,
+            compatibilityScore: 1.0,
+            matchedAt: now.subtract(const Duration(days: 30)),
+          ));
+
       state = state.copyWith(
-        matches: mockMatches,
+        matches: matchItems,
         isLoading: false,
         error: () => null,
       );
@@ -129,6 +192,32 @@ class MatchesViewModel extends _$MatchesViewModel {
         error: () => 'Failed to load matches: $e',
       );
     }
+  }
+
+  String? _getImageUrl(Map<String, dynamic> user) {
+    String? currentImageId;
+
+    if (user['imageId'] != null && user['imageId'].toString().isNotEmpty) {
+      currentImageId = user['imageId'].toString();
+    } else if (user['images'] != null &&
+        user['images'] is List &&
+        (user['images'] as List).isNotEmpty) {
+      currentImageId = (user['images'] as List)[0]?.toString();
+    } else if (user['imageIds'] != null &&
+        user['imageIds'] is List &&
+        (user['imageIds'] as List).isNotEmpty) {
+      currentImageId = (user['imageIds'] as List)[0]?.toString();
+    } else if (user['firstImageId'] != null) {
+      currentImageId = user['firstImageId']?.toString();
+    } else {
+      return null;
+    }
+
+    if (currentImageId == null || currentImageId.isEmpty) {
+      return null;
+    }
+
+    return "https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$currentImageId";
   }
 
   List<MatchItem> _createMockData() {

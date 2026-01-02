@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'viewmodels/matches_viewmodel.dart';
@@ -148,8 +149,14 @@ class MatchesScreen extends ConsumerWidget {
           return MatchCardWidget(
             match: match,
             onTap: () {
-              // TODO: Navigate to chat screen
-              _showChatStub(context, match.name);
+              context.pushNamed(
+                RouteNames.chat,
+                pathParameters: {'userId': match.id},
+                extra: {
+                  'name': match.name,
+                  'image': match.imageUrl,
+                },
+              );
             },
           );
         },
@@ -185,17 +192,6 @@ class MatchesScreen extends ConsumerWidget {
           ],
         );
       },
-    );
-  }
-
-  void _showChatStub(BuildContext context, String name) {
-    final colorScheme = Theme.of(context).colorScheme;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Chat with $name coming soon!'),
-        backgroundColor: colorScheme.inverseSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 }

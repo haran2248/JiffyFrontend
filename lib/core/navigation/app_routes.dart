@@ -22,7 +22,7 @@ class AppRoutes {
   static const String profileSelf = '/profile/self';
   static const String profileCurated = '/onboarding/profile-curated';
   static const String discover = '/discover';
-  // static const String messages = '/messages';
+  static const String chat = '/chat/:userId';
   // static const String settings = '/settings';
 
   // Utility/debug screens
@@ -45,6 +45,7 @@ class RouteNames {
   static const String phoneVerification = 'phone-verification';
   static const String otpVerification = 'otp-verification';
   static const String discover = 'discover';
+  static const String chat = 'chat';
   static const String matches = 'matches';
   static const String designSystem = 'design-system';
 }
