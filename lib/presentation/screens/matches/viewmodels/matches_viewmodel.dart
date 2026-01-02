@@ -3,6 +3,7 @@ import '../models/match_item.dart';
 import '../models/matches_filter.dart';
 
 import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
+import 'package:jiffy/presentation/screens/chat/models/chat_message.dart'; // Import ChatMessage
 import '../../chat/data/chat_repository.dart';
 import '../data/matches_repository.dart';
 
@@ -94,7 +95,6 @@ class MatchesState {
 @riverpod
 class MatchesViewModel extends _$MatchesViewModel {
   @override
-  @override
   MatchesState build() {
     // Determine initial state. We can trigger loadMatches immediately or wait.
     // Ideally we should start loading mock data is removed.
@@ -142,14 +142,10 @@ class MatchesViewModel extends _$MatchesViewModel {
 
         try {
           // This returns "Start your conversation" if no message
-          final msg = await chatRepo.getLastMessage(uid);
-          if (msg != "Start your conversation") {
-            lastMessage = msg;
-            // We don't have timestamp from this simple call,
-            // ideally getLastMessage should return a Message object or we assume now for sorting if needed,
-            // but sorting might be wrong.
-            // For V1 let's accept this limitation or update ChatRepository to return Message object.
-            lastMessageTime = DateTime.now(); // Placeholder
+          final ChatMessage? msg = await chatRepo.getLastMessage(uid);
+          if (msg != null) {
+            lastMessage = msg.message;
+            lastMessageTime = msg.timestamp;
           }
         } catch (_) {}
 
