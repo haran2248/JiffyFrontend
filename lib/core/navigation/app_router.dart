@@ -10,6 +10,7 @@ import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_in
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
+import '../../presentation/screens/chat/chat_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
 import 'package:jiffy/presentation/screens/profile_self/profile_self_screen.dart';
@@ -167,6 +168,23 @@ GoRouter appRouter(Ref ref) {
             return FadeTransition(opacity: animation, child: child);
           },
         ),
+      ),
+      // Chat Route
+      GoRoute(
+        path: AppRoutes.chat,
+        name: RouteNames.chat,
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          final userName = extra?['name'] ?? 'Chat';
+          final userImage = extra?['image'];
+
+          return ChatScreen(
+            otherUserId: userId,
+            otherUserName: userName,
+            otherUserImage: userImage,
+          );
+        },
       ),
 
       // Utility screens
