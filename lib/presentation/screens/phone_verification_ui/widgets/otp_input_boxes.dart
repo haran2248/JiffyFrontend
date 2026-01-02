@@ -45,15 +45,28 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
     if (value.length == 1 && index < widget.boxCount - 1) {
       // Move to next field
       _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      // Move to previous field on backspace
-      _focusNodes[index - 1].requestFocus();
     }
+    // Note: Backspace handling moved to _handleKeyEvent for reliability
 
     // Check if all fields are filled
     final code = _controllers.map((c) => c.text).join();
     if (code.length == widget.boxCount) {
       widget.onCompleted?.call(code);
+    }
+  }
+
+  /// Handle physical key events for backspace navigation.
+  ///
+  /// onChanged doesn't fire when backspace is pressed on an already-empty
+  /// field, so we need to intercept the key event directly.
+  void _handleKeyEvent(int index, KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace) {
+      if (_controllers[index].text.isEmpty && index > 0) {
+        // Move to previous field and clear it
+        _focusNodes[index - 1].requestFocus();
+        _controllers[index - 1].clear();
+      }
     }
   }
 
@@ -81,24 +94,28 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
               width: hasFocus ? 2 : 1,
             ),
           ),
-          child: TextField(
-            controller: _controllers[index],
-            focusNode: _focusNodes[index],
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            maxLength: 1,
-            onChanged: (value) => _onChanged(index, value),
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            style: textTheme.headlineSmall?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-            decoration: const InputDecoration(
-              counterText: '',
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+          child: KeyboardListener(
+            focusNode: FocusNode(), // Dummy node - TextField has its own
+            onKeyEvent: (event) => _handleKeyEvent(index, event),
+            child: TextField(
+              controller: _controllers[index],
+              focusNode: _focusNodes[index],
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              maxLength: 1,
+              onChanged: (value) => _onChanged(index, value),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              style: textTheme.headlineSmall?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: const InputDecoration(
+                counterText: '',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
         );
