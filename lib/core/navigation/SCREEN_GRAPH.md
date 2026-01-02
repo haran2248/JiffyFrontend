@@ -2,14 +2,40 @@
 
 Visual representation of the app's navigation structure.
 
-## Onboarding Flow
+## Authentication & Onboarding Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Root (/)                                │
-│              (redirects to /onboarding/basics)              │
+│                      /login                                 │
+│                   LoginScreen                               │
+│  • Google Sign-In                                           │
+│  • Apple Sign-In (iOS only)                                 │
 └─────────────────────┬───────────────────────────────────────┘
+                      │ (Authenticated)
                       │
+                      ▼
+              ┌───────────────────┐
+              │ Check isPhoneVerified │
+              └───────┬───────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │ No                      │ Yes
+         ▼                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│      /onboarding/phone-verification                         │
+│            PhoneNumberScreen                                 │
+│  • Enter phone number                                        │
+│  • Sends OTP via backend API                                │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ (Send Code)
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│       /onboarding/otp-verification                          │
+│           OtpVerificationScreen                              │
+│  • Enter 4-digit OTP code                                   │
+│  • Resend countdown timer                                    │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ (Verified)
                       ▼
 ┌─────────────────────────────────────────────────────────────┐
 │            /onboarding/basics                               │
@@ -30,10 +56,17 @@ Visual representation of the app's navigation structure.
 │        /onboarding/profile-setup                            │
 │           ProfileSetupScreen                                 │
 │  • Interactive chat-based profile setup                     │
-│  • Can skip to permissions                                  │
-└───────┬─────────────────────────────────────┬───────────────┘
-        │ (Continue)                          │ (Skip)
-        ▼                                     ▼
+└─────────────────────┬───────────────────────────────────────┘
+                      │ (Continue)
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│        /onboarding/profile-curated                          │
+│           ProfileCuratedScreen                               │
+│  • Review AI-curated profile                                │
+│  • Finalize before continuing                               │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ (Finalize)
+                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │         /onboarding/permissions                             │
 │            PermissionsScreen                                 │
@@ -43,8 +76,7 @@ Visual representation of the app's navigation structure.
                       │ (Continue / Maybe Later)
                       ▼
               ┌───────────────┐
-              │  (Future)     │
-              │   /home       │
+              │    /home      │
               │  HomeScreen   │
               └───────────────┘
 ```
@@ -53,10 +85,13 @@ Visual representation of the app's navigation structure.
 
 | Route | Name | Screen | Description |
 |-------|------|--------|-------------|
-| `/` | - | (redirect) | Redirects to onboarding basics |
+| `/login` | `login` | `LoginScreen` | Google/Apple Sign-In |
+| `/onboarding/phone-verification` | `phone-verification` | `PhoneNumberScreen` | Phone number entry |
+| `/onboarding/otp-verification` | `otp-verification` | `OtpVerificationScreen` | OTP code entry |
 | `/onboarding/basics` | `basics` | `BasicsScreen` | User name, photo, and vitals |
 | `/onboarding/co-pilot-intro` | `co-pilot-intro` | `CoPilotIntroScreen` | Introduces AI Co-Pilot |
 | `/onboarding/profile-setup` | `profile-setup` | `ProfileSetupScreen` | Chat-based profile setup |
+| `/onboarding/profile-curated` | `profile-curated` | `ProfileCuratedScreen` | Review AI-curated profile |
 | `/onboarding/permissions` | `permissions` | `PermissionsScreen` | Location and notifications |
 | `/design-system` | `design-system` | `DesignSystemPage` | Design system showcase |
 
@@ -65,7 +100,7 @@ Visual representation of the app's navigation structure.
 ### Push (Forward Navigation)
 - Use `context.pushRoute()` when adding a screen to the stack
 - User can go back using the back button
-- Example: Basics → Co-Pilot Intro
+- Example: Phone Verification → OTP Verification
 
 ### Replace (Swap Current Screen)
 - Use `context.replaceRoute()` when replacing current screen
@@ -75,11 +110,19 @@ Visual representation of the app's navigation structure.
 ### Go (Clear Stack)
 - Use `context.goToRoute()` after completing flows
 - Clears entire navigation stack
-- Example: After onboarding completes → Home
+- Example: After login → Phone Verification (or Basics if already verified)
 
 ### Pop (Go Back)
 - Use `context.popRoute()` to go back
 - Check `context.canPop()` first if needed
+
+## Phone Verification Skip Logic
+
+After authentication, the app checks `isPhoneVerified` via API:
+- If `true` → Skip to `/onboarding/basics`
+- If `false` → Show `/onboarding/phone-verification`
+
+This check uses in-memory caching to avoid redundant API calls.
 
 ## Future Routes (To Be Implemented)
 
