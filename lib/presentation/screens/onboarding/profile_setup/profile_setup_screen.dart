@@ -63,7 +63,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           TextButton(
             onPressed: () {
               viewModel.skip();
-              context.pushRoute(AppRoutes.onboardingPermissions);
+              // Navigate to home after skipping profile setup
+              context.goToRoute(AppRoutes.home);
             },
             child: Text(
               "Skip",
@@ -78,8 +79,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         child: Column(
           children: [
             ProgressBar(
-              currentStep: formData.currentStep,
-              totalSteps: 3,
+              currentStep: 4,
+              totalSteps: 4,
             ),
             const SizedBox(height: 8),
             Expanded(

@@ -28,6 +28,8 @@ dependencies:
   sign_in_with_apple: ^6.1.1
   cloud_firestore: ^6.1.1
   crypto: ^3.0.7
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2
 
 dev_dependencies:
   flutter_test:

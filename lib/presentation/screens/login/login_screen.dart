@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../../../core/auth/auth_viewmodel.dart';
 import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
@@ -35,20 +34,31 @@ class LoginScreen extends ConsumerWidget {
     final signinToggle = signinToggleAsync.value ?? const SigninToggleConfig();
 
     // Listen for auth state changes and navigate
+    // Navigate when user is authenticated and not loading
     ref.listen(authViewModelProvider, (previous, next) {
-      if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
-        // User just authenticated - navigate to onboarding
-        context.goToRoute(AppRoutes.onboardingBasics);
+      debugPrint('[LoginScreen] Auth state changed: previous=${previous?.isAuthenticated}, next=${next.isAuthenticated}, loading=${next.isLoading}');
+      
+      // Navigate if:
+      // 1. User is authenticated
+      // 2. Not currently loading (sign-in completed)
+      // 3. Either just became authenticated OR was already authenticated (handles case where state was set before listener fired)
+      if (next.isAuthenticated && !next.isLoading) {
+        final wasJustAuthenticated = !(previous?.isAuthenticated ?? false);
+        final wasLoading = previous?.isLoading ?? false;
+        
+        if (wasJustAuthenticated || wasLoading) {
+          debugPrint('[LoginScreen] User authenticated, navigating to permissions');
+          // User just authenticated - navigate to permissions screen first
+          // Use goToRoute to clear the login screen from stack
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              debugPrint('[LoginScreen] Executing navigation to permissions');
+              context.goToRoute(AppRoutes.onboardingPermissions);
+            }
+          });
+        }
       }
     });
-
-    // Check if already authenticated (e.g., returning user with persisted session)
-    // This handles the case where user is already logged in when opening the app
-    if (authState.isAuthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.goToRoute(AppRoutes.onboardingBasics);
-      });
-    }
 
     return Scaffold(
       backgroundColor: colorScheme.surface,

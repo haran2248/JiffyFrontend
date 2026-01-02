@@ -4,6 +4,7 @@ import 'home_service.dart';
 import 'permission_service.dart';
 import 'notification_service.dart';
 import 'profile_service.dart';
+import 'photo_upload_service.dart';
 
 part 'service_providers.g.dart';
 
@@ -25,4 +26,9 @@ NotificationService notificationService(Ref ref) {
 @riverpod
 ProfileService profileService(Ref ref) {
   return ProfileService();
+}
+
+@riverpod
+PhotoUploadService photoUploadService(Ref ref) {
+  return PhotoUploadService();
 }

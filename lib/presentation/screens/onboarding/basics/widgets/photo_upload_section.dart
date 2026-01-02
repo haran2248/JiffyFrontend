@@ -3,10 +3,12 @@ import '../../../../widgets/avatar.dart';
 
 class PhotoUploadSection extends StatelessWidget {
   final VoidCallback? onTap;
+  final String? imageUrl;
 
   const PhotoUploadSection({
     super.key,
     this.onTap,
+    this.imageUrl,
   });
 
   @override
@@ -17,6 +19,7 @@ class PhotoUploadSection extends StatelessWidget {
         children: [
           Avatar(
             radius: 80,
+            imageUrl: imageUrl,
             onTap: onTap,
           ),
           const SizedBox(height: 24),
