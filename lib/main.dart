@@ -10,14 +10,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Note: This will fail if GoogleService-Info.plist (iOS) or
-    // google-services.json (Android) are missing.
     await Firebase.initializeApp();
     isFirebaseInitialized = true;
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
     debugPrint(
-        'Ensure you have added the Firebase configuration files for your platforms.');
+      'Ensure you have added the Firebase configuration files for your platforms.',
+    );
     // We continue so the app still runs, but Firebase features will be disabled
     isFirebaseInitialized = false;
   }
