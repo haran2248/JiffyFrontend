@@ -180,6 +180,8 @@ class MatchesViewModel extends _$MatchesViewModel {
             isJiffyAi: true,
             compatibilityScore: 1.0,
             matchedAt: now.subtract(const Duration(days: 30)),
+            hasUnread: false,
+            tags: [],
           ));
 
       state = state.copyWith(
