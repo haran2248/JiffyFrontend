@@ -4,7 +4,6 @@ import '../models/matches_filter.dart';
 
 import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
 import 'package:jiffy/presentation/screens/chat/models/chat_message.dart'; // Import ChatMessage
-import '../../chat/data/chat_repository.dart';
 import '../data/matches_repository.dart';
 
 part 'matches_viewmodel.g.dart';
