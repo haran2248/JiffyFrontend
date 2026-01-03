@@ -158,20 +158,18 @@ class RelationshipGoalsScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Button(
-                text: "Continue",
-                onTap: state.selectedGoal != null
-                    ? () async {
-                        final success = await viewModel.saveRelationshipGoal();
-                        if (success && context.mounted) {
-                          context.push(AppRoutes.onboardingCoPilotIntro);
-                        }
-                      }
-                    : () {},
-                isLoading: state.isLoading,
-                // Optional: Dynamic button color based on selection?
-                // buttonColor: state.selectedGoal?.color,
-                // But default primary color is cleaner for consistency.
+              child: AbsorbPointer(
+                absorbing: state.selectedGoal == null,
+                child: Button(
+                  text: "Continue",
+                  onTap: () async {
+                    final success = await viewModel.saveRelationshipGoal();
+                    if (success && context.mounted) {
+                      context.push(AppRoutes.onboardingCoPilotIntro);
+                    }
+                  },
+                  isLoading: state.isLoading,
+                ),
               ),
             ),
           ],

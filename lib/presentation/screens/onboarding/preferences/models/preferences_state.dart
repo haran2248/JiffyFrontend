@@ -1,6 +1,8 @@
 import 'gender_preference.dart';
 import 'relationship_goal.dart';
 
+const _sentinel = Object();
+
 class PreferencesState {
   final GenderPreference? selectedGender;
   final RelationshipGoal? selectedGoal;
@@ -18,13 +20,15 @@ class PreferencesState {
     GenderPreference? selectedGender,
     RelationshipGoal? selectedGoal,
     bool? isLoading,
-    String? errorMessage,
+    Object? errorMessage = _sentinel,
   }) {
     return PreferencesState(
       selectedGender: selectedGender ?? this.selectedGender,
       selectedGoal: selectedGoal ?? this.selectedGoal,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage == _sentinel
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 }

@@ -23,8 +23,16 @@ import 'widgets/social_sign_in_button_widget.dart';
 /// - Premium, exclusive, warm aesthetic
 /// - Deep Raspberry & Royal Violet gradient accents
 /// - Midnight Plum background
-class LoginScreen extends ConsumerWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  // Flag to prevent duplicate navigations
+  bool _hasNavigated = false;
 
   /// Handle post-login navigation based on phone verification and onboarding status.
   Future<void> _handlePostLoginNavigation(
@@ -43,7 +51,7 @@ class LoginScreen extends ConsumerWidget {
       final profileService = ref.read(profileServiceProvider);
       final isOnboarded = await profileService.isOnboardingComplete(userId);
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       if (isOnboarded) {
         // User has completed onboarding - go directly to home
@@ -56,10 +64,11 @@ class LoginScreen extends ConsumerWidget {
       final phoneService = ref.read(phoneVerificationServiceProvider);
       final isVerified = await phoneService.isPhoneVerified(uid: userId);
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       if (isVerified) {
-        debugPrint('LoginScreen: Phone verified but not onboarded, going to basics');
+        debugPrint(
+            'LoginScreen: Phone verified but not onboarded, going to basics');
         context.goToRoute(AppRoutes.onboardingBasics);
       } else {
         debugPrint('LoginScreen: Phone not verified, going to verification');
@@ -68,14 +77,14 @@ class LoginScreen extends ConsumerWidget {
     } catch (e) {
       debugPrint('LoginScreen: Error checking user status: $e');
       // On error, go to phone verification to be safe
-      if (context.mounted) {
+      if (mounted) {
         context.goToRoute(AppRoutes.phoneVerification);
       }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final authViewModel = ref.read(authViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
@@ -83,15 +92,6 @@ class LoginScreen extends ConsumerWidget {
     // Watch the sign-in toggle config from Firestore
     final signinToggleAsync = ref.watch(signinToggleConfigProvider);
     final signinToggle = signinToggleAsync.value ?? const SigninToggleConfig();
-
-    // Check initial auth state (handles case where user is already authenticated on mount)
-    // Use a post-frame callback to ensure the screen renders first
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authState.isAuthenticated && !authState.isLoading) {
-        debugPrint('[LoginScreen] User already authenticated on mount, checking phone verification');
-        _handlePostLoginNavigation(context, ref, authState.userId);
-      }
-    });
 
     // Listen for auth state changes and navigate.
     // This handles both fresh sign-ins AND session restoration from Firebase.
@@ -104,21 +104,31 @@ class LoginScreen extends ConsumerWidget {
       // Trigger navigation if:
       // 1. We just became authenticated
       // 2. OR we finished a loading operation (e.g. Google Sign-In finished) and are authenticated
+      // 3. AND we haven't already navigated
       if (next.isAuthenticated && (wasNotAuthenticated || wasLoading)) {
         debugPrint(
             'LoginScreen: Auth state change detected. Authenticated: ${next.isAuthenticated}, Was loading: $wasLoading');
-        _handlePostLoginNavigation(context, ref, next.userId);
+
+        if (!_hasNavigated) {
+          _hasNavigated = true;
+          _handlePostLoginNavigation(context, ref, next.userId);
+        }
       }
     });
 
     // Check for existing session on initial build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authState.isAuthenticated && !authState.isLoading) {
-        debugPrint(
-            'LoginScreen: Found existing authenticated session. Navigating...');
-        _handlePostLoginNavigation(context, ref, authState.userId);
-      }
-    });
+    // Only schedule if we haven't navigated yet and conditions are met
+    if (!_hasNavigated && authState.isAuthenticated && !authState.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Double check inside callback to be safe
+        if (!_hasNavigated && mounted) {
+          debugPrint(
+              'LoginScreen: Found existing authenticated session. Navigating...');
+          _hasNavigated = true;
+          _handlePostLoginNavigation(context, ref, authState.userId);
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
