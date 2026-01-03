@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/core/config/image_size_config.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
@@ -39,7 +41,7 @@ class HomeScreen extends ConsumerWidget {
                         _buildErrorState(context, state.error!, viewModel)
                       else if (state.data != null) ...[
                         // Stories Section - scrollable
-                        _buildStoriesSection(context, state.data!.stories),
+                        _buildStoriesSection(context, state.data!.stories, ref),
 
                         const SizedBox(height: 16),
 
@@ -180,7 +182,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStoriesSection(BuildContext context, List<StoryItem> stories) {
+  Widget _buildStoriesSection(
+    BuildContext context,
+    List<StoryItem> stories,
+    WidgetRef ref,
+  ) {
     if (stories.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -192,10 +198,34 @@ class HomeScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: stories.length,
         itemBuilder: (context, index) {
+          final story = stories[index];
           return StoryItemWidget(
-            story: stories[index],
-            onTap: () {
-              // TODO: Handle story tap
+            story: story,
+            onTap: () async {
+              if (story.isUserStory) {
+                // User's own story - allow photo upload
+                final photoUploadService = ref.read(photoUploadServiceProvider);
+                final imageFile = await photoUploadService.pickAndCropImage(
+                  aspectRatio: ImageSizeConfig.profilePhotoAspectRatio,
+                  width: ImageSizeConfig.profilePhotoSize,
+                  height: ImageSizeConfig.profilePhotoSize,
+                );
+                
+                if (imageFile != null) {
+                  // TODO: Upload story image to server
+                  // For now, just show a snackbar
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Story photo selected! Upload functionality coming soon.'),
+                      ),
+                    );
+                  }
+                }
+              } else {
+                // Other user's story - view story
+                // TODO: Navigate to story viewer
+              }
             },
           );
         },

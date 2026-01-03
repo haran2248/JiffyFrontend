@@ -193,16 +193,38 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.chat,
         name: RouteNames.chat,
-        builder: (context, state) {
-          final userId = state.pathParameters['userId']!;
+        pageBuilder: (context, state) {
+          final userId = state.pathParameters['userId'] ?? '';
           final extra = state.extra as Map<String, dynamic>?;
           final userName = extra?['name'] ?? 'Chat';
           final userImage = extra?['image'];
 
-          return ChatScreen(
-            otherUserId: userId,
-            otherUserName: userName,
-            otherUserImage: userImage,
+          // Defensive handling: if userId is missing, show error screen
+          if (userId.isEmpty) {
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: Scaffold(
+                body: Center(
+                  child: Text(
+                    'User ID not provided',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ChatScreen(
+              otherUserId: userId,
+              otherUserName: userName,
+              otherUserImage: userImage,
+            ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
           );
         },
       ),

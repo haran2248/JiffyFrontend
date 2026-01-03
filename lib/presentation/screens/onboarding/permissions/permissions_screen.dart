@@ -25,7 +25,7 @@ class PermissionsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Onboarding"),
+        title: const Text("Permissions"),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -40,11 +40,11 @@ class PermissionsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                "2/3",
+                "1/4",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const ProgressBar(currentStep: 2, totalSteps: 3),
+              const ProgressBar(currentStep: 1, totalSteps: 4),
               const SizedBox(height: 48),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -82,6 +82,24 @@ class PermissionsScreen extends ConsumerWidget {
                       isGranted: state.notificationsGranted,
                       onTap: viewModel.requestNotifications,
                     ),
+                    const SizedBox(height: 16),
+                    PermissionCard(
+                      icon: Icons.photo_library_outlined,
+                      title: "Photo Library",
+                      description:
+                          "Upload photos from your gallery for your profile and stories",
+                      isGranted: state.photoLibraryGranted,
+                      onTap: viewModel.requestPhotoLibrary,
+                    ),
+                    const SizedBox(height: 16),
+                    PermissionCard(
+                      icon: Icons.camera_alt_outlined,
+                      title: "Camera",
+                      description:
+                          "Take photos directly with your camera for your profile",
+                      isGranted: state.cameraGranted,
+                      onTap: viewModel.requestCamera,
+                    ),
                   ],
                 ),
               ),
@@ -89,26 +107,10 @@ class PermissionsScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Button(
-                  text: state.locationGranted && state.notificationsGranted
-                      ? "Continue"
-                      : "Maybe Later",
+                  text: "Continue",
                   onTap: () {
-                    // Final Step - Complete Onboarding
-                    final bothGranted =
-                        state.locationGranted && state.notificationsGranted;
-
-                    if (bothGranted) {
-                      // Navigate to home screen when both permissions are granted
-                      context.goToRoute(AppRoutes.home);
-                    } else {
-                      // Show snackbar if permissions are not granted
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please resolve permission'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
+                    // Navigate to onboarding basics after permissions
+                    context.pushRoute(AppRoutes.onboardingBasics);
                   },
                 ),
               ),

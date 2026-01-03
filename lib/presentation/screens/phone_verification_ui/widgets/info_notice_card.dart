@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
-/// Info notice card with leading emoji/icon and message text.
+/// Info notice card with leading emoji and message text.
 ///
 /// Used for privacy notices and tips in verification screens.
 class InfoNoticeCard extends StatelessWidget {
   final String emoji;
   final String text;
-  final IconData? icon;
 
   const InfoNoticeCard({
     super.key,
     required this.emoji,
     required this.text,
-    this.icon,
   });
 
   @override

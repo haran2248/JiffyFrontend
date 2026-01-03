@@ -48,7 +48,7 @@ post_install do |installer|
         definitions = [definitions]
       end
       
-      ['$(inherited)', 'PERMISSION_LOCATION=1', 'PERMISSION_NOTIFICATIONS=1'].each do |define|
+      ['$(inherited)', 'PERMISSION_LOCATION=1', 'PERMISSION_NOTIFICATIONS=1', 'PERMISSION_PHOTOS=1', 'PERMISSION_CAMERA=1'].each do |define|
         definitions << define unless definitions.include?(define)
       end
       
@@ -56,4 +56,6 @@ post_install do |installer|
     end
   end
 end
+
+
 

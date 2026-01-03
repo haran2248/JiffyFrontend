@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/core/services/permission_service.dart';
+import 'package:jiffy/core/config/image_size_config.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/basics_viewmodel.dart';
@@ -30,7 +33,7 @@ class BasicsScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            ProgressBar(currentStep: formData.currentStep, totalSteps: 2),
+            ProgressBar(currentStep: 2, totalSteps: 4),
             const SizedBox(height: 32),
             Expanded(
               child: SingleChildScrollView(
@@ -38,10 +41,68 @@ class BasicsScreen extends ConsumerWidget {
                 child: formData.currentStep == 1
                     ? NamePhotoStep(
                         firstName: formData.firstName,
+                        photoUrl: formData.photoUrl,
                         onFirstNameChanged: viewModel.updateFirstName,
-                        onPhotoTap: () {
-                          // TODO: Implement photo picker
-                          viewModel.updatePhoto(null);
+                        onPhotoTap: () async {
+                          try {
+                            final photoUploadService =
+                                ref.read(photoUploadServiceProvider);
+                            final imageFile =
+                                await photoUploadService.pickAndCropImage(
+                              aspectRatio:
+                                  ImageSizeConfig.profilePhotoAspectRatio,
+                              width: ImageSizeConfig.profilePhotoSize,
+                              height: ImageSizeConfig.profilePhotoSize,
+                            );
+
+                            if (imageFile != null && context.mounted) {
+                              // TODO: Upload image to server and get URL
+                              // For now, store the file path
+                              viewModel.updatePhoto(imageFile.path);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Photo selected successfully!'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            } else if (imageFile == null && context.mounted) {
+                              // Check if this was a permission issue or user cancellation
+                              final permissionService =
+                                  ref.read(permissionServiceProvider);
+                              final hasPermission =
+                                  await permissionService
+                                      .checkPhotoLibraryStatus();
+                              
+                              if (!hasPermission) {
+                                // Permission denied - show guidance
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Photo access is required. Please enable it in Settings if needed.'),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              } else {
+                                // User cancelled - show neutral message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No photo selected'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Error selecting photo: ${e.toString()}'),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          }
                         },
                       )
                     : VitalsStep(

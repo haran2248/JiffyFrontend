@@ -78,10 +78,13 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
       );
 
       if (response.isSuccess && response.data?.verificationId != null) {
+        // Extract otpLength from response data, default to 6
+        final otpLength = response.data?.otpLength ?? 6;
         state = state.copyWith(
           isSendingOtp: false,
           isOtpSent: true,
           verificationId: response.data!.verificationId,
+          otpLength: otpLength,
         );
         _startResendTimer();
         return true;
@@ -118,7 +121,9 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
     }
 
     if (!state.canVerifyOtp) {
-      state = state.copyWith(errorMessage: 'Please enter a 4-digit code');
+      state = state.copyWith(
+        errorMessage: 'Please enter a ${state.otpLength}-digit code',
+      );
       return false;
     }
 

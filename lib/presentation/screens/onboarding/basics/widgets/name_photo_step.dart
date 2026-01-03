@@ -4,12 +4,14 @@ import 'photo_upload_section.dart';
 
 class NamePhotoStep extends StatelessWidget {
   final String? firstName;
+  final String? photoUrl;
   final ValueChanged<String?>? onFirstNameChanged;
   final VoidCallback? onPhotoTap;
 
   const NamePhotoStep({
     super.key,
     this.firstName,
+    this.photoUrl,
     this.onFirstNameChanged,
     this.onPhotoTap,
   });
@@ -19,7 +21,10 @@ class NamePhotoStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PhotoUploadSection(onTap: onPhotoTap),
+        PhotoUploadSection(
+          imageUrl: photoUrl,
+          onTap: onPhotoTap,
+        ),
         const SizedBox(height: 48),
         ThemedInput(
           label: "First Name",

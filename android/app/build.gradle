@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.jiffy"
+    namespace = "com.jiffydating.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

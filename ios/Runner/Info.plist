@@ -52,7 +52,11 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Jiffy needs your location to show you matches nearby even when the app is in background.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Jiffy needs access to your photos to let you upload a profile picture.</string>
+	<string>Jiffy needs access to your photos to let you upload profile pictures and images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Jiffy needs permission to save photos to your library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Jiffy needs access to your camera to let you take photos for your profile.</string>
 	<key>NSBonjourServices</key>
 	<array>
 	</array>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import '../../../widgets/button.dart';
+import '../../../widgets/progress_bar.dart';
 import 'widgets/feature_item.dart';
 import 'widgets/demo_section.dart';
 
@@ -15,12 +16,17 @@ class CoPilotIntroScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 3, totalSteps: 4),
+            const SizedBox(height: 32),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
               Text(
                 "Your Conversation Co-Pilot",
                 textAlign: TextAlign.center,
@@ -61,14 +67,17 @@ class CoPilotIntroScreen extends StatelessWidget {
               const SizedBox(height: 64),
               const DemoSection(),
               const SizedBox(height: 48),
-              Button(
-                text: "Got it, Let's Continue",
-                onTap: () {
-                  context.replaceRoute(AppRoutes.onboardingProfileSetup);
-                },
+                    Button(
+                      text: "Got it, Let's Continue",
+                      onTap: () {
+                        context.replaceRoute(AppRoutes.onboardingProfileSetup);
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

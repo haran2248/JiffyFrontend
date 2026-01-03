@@ -1,5 +1,5 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
 
 class Avatar extends StatelessWidget {
   final double radius;
@@ -15,19 +15,40 @@ class Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: CircleAvatar(
-        radius: radius,
-        backgroundColor: AppColors.surfacePlum,
-        backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
-        child: imageUrl == null
-            ? Icon(
-                Icons.camera_alt_outlined,
-                size: radius * 0.8,
-                color: AppColors.textSecondary,
-              )
-            : null,
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // Determine if imageUrl is a local file path or network URL
+    ImageProvider? imageProvider;
+    if (imageUrl != null) {
+      if (imageUrl!.startsWith('http://') || imageUrl!.startsWith('https://')) {
+        // Network image
+        imageProvider = NetworkImage(imageUrl!);
+      } else {
+        // Local file path
+        final file = File(imageUrl!);
+        if (file.existsSync()) {
+          imageProvider = FileImage(file);
+        }
+      }
+    }
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        child: CircleAvatar(
+          radius: radius,
+          backgroundColor: colorScheme.surfaceContainerHighest,
+          backgroundImage: imageProvider,
+          child: imageProvider == null
+              ? Icon(
+                  Icons.person_outline,
+                  size: radius * 0.8,
+                  color: colorScheme.onSurfaceVariant,
+                )
+              : null,
+        ),
       ),
     );
   }

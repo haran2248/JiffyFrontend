@@ -21,6 +21,7 @@ class OtpInputBoxes extends StatefulWidget {
 class _OtpInputBoxesState extends State<OtpInputBoxes> {
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
+  late List<FocusNode> _keyboardListenerNodes; // Dummy nodes for KeyboardListener
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
     _controllers =
         List.generate(widget.boxCount, (_) => TextEditingController());
     _focusNodes = List.generate(widget.boxCount, (_) => FocusNode());
+    _keyboardListenerNodes = List.generate(widget.boxCount, (_) => FocusNode());
 
     // Add listeners to trigger rebuilds when focus changes
     for (final node in _focusNodes) {
@@ -47,6 +49,10 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
     }
     for (final node in _focusNodes) {
       node.removeListener(_onFocusChange);
+      node.dispose();
+    }
+    // Dispose keyboard listener nodes
+    for (final node in _keyboardListenerNodes) {
       node.dispose();
     }
     super.dispose();
@@ -106,7 +112,7 @@ class _OtpInputBoxesState extends State<OtpInputBoxes> {
             ),
           ),
           child: KeyboardListener(
-            focusNode: FocusNode(), // Dummy node - TextField has its own
+            focusNode: _keyboardListenerNodes[index], // Reuse pre-created node
             onKeyEvent: (event) => _handleKeyEvent(index, event),
             child: TextField(
               controller: _controllers[index],
