@@ -16,6 +16,10 @@ class AppRoutes {
   static const String onboardingPermissions = '/onboarding/permissions';
   static const String phoneVerification = '/onboarding/phone-verification';
   static const String otpVerification = '/onboarding/otp-verification';
+  static const String onboardingPreferredGender =
+      '/onboarding/preferred-gender';
+  static const String onboardingRelationshipGoals =
+      '/onboarding/relationship-goals';
 
   // Main app screens (home is defined above in root section)
   static const String profileView = '/profile/:userId';

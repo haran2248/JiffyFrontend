@@ -94,12 +94,29 @@ class LoginScreen extends ConsumerWidget {
     });
 
     // Listen for auth state changes and navigate.
-    // This handles both fresh sign-ins AND session restoration from Firebase,
-    // since restored sessions trigger a state change from initial -> authenticated.
+    // This handles both fresh sign-ins AND session restoration from Firebase.
     ref.listen(authViewModelProvider, (previous, next) {
-      if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
-        // User just authenticated - check phone verification status
+      // Check if we effectively just finished authentication or loading
+      final wasNotAuthenticated = !(previous?.isAuthenticated ?? false);
+      final wasLoading = (previous?.isGoogleLoading ?? false) ||
+          (previous?.isAppleLoading ?? false);
+
+      // Trigger navigation if:
+      // 1. We just became authenticated
+      // 2. OR we finished a loading operation (e.g. Google Sign-In finished) and are authenticated
+      if (next.isAuthenticated && (wasNotAuthenticated || wasLoading)) {
+        debugPrint(
+            'LoginScreen: Auth state change detected. Authenticated: ${next.isAuthenticated}, Was loading: $wasLoading');
         _handlePostLoginNavigation(context, ref, next.userId);
+      }
+    });
+
+    // Check for existing session on initial build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authState.isAuthenticated && !authState.isLoading) {
+        debugPrint(
+            'LoginScreen: Found existing authenticated session. Navigating...');
+        _handlePostLoginNavigation(context, ref, authState.userId);
       }
     });
 

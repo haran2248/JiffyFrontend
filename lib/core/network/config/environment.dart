@@ -57,7 +57,8 @@ final class DevEnvironment extends Environment {
   const DevEnvironment();
 
   @override
-  String get baseUrl => 'http://localhost:5001';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'development';
@@ -80,7 +81,8 @@ final class StagingEnvironment extends Environment {
   const StagingEnvironment();
 
   @override
-  String get baseUrl => 'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'staging';
@@ -103,7 +105,8 @@ final class ProdEnvironment extends Environment {
   const ProdEnvironment();
 
   @override
-  String get baseUrl => 'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'production';

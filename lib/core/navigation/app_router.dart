@@ -9,6 +9,8 @@ import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart'
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/preferences/preferred_gender_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/preferences/relationship_goals_screen.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import '../../presentation/screens/chat/chat_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
@@ -74,6 +76,28 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const BasicsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingPreferredGender,
+        name: 'preferred-gender',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PreferredGenderScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingRelationshipGoals,
+        name: 'relationship-goals',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const RelationshipGoalsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         ),
       ),
       GoRoute(
