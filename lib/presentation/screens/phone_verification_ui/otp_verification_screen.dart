@@ -10,7 +10,7 @@ import 'widgets/info_notice_card.dart';
 import 'widgets/resend_code_text.dart';
 import 'widgets/verification_primary_button.dart';
 
-/// OTP verification screen for entering the 4-digit code.
+/// OTP verification screen for entering the verification code.
 ///
 /// Verifies the OTP code via API.
 /// Navigation: Back → Phone Number Screen, Forward → Profile Setup
@@ -39,8 +39,9 @@ class OtpVerificationScreen extends ConsumerWidget {
     });
 
     // Format phone number for display
-    final displayPhone =
-        state.phoneNumber.isNotEmpty ? state.phoneNumber : '+91 98765 43210';
+    final displayPhone = state.phoneNumber.isNotEmpty
+        ? state.phoneNumber
+        : 'Phone number not provided';
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -95,7 +96,9 @@ class OtpVerificationScreen extends ConsumerWidget {
                           height: 1.5,
                         ),
                         children: [
-                          const TextSpan(text: 'We sent a 4-digit code to '),
+                          TextSpan(
+                            text: 'We sent a ${state.otpLength}-digit code to ',
+                          ),
                           TextSpan(
                             text: displayPhone,
                             style: textTheme.bodyLarge?.copyWith(
@@ -111,6 +114,7 @@ class OtpVerificationScreen extends ConsumerWidget {
                     // OTP input boxes
                     Center(
                       child: OtpInputBoxes(
+                        boxCount: state.otpLength,
                         onCompleted: (code) {
                           viewModel.updateOtpCode(code);
                         },

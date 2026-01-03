@@ -61,6 +61,7 @@ class VerificationData {
   final String? timeout;
   final String? transactionId;
   final String? flowType;
+  final int otpLength;
 
   const VerificationData({
     this.verificationId,
@@ -69,6 +70,7 @@ class VerificationData {
     this.timeout,
     this.transactionId,
     this.flowType,
+    this.otpLength = 6, // Default to 6 digits
   });
 
   factory VerificationData.fromJson(Map<String, dynamic> json) {
@@ -79,6 +81,7 @@ class VerificationData {
       timeout: json['timeout'] as String?,
       transactionId: json['transactionId'] as String?,
       flowType: json['flowType'] as String?,
+      otpLength: json['otpLength'] as int? ?? 6, // Safe fallback to 6
     );
   }
 }
@@ -182,6 +185,7 @@ class PhoneVerificationState {
   final int resendCountdown;
   final bool isOtpSent;
   final bool isVerified;
+  final int otpLength;
 
   const PhoneVerificationState({
     this.phoneNumber = '',
@@ -194,10 +198,11 @@ class PhoneVerificationState {
     this.resendCountdown = 0,
     this.isOtpSent = false,
     this.isVerified = false,
+    this.otpLength = 6, // Default to 6 digits
   });
 
   bool get canSendOtp => phoneNumber.length >= 10 && !isSendingOtp;
-  bool get canVerifyOtp => otpCode.length == 4 && !isVerifyingOtp;
+  bool get canVerifyOtp => otpCode.length == otpLength && !isVerifyingOtp;
   bool get canResend => resendCountdown == 0 && !isSendingOtp;
 
   PhoneVerificationState copyWith({
@@ -211,6 +216,7 @@ class PhoneVerificationState {
     int? resendCountdown,
     bool? isOtpSent,
     bool? isVerified,
+    int? otpLength,
   }) {
     return PhoneVerificationState(
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -223,6 +229,7 @@ class PhoneVerificationState {
       resendCountdown: resendCountdown ?? this.resendCountdown,
       isOtpSent: isOtpSent ?? this.isOtpSent,
       isVerified: isVerified ?? this.isVerified,
+      otpLength: otpLength ?? this.otpLength,
     );
   }
 }

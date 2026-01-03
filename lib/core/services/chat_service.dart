@@ -49,7 +49,8 @@ class ChatService {
   Stream<QuerySnapshot> getMessages(String otherUserID) {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
-      throw Exception("No authenticated user found.");
+      // Return a failing stream instead of throwing synchronously
+      return Stream.error(Exception("No authenticated user found."));
     }
     String currentUserID = currentUser.uid;
     List<String> ids = [currentUserID, otherUserID];
