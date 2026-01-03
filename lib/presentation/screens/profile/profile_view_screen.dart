@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
-import "package:jiffy/core/services/service_providers.dart";
+import "package:jiffy/core/services/profile_service.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";

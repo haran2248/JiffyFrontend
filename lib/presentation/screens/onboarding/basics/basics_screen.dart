@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/core/services/permission_service.dart';
 import 'package:jiffy/core/config/image_size_config.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
@@ -65,15 +66,31 @@ class BasicsScreen extends ConsumerWidget {
                                 ),
                               );
                             } else if (imageFile == null && context.mounted) {
-                              // Permission denied or user cancelled
-                              // The service will have opened settings if permanently denied
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Photo access is required. Please enable it in Settings if needed.'),
-                                  duration: Duration(seconds: 4),
-                                ),
-                              );
+                              // Check if this was a permission issue or user cancellation
+                              final permissionService =
+                                  ref.read(permissionServiceProvider);
+                              final hasPermission =
+                                  await permissionService
+                                      .checkPhotoLibraryStatus();
+                              
+                              if (!hasPermission) {
+                                // Permission denied - show guidance
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Photo access is required. Please enable it in Settings if needed.'),
+                                    duration: Duration(seconds: 4),
+                                  ),
+                                );
+                              } else {
+                                // User cancelled - show neutral message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No photo selected'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
                             }
                           } catch (e) {
                             if (context.mounted) {

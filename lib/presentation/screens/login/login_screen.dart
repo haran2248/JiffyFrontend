@@ -11,6 +11,7 @@ import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/navigation_service.dart';
 import '../../../core/services/phone_verification_service.dart';
+import '../../../core/services/profile_service.dart';
 import 'widgets/login_branding_widget.dart';
 import 'widgets/login_error_message_widget.dart';
 import 'widgets/login_terms_text_widget.dart';
@@ -25,7 +26,7 @@ import 'widgets/social_sign_in_button_widget.dart';
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
-  /// Handle post-login navigation based on phone verification status.
+  /// Handle post-login navigation based on phone verification and onboarding status.
   Future<void> _handlePostLoginNavigation(
     BuildContext context,
     WidgetRef ref,
@@ -38,21 +39,35 @@ class LoginScreen extends ConsumerWidget {
     }
 
     try {
-      final service = ref.read(phoneVerificationServiceProvider);
-      final isVerified = await service.isPhoneVerified(uid: userId);
+      // First check if user has completed onboarding
+      final profileService = ref.read(profileServiceProvider);
+      final isOnboarded = await profileService.isOnboardingComplete(userId);
+
+      if (!context.mounted) return;
+
+      if (isOnboarded) {
+        // User has completed onboarding - go directly to home
+        debugPrint('LoginScreen: User already onboarded, going to home');
+        context.goToRoute(AppRoutes.home);
+        return;
+      }
+
+      // User hasn't completed onboarding - check phone verification
+      final phoneService = ref.read(phoneVerificationServiceProvider);
+      final isVerified = await phoneService.isPhoneVerified(uid: userId);
 
       if (!context.mounted) return;
 
       if (isVerified) {
-        debugPrint('LoginScreen: Phone already verified, skipping to basics');
+        debugPrint('LoginScreen: Phone verified but not onboarded, going to basics');
         context.goToRoute(AppRoutes.onboardingBasics);
       } else {
         debugPrint('LoginScreen: Phone not verified, going to verification');
         context.goToRoute(AppRoutes.phoneVerification);
       }
     } catch (e) {
-      debugPrint('LoginScreen: Error checking verification status: $e');
-      // On error, go to verification to be safe
+      debugPrint('LoginScreen: Error checking user status: $e');
+      // On error, go to phone verification to be safe
       if (context.mounted) {
         context.goToRoute(AppRoutes.phoneVerification);
       }
@@ -69,8 +84,18 @@ class LoginScreen extends ConsumerWidget {
     final signinToggleAsync = ref.watch(signinToggleConfigProvider);
     final signinToggle = signinToggleAsync.value ?? const SigninToggleConfig();
 
-    // Listen for auth state changes and navigate
-    // Navigate when user is authenticated and not loading
+    // Check initial auth state (handles case where user is already authenticated on mount)
+    // Use a post-frame callback to ensure the screen renders first
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (authState.isAuthenticated && !authState.isLoading) {
+        debugPrint('[LoginScreen] User already authenticated on mount, checking phone verification');
+        _handlePostLoginNavigation(context, ref, authState.userId);
+      }
+    });
+
+    // Listen for auth state changes and navigate.
+    // This handles both fresh sign-ins AND session restoration from Firebase,
+    // since restored sessions trigger a state change from initial -> authenticated.
     ref.listen(authViewModelProvider, (previous, next) {
       if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
         // User just authenticated - check phone verification status

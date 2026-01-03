@@ -21,8 +21,7 @@ class PermissionService {
   }
 
   Future<bool> requestPhotoLibraryPermission() async {
-    // Just request - let the system handle showing the dialog
-    // This matches how location and notifications work
+    // Just request - let the system show the dialog. Only open settings if permanently denied.
     final status = await Permission.photos.request();
     debugPrint('[PermissionService] Photo library permission status: ${status.toString()}');
     
@@ -40,8 +39,7 @@ class PermissionService {
   }
 
   Future<bool> requestCameraPermission() async {
-    // Just request - let the system handle showing the dialog
-    // This matches how location and notifications work
+    // Just request - let the system show the dialog. Only open settings if permanently denied.
     final status = await Permission.camera.request();
     debugPrint('[PermissionService] Camera permission status: ${status.toString()}');
     

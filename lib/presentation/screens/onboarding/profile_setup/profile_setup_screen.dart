@@ -79,8 +79,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         child: Column(
           children: [
             ProgressBar(
-              currentStep: 4,
-              totalSteps: 4,
+              currentStep: formData.currentStep,
+              totalSteps: 3,
             ),
             const SizedBox(height: 8),
             Expanded(

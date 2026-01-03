@@ -63,7 +63,8 @@ class ProfileCuratedScreen extends ConsumerWidget {
           ? FinalizeProfileButton(
               onTap: () {
                 viewModel.onFinalizeProfile();
-                context.pushRoute(AppRoutes.onboardingPermissions);
+                // Navigate to home screen after finalizing profile
+                context.goToRoute(AppRoutes.home);
               },
               isLoading: state.isLoading,
             )

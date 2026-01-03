@@ -155,6 +155,10 @@ class PhotoUploadService {
     int? height,
   }) async {
     try {
+      // Apply default width/height if not provided
+      final targetWidth = width ?? ImageSizeConfig.profilePhotoSize;
+      final targetHeight = height ?? ImageSizeConfig.profilePhotoSize;
+      
       // Convert aspect ratio to ratioX:ratioY format
       // For 1.0 (square): 1:1
       // For 0.75 (3:4): 3:4
@@ -190,8 +194,8 @@ class PhotoUploadService {
         ],
         compressFormat: ImageCompressFormat.jpg,
         compressQuality: ImageSizeConfig.compressionQuality,
-        maxWidth: width,
-        maxHeight: height,
+        maxWidth: targetWidth,
+        maxHeight: targetHeight,
       );
 
       if (croppedFile == null) {
@@ -302,9 +306,9 @@ class PhotoUploadService {
   (int, int) _findClosestRatio(double aspectRatio) {
     // Try common denominators
     for (int denom = 1; denom <= 20; denom++) {
-      final num = (aspectRatio * denom).round();
-      if ((aspectRatio - num / denom).abs() < 0.01) {
-        return (num, denom);
+      final numerator = (aspectRatio * denom).round();
+      if ((aspectRatio - numerator / denom).abs() < 0.01) {
+        return (numerator, denom);
       }
     }
     // Fallback to a simple approximation
