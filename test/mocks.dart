@@ -20,6 +20,18 @@ class MockPermissionService implements PermissionService {
     _notificationGranted = true;
     return true;
   }
+
+  @override
+  Future<bool> requestPhotoLibraryPermission() async => true;
+
+  @override
+  Future<bool> checkPhotoLibraryStatus() async => true;
+
+  @override
+  Future<bool> requestCameraPermission() async => true;
+
+  @override
+  Future<bool> checkCameraStatus() async => true;
 }
 
 class MockNotificationService implements NotificationService {

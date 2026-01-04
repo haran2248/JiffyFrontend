@@ -124,7 +124,8 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            context.pushRoute(AppRoutes.onboardingCoPilotIntro);
+                            context
+                                .pushRoute(AppRoutes.onboardingPreferredGender);
                           }
                         }
                       : () {},
