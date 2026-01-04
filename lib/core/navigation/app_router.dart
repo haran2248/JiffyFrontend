@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/design_system_page.dart';
@@ -20,6 +19,9 @@ import 'package:jiffy/presentation/screens/profile_curated/profile_curated_scree
 import 'package:jiffy/presentation/screens/phone_verification_ui/phone_number_screen.dart';
 import 'package:jiffy/presentation/screens/phone_verification_ui/otp_verification_screen.dart';
 import 'package:jiffy/presentation/screens/matches/matches_screen.dart';
+import 'package:jiffy/presentation/screens/stories/story_viewer_screen.dart';
+import 'package:jiffy/presentation/screens/stories/story_creation_screen.dart';
+import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -251,6 +253,55 @@ GoRouter appRouter(Ref ref) {
             },
           );
         },
+      ),
+
+      // Story screens
+      GoRoute(
+        path: AppRoutes.storyViewer,
+        name: RouteNames.storyViewer,
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final stories = extra?['stories'] as List<Story>?;
+          final initialStoryIndex = extra?['initialStoryIndex'] as int? ?? 0;
+          final initialContentIndex = extra?['initialContentIndex'] as int? ?? 0;
+
+          if (stories == null || stories.isEmpty) {
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: Scaffold(
+                body: Center(
+                  child: Text(
+                    'No stories to display',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: StoryViewerScreen(
+              stories: stories,
+              initialStoryIndex: initialStoryIndex,
+              initialContentIndex: initialContentIndex,
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.storyCreation,
+        name: RouteNames.storyCreation,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const StoryCreationScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
 
       // Utility screens

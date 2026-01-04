@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
-import 'package:jiffy/core/services/service_providers.dart';
-import 'package:jiffy/core/config/image_size_config.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/trending_card_widget.dart';
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
+import 'package:jiffy/presentation/screens/stories/story_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
 
@@ -203,28 +202,25 @@ class HomeScreen extends ConsumerWidget {
             story: story,
             onTap: () async {
               if (story.isUserStory) {
-                // User's own story - allow photo upload
-                final photoUploadService = ref.read(photoUploadServiceProvider);
-                final imageFile = await photoUploadService.pickAndCropImage(
-                  aspectRatio: ImageSizeConfig.profilePhotoAspectRatio,
-                  width: ImageSizeConfig.profilePhotoSize,
-                  height: ImageSizeConfig.profilePhotoSize,
-                );
-                
-                if (imageFile != null) {
-                  // TODO: Upload story image to server
-                  // For now, just show a snackbar
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Story photo selected! Upload functionality coming soon.'),
-                      ),
-                    );
-                  }
+                // User's own story - navigate to story creation
+                if (context.mounted) {
+                  context.navigation.pushNamed(RouteNames.storyCreation);
                 }
               } else {
                 // Other user's story - view story
-                // TODO: Navigate to story viewer
+                final allStories = StoryHelpers.storyItemsToStories(stories);
+                final storyIndex = allStories.indexWhere((s) => s.userId == story.userId);
+                
+                if (context.mounted && storyIndex != -1) {
+                  context.navigation.pushNamed(
+                    RouteNames.storyViewer,
+                    extra: {
+                      'stories': allStories,
+                      'initialStoryIndex': storyIndex,
+                      'initialContentIndex': 0,
+                    },
+                  );
+                }
               }
             },
           );
