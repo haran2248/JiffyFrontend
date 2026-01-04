@@ -8,7 +8,6 @@ import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
-import 'package:jiffy/presentation/screens/home/widgets/trending_card_widget.dart';
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
@@ -66,6 +65,7 @@ class HomeScreen extends ConsumerWidget {
 
                         const SizedBox(height: 24),
 
+                        /*
                         // Trending in your area Section
                         if (state.data!.trendingItems.isNotEmpty)
                           _buildTrendingSection(
@@ -74,6 +74,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
 
                         const SizedBox(height: 24),
+                        */
 
                         // Current Matches Section
                         _buildCurrentMatchesSection(
@@ -210,14 +211,15 @@ class HomeScreen extends ConsumerWidget {
                   width: ImageSizeConfig.profilePhotoSize,
                   height: ImageSizeConfig.profilePhotoSize,
                 );
-                
+
                 if (imageFile != null) {
                   // TODO: Upload story image to server
                   // For now, just show a snackbar
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Story photo selected! Upload functionality coming soon.'),
+                        content: Text(
+                            'Story photo selected! Upload functionality coming soon.'),
                       ),
                     );
                   }
@@ -279,6 +281,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /*
   Widget _buildTrendingSection(
       BuildContext context, List<TrendingItem> trendingItems) {
     final textTheme = Theme.of(context).textTheme;
@@ -318,6 +321,7 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+  */
 
   Widget _buildCurrentMatchesSection(
       BuildContext context, List<SuggestionCard> matches) {

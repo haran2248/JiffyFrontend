@@ -58,12 +58,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
+        // Removed top border for cleaner look
       ),
       child: SafeArea(
         top: false,
@@ -74,36 +69,35 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 controller: _controller,
                 focusNode: _focusNode,
                 enabled: widget.isEnabled,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white, // AppColors.textPrimary
+                    ),
+                cursorColor:
+                    const Color(0xFFD81B60), // AppColors.primaryRaspberry
                 decoration: InputDecoration(
                   hintText: "Type your response...",
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color:
+                            const Color(0xFFB0A8BF), // AppColors.textSecondary
                       ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
+                  fillColor: const Color(0xFF2A1B3D), // AppColors.surfacePlum
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 20,
+                    vertical: 14,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outline,
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF8E24AA), // AppColors.primaryViolet
                       width: 1.5,
                     ),
                   ),
@@ -118,10 +112,10 @@ class _ChatInputFieldState extends State<ChatInputField> {
               height: 48,
               decoration: BoxDecoration(
                 gradient: widget.isEnabled
-                    ? LinearGradient(
+                    ? const LinearGradient(
                         colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
+                          Color(0xFFD81B60), // AppColors.primaryRaspberry
+                          Color(0xFF8E24AA), // AppColors.primaryViolet
                         ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
@@ -129,20 +123,15 @@ class _ChatInputFieldState extends State<ChatInputField> {
                     : null,
                 color: widget.isEnabled
                     ? null
-                    : Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withValues(alpha: 0.5),
+                    : const Color(0xFF2A1B3D)
+                        .withOpacity(0.5), // AppColors.surfacePlum
                 shape: BoxShape.circle,
                 boxShadow: widget.isEnabled
                     ? [
                         BoxShadow(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .secondary
-                              .withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: const Color(0xFF8E24AA).withOpacity(0.4),
+                          blurRadius: 12, // Increased blur for softer glow
+                          offset: const Offset(0, 4),
                         ),
                       ]
                     : null,
