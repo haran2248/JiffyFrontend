@@ -17,7 +17,7 @@ class ChatActionChip extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       child: Material(
-        color: const Color(0xFF2A2A35), // Dark grey background
+        color: const Color(0xFF2A1B3D), // AppColors.surfacePlum
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -28,13 +28,16 @@ class ChatActionChip extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 16, color: Colors.amber),
+                  Icon(icon,
+                      size: 16,
+                      color: const Color(
+                          0xFFD81B60)), // AppColors.primaryRaspberry
                   const SizedBox(width: 8),
                 ],
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.white, // AppColors.textPrimary
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),

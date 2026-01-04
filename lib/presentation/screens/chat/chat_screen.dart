@@ -48,9 +48,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final chatState = ref.watch(chatViewModelProvider(widget.otherUserId));
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E24), // Dark background from design
+      backgroundColor: const Color(0xFF0D0B14), // AppColors.midnightPlum
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E24),
+        backgroundColor: const Color(0xFF0D0B14),
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
