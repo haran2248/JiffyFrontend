@@ -66,9 +66,16 @@ class OnboardingRepository {
         queryParameters: {'uid': uid},
       );
 
-      if (response.statusCode != 201 && response.statusCode != 200) {
+      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
         throw Exception(
             "Failed to save desired qualities: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to save desired qualities: ${e.response?.statusCode} - ${e.response?.data}");
+      } else {
+        throw Exception("Network error saving desired qualities: ${e.message}");
       }
     } catch (e) {
       throw Exception("Error saving desired qualities: $e");
