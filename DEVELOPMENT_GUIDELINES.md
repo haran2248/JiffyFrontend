@@ -7,6 +7,7 @@ This document outlines architectural standards, state management patterns, and t
 **Related Documents:**
 - `LINTER_GUIDELINES.md` - Code quality, deprecation fixes, and linter rules
 - `DESIGN_SYSTEM.md` - Design tokens, colors, and typography
+- `NETWORK_ARCHITECTURE.md` - Network calls, data flow, and state management patterns
 - `lib/core/navigation/README.md` - Navigation framework documentation
 
 ---
@@ -42,18 +43,28 @@ This document outlines architectural standards, state management patterns, and t
 - Use `copyWith` for all state updates
 - Validation logic goes in model class
 
-**5. Navigation:**
+**5. Network Architecture & Data Flow:**
+- **Standard Flow**: Screen → ViewModel → Repository → Service → API (complex) OR Screen → ViewModel → Service → API (simple)
+- **API Endpoints**: Define all endpoints in `data/[feature]_api_endpoints.dart` (Repository) or `core/services/api/[feature]_api_endpoints.dart` (Service) - NO hardcoded strings
+- **ViewModels**: Manage state (`data`, `isLoading`, `error`), catch `ApiError`, update state with `copyWith`
+- **Repositories** (optional): Transform API data to domain models, aggregate multiple sources, convert `DioException` to `ApiError`
+- **Services**: Direct API calls, return domain models, basic error handling
+- **Error Handling**: All `DioException` → `ApiError` at network boundary, ViewModel catches `ApiError` and updates state, Screen displays error from state
+- **State Pattern**: Always use State class with `data`, `isLoading`, `error` fields and `copyWith` method
+- See `NETWORK_ARCHITECTURE.md` for detailed patterns, templates, and decision guide
+
+**6. Navigation:**
 - ❌ Never use `Navigator.push/pop` directly
 - ✅ Always use navigation extension methods: `context.pushRoute()`, `context.replaceRoute()`, `context.goToRoute()`, `context.popRoute()`
 - ✅ Use route constants from `AppRoutes` class (never hardcode route strings)
 - ✅ For modal bottom sheets, `Navigator.pop()` is acceptable (not routing)
 
-**6. Testing:**
+**7. Testing:**
 - Wrap test widgets with `ProviderScope`
 - Use `pump()` not `pumpAndSettle()` for animated widgets
 - Test both success and failure states
 
-**7. Generated Files:**
+**8. Generated Files:**
 - ❌ Never edit `GeneratedPluginRegistrant.java`
 - ❌ Never edit `*.g.dart` or `*.freezed.dart` files
 - ✅ Regenerate with `dart run build_runner build`

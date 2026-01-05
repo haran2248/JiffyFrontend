@@ -1,12 +1,16 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import 'package:jiffy/presentation/screens/stories/story_image_compositor.dart';
 import 'package:jiffy/presentation/screens/stories/story_overlay_colors.dart';
 
 /// Screen for creating a new story with photo and text overlay
@@ -29,6 +33,8 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
       {}; // Track accumulated delta per overlay
   bool _isDragging = false;
   bool _isOverDeleteButton = false; // Track if finger is over delete button
+  bool _isUploading = false; // Track upload state
+  CancelToken? _uploadCancelToken; // Cancel token for upload cancellation
   final GlobalKey _stackKey = GlobalKey();
   final GlobalKey _deleteButtonKey = GlobalKey();
 
@@ -40,6 +46,8 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
 
   @override
   void dispose() {
+    // Cancel any in-flight uploads when screen is disposed
+    _uploadCancelToken?.cancel();
     super.dispose();
   }
 
@@ -124,17 +132,102 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   }
 
   Future<void> _saveStory() async {
-    if (_selectedImage == null) return;
+    if (_selectedImage == null || _isUploading) return;
 
-    // TODO: Upload story to backend with overlays
-    // For now, just show a message and go back
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Story saved! (Upload functionality coming soon)'),
-        ),
+    // Create cancel token for this upload
+    _uploadCancelToken = CancelToken();
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    File? compositedImageFile;
+    try {
+      // Composite text overlays onto the image
+      compositedImageFile = await StoryImageCompositor.compositeImage(
+        imageFile: _selectedImage!,
+        overlays: _overlays,
       );
-      context.popRoute();
+
+      final repository = ref.read(storiesRepositoryProvider);
+      await repository.uploadStory(
+        imageFile: compositedImageFile,
+        cancelToken: _uploadCancelToken,
+      );
+
+      // Clean up temporary composited file if it's different from original
+      if (compositedImageFile.path != _selectedImage!.path) {
+        try {
+          await compositedImageFile.delete();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isUploading = false; // Reset upload state on success
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Story uploaded successfully!'),
+          ),
+        );
+        context.popRoute();
+      }
+    } catch (e) {
+      if (e is DioException) {
+        // Handle cancellation separately - don't show error for user-initiated cancellation
+        if (e.type == DioExceptionType.cancel) {
+          if (mounted) {
+            setState(() {
+              _isUploading = false;
+            });
+          }
+          return;
+        }
+        // Handle DioException errors
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Failed to upload story: ${e.message ?? 'Unknown error'}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      } else if (e is ApiError) {
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload story: ${e.message}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      } else {
+        // Handle other errors
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload story: ${e.toString()}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    } finally {
+      // Clean up cancel token
+      _uploadCancelToken = null;
     }
   }
 
@@ -392,22 +485,36 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
-                      onTap: _selectedImage != null ? _saveStory : null,
+                      onTap: (_selectedImage != null && !_isUploading)
+                          ? _saveStory
+                          : null,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         alignment: Alignment.center,
-                        child: Text(
-                          'Post',
-                          style: TextStyle(
-                            color: _selectedImage != null
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.5),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: _isUploading
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                'Post',
+                                style: TextStyle(
+                                  color:
+                                      (_selectedImage != null && !_isUploading)
+                                          ? Colors.white
+                                          : Colors.white.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                   ),

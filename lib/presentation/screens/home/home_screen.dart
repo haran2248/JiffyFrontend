@@ -7,6 +7,8 @@ import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
+import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
+import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
 import 'package:jiffy/presentation/screens/stories/story_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
@@ -203,9 +205,25 @@ class HomeScreen extends ConsumerWidget {
             story: story,
             onTap: () async {
               if (story.isUserStory) {
-                // User's own story - navigate to story creation screen
-                if (context.mounted) {
-                  context.navigation.pushNamed(RouteNames.storyCreation);
+                // User's own story - check if they have stories
+                final repository = ref.read(storiesRepositoryProvider);
+                try {
+                  final userStoriesJson = await repository.fetchUserStories();
+
+                  if (context.mounted) {
+                    if (userStoriesJson.isNotEmpty) {
+                      // User has stories - show options to view or add new
+                      _showUserStoryOptions(context, ref, userStoriesJson);
+                    } else {
+                      // No stories - open creation screen directly
+                      context.navigation.pushNamed(RouteNames.storyCreation);
+                    }
+                  }
+                } catch (e) {
+                  // On error, default to opening creation screen
+                  if (context.mounted) {
+                    context.navigation.pushNamed(RouteNames.storyCreation);
+                  }
                 }
               } else {
                 // Other user's story - view story
@@ -227,6 +245,96 @@ class HomeScreen extends ConsumerWidget {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _showUserStoryOptions(
+    BuildContext context,
+    WidgetRef ref,
+    List<Map<String, dynamic>> userStoriesJson,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    // Capture stable context for navigation (outer screen context, not builder context)
+    final stableContext = context;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // View Stories option
+              ListTile(
+                leading: Icon(Icons.visibility, color: colorScheme.primary),
+                title: Text(
+                  'View Stories',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                onTap: () {
+                  // Convert stories before popping
+                  final userStories = userStoriesJson
+                      .map((json) => StoryApiHelpers.storyFromApiJson(json))
+                      .toList();
+                  Navigator.of(sheetContext).pop();
+                  // Use stable context for navigation
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (stableContext.mounted) {
+                      stableContext.navigation.pushNamed(
+                        RouteNames.storyViewer,
+                        extra: {
+                          'stories': userStories,
+                          'initialStoryIndex': 0,
+                          'initialContentIndex': 0,
+                        },
+                      );
+                    }
+                  });
+                },
+              ),
+              // Add New Story option
+              ListTile(
+                leading: Icon(Icons.add_circle, color: colorScheme.primary),
+                title: Text(
+                  'Add New Story',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  // Use stable context for navigation
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (stableContext.mounted) {
+                      stableContext.navigation
+                          .pushNamed(RouteNames.storyCreation);
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }

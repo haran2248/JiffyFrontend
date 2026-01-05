@@ -245,7 +245,8 @@ class PhotoUploadService {
       debugPrint(
           "[PhotoUploadService] Current iOS photos permission: ${currentStatus.toString()}");
 
-      if (currentStatus.isGranted) {
+      // On iOS, both granted and limited permissions allow image picking
+      if (currentStatus.isGranted || currentStatus.isLimited) {
         return true;
       }
 
@@ -259,7 +260,8 @@ class PhotoUploadService {
       final status = await Permission.photos.request();
       debugPrint(
           "[PhotoUploadService] iOS photos permission after request: ${status.toString()}");
-      return status.isGranted;
+      // On iOS, both granted and limited permissions allow image picking
+      return status.isGranted || status.isLimited;
     }
 
     debugPrint("[PhotoUploadService] Platform not supported for photo library");
@@ -273,7 +275,8 @@ class PhotoUploadService {
       return status.isGranted;
     } else if (Platform.isIOS) {
       final status = await Permission.photos.status;
-      return status.isGranted;
+      // On iOS, both granted and limited permissions allow image picking
+      return status.isGranted || status.isLimited;
     }
     return false;
   }

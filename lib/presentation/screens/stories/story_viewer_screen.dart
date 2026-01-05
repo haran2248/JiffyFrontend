@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'package:jiffy/presentation/widgets/avatar.dart';
@@ -31,6 +32,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   late int _currentContentIndex;
   Timer? _timer;
   bool _isPaused = false;
+  bool _isImageLoaded = false; // Track if current image has loaded
   static const Duration _storyDuration = Duration(seconds: 5);
 
   @override
@@ -39,7 +41,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     _currentStoryIndex = widget.initialStoryIndex;
     _currentContentIndex = widget.initialContentIndex;
     _storyPageController = PageController(initialPage: _currentStoryIndex);
-    _startTimer();
+    // Don't start timer here - wait for image to load
+    _isImageLoaded = false;
   }
 
   @override
@@ -64,10 +67,12 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
     if (_currentContentIndex < currentStory.contents.length - 1) {
       // Move to next content in same story
+      _timer?.cancel();
       setState(() {
         _currentContentIndex++;
+        _isImageLoaded = false; // Reset image loaded state
       });
-      _startTimer();
+      // Don't start timer here - wait for image to load
     } else {
       // Move to next story
       _nextStory();
@@ -76,10 +81,12 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
   void _previousContent() {
     if (_currentContentIndex > 0) {
+      _timer?.cancel();
       setState(() {
         _currentContentIndex--;
+        _isImageLoaded = false; // Reset image loaded state
       });
-      _startTimer();
+      // Don't start timer here - wait for image to load
     } else {
       // Move to previous story
       _previousStory();
@@ -128,49 +135,81 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     setState(() {
       _currentStoryIndex = index;
       _currentContentIndex = 0;
+      _isImageLoaded = false; // Reset image loaded state
     });
-    // Restart timer for new story
+    // Don't start timer here - wait for image to load
+  }
+
+  void _onImageLoaded() {
+    if (!mounted) return;
+    setState(() {
+      _isImageLoaded = true;
+    });
+    // Start timer after image is loaded
     _startTimer();
   }
 
   /// Build tap zone indicators (left/right chevrons) when paused
+  /// Tap zones remain full-width for gesture detection, but visual indicators are smaller and shadowed
   List<Widget> _buildTapZoneIndicators() {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return [
-      // Left indicator
+      // Left indicator - full width for tap detection, but smaller shadowed visual
       Positioned(
         left: 0,
         top: 0,
         bottom: 0,
         width: screenWidth / 3,
         child: IgnorePointer(
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.3),
-            child: const Center(
-              child: Icon(
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Icon(
                 Icons.chevron_left,
                 color: Colors.white,
-                size: 48,
+                size: 24,
               ),
             ),
           ),
         ),
       ),
-      // Right indicator
+      // Right indicator - full width for tap detection, but smaller shadowed visual
       Positioned(
         right: 0,
         top: 0,
         bottom: 0,
         width: screenWidth / 3,
         child: IgnorePointer(
-          child: Container(
-            color: Colors.black.withValues(alpha: 0.3),
-            child: const Center(
-              child: Icon(
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Icon(
                 Icons.chevron_right,
                 color: Colors.white,
-                size: 48,
+                size: 24,
               ),
             ),
           ),
@@ -180,8 +219,26 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   }
 
   void _onTap(TapDownDetails details) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
     final tapX = details.globalPosition.dx;
+    final tapY = details.globalPosition.dy;
+
+    // Exclude top bar area from gesture handling (top bar is at padding.top + 40, with ~60px height)
+    final topBarTop = MediaQuery.of(context).padding.top + 40;
+    final topBarBottom = topBarTop + 60; // Approximate top bar height
+    if (tapY >= topBarTop && tapY <= topBarBottom) {
+      // Tap is in top bar area, let the buttons handle it
+      return;
+    }
+
+    // Exclude bottom counter area
+    final bottomCounterTop =
+        screenSize.height - MediaQuery.of(context).padding.bottom - 50;
+    if (tapY >= bottomCounterTop) {
+      // Tap is in bottom counter area
+      return;
+    }
 
     if (tapX < screenWidth / 3) {
       // Left side - previous
@@ -201,6 +258,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTapDown: _onTap,
+        behavior: HitTestBehavior.translucent,
         child: Stack(
           children: [
             // Story content
@@ -216,6 +274,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                   story: story,
                   contentIndex:
                       index == _currentStoryIndex ? _currentContentIndex : 0,
+                  onImageLoaded:
+                      index == _currentStoryIndex ? _onImageLoaded : null,
                 );
               },
             ),
@@ -226,9 +286,12 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               left: 0,
               right: 0,
               child: _StoryProgressIndicator(
+                key: ValueKey(
+                    'progress_${_currentStoryIndex}_${_currentContentIndex}'),
                 story: widget.stories[_currentStoryIndex],
                 currentIndex: _currentContentIndex,
-                isPaused: _isPaused,
+                isPaused: _isPaused ||
+                    !_isImageLoaded, // Pause progress bar if image not loaded
               ),
             ),
 
@@ -254,7 +317,10 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
             ),
 
-            // Top bar with user info and controls
+            // Tap zone indicators when paused (must come before top bar to not block it)
+            if (_isPaused) ..._buildTapZoneIndicators(),
+
+            // Top bar with user info and controls (after tap zones to ensure it's on top)
             Positioned(
               top: MediaQuery.of(context).padding.top + 40,
               left: 0,
@@ -267,25 +333,29 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
             ),
 
-            // Pause indicator
+            // Pause indicator (shows play icon when paused)
             if (_isPaused)
               Center(
                 child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: const Icon(
-                    Icons.pause,
+                    Icons.play_arrow,
                     color: Colors.white,
-                    size: 48,
+                    size: 24,
                   ),
                 ),
               ),
-
-            // Tap zone indicators when paused
-            if (_isPaused) ..._buildTapZoneIndicators(),
 
             // Story counter at bottom
             Positioned(
@@ -308,11 +378,13 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 class _StoryContentPage extends StatefulWidget {
   final Story story;
   final int contentIndex;
+  final VoidCallback? onImageLoaded;
 
   const _StoryContentPage({
     super.key,
     required this.story,
     required this.contentIndex,
+    this.onImageLoaded,
   });
 
   @override
@@ -321,6 +393,17 @@ class _StoryContentPage extends StatefulWidget {
 
 class _StoryContentPageState extends State<_StoryContentPage> {
   final GlobalKey _stackKey = GlobalKey();
+  bool _hasCalledImageLoaded = false;
+
+  @override
+  void didUpdateWidget(_StoryContentPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset flag if story or content index changed
+    if (oldWidget.story.id != widget.story.id ||
+        oldWidget.contentIndex != widget.contentIndex) {
+      _hasCalledImageLoaded = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -347,10 +430,7 @@ class _StoryContentPageState extends State<_StoryContentPage> {
       children: [
         // Image
         content.isLocal
-            ? Image.file(
-                File(content.imageUrl),
-                fit: BoxFit.cover,
-              )
+            ? _buildLocalImage()
             : Image.network(
                 content.imageUrl,
                 fit: BoxFit.cover,
@@ -367,7 +447,19 @@ class _StoryContentPageState extends State<_StoryContentPage> {
                   );
                 },
                 loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
+                  if (loadingProgress == null) {
+                    // Image has finished loading - call callback once
+                    if (!_hasCalledImageLoaded &&
+                        widget.onImageLoaded != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && !_hasCalledImageLoaded) {
+                          _hasCalledImageLoaded = true;
+                          widget.onImageLoaded?.call();
+                        }
+                      });
+                    }
+                    return child;
+                  }
                   return Container(
                     color: Colors.grey[900],
                     child: Center(
@@ -385,6 +477,24 @@ class _StoryContentPageState extends State<_StoryContentPage> {
         // Render all text overlays (non-interactive, viewing mode)
         ..._buildOverlays(context, content),
       ],
+    );
+  }
+
+  /// Build local image widget (for images that are already on device)
+  Widget _buildLocalImage() {
+    // For local images, we can assume they're already "loaded"
+    // Call the callback immediately
+    if (!_hasCalledImageLoaded && widget.onImageLoaded != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasCalledImageLoaded) {
+          _hasCalledImageLoaded = true;
+          widget.onImageLoaded?.call();
+        }
+      });
+    }
+    return Image.file(
+      File(widget.story.contents[widget.contentIndex].imageUrl),
+      fit: BoxFit.cover,
     );
   }
 
@@ -449,6 +559,7 @@ class _StoryProgressIndicator extends StatelessWidget {
   final bool isPaused;
 
   const _StoryProgressIndicator({
+    super.key,
     required this.story,
     required this.currentIndex,
     required this.isPaused,
@@ -468,6 +579,7 @@ class _StoryProgressIndicator extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: _StoryProgressBar(
+                key: ValueKey('${story.id}_progress_$index'),
                 isActive: index == currentIndex,
                 isCompleted: index < currentIndex,
                 isPaused: isPaused && index == currentIndex,
@@ -487,6 +599,7 @@ class _StoryProgressBar extends StatefulWidget {
   final bool isPaused;
 
   const _StoryProgressBar({
+    super.key,
     required this.isActive,
     required this.isCompleted,
     required this.isPaused,
@@ -566,7 +679,7 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
 }
 
 /// Top bar with user info and close button
-class _StoryTopBar extends StatelessWidget {
+class _StoryTopBar extends ConsumerWidget {
   final Story story;
   final bool isPaused;
   final VoidCallback onClose;
@@ -580,7 +693,17 @@ class _StoryTopBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Check if this is the current user's story
+    final authRepo = ref.read(authRepositoryProvider);
+    final currentUser = authRepo.currentUser;
+    final isCurrentUserStory =
+        currentUser != null && story.userId == currentUser.uid;
+
+    // Determine display name
+    final displayName =
+        isCurrentUserStory ? 'Your Story' : (story.userName ?? 'Unknown');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -606,7 +729,7 @@ class _StoryTopBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  story.userName ?? 'Unknown',
+                  displayName,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
