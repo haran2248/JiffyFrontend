@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/design_system_page.dart';
@@ -20,6 +19,9 @@ import 'package:jiffy/presentation/screens/profile_curated/profile_curated_scree
 import 'package:jiffy/presentation/screens/phone_verification_ui/phone_number_screen.dart';
 import 'package:jiffy/presentation/screens/phone_verification_ui/otp_verification_screen.dart';
 import 'package:jiffy/presentation/screens/matches/matches_screen.dart';
+import 'package:jiffy/presentation/screens/stories/story_viewer_screen.dart';
+import 'package:jiffy/presentation/screens/stories/story_creation_screen.dart';
+import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -251,6 +253,93 @@ GoRouter appRouter(Ref ref) {
             },
           );
         },
+      ),
+
+      // Story screens
+      GoRoute(
+        path: AppRoutes.storyViewer,
+        name: RouteNames.storyViewer,
+        pageBuilder: (context, state) {
+          // Safely extract extra data, falling back to null if type is incorrect
+          final extra = state.extra is Map<String, dynamic>
+              ? state.extra as Map<String, dynamic>
+              : null;
+
+          // Safely extract stories list, validating type
+          List<Story>? stories;
+          if (extra != null && extra['stories'] is List) {
+            try {
+              final storiesList = extra['stories'] as List;
+              // Validate that all items are Story instances
+              if (storiesList.every((item) => item is Story)) {
+                stories = storiesList.cast<Story>();
+              }
+            } catch (_) {
+              // Type mismatch, stories remains null
+            }
+          }
+
+          // Safely extract indices with type validation
+          int initialStoryIndex = 0;
+          if (extra != null && extra['initialStoryIndex'] != null) {
+            final value = extra['initialStoryIndex'];
+            if (value is int) {
+              initialStoryIndex = value;
+            } else if (value is num) {
+              initialStoryIndex = value.toInt();
+            }
+            // If value is not a number, defaults to 0
+          }
+
+          int initialContentIndex = 0;
+          if (extra != null && extra['initialContentIndex'] != null) {
+            final value = extra['initialContentIndex'];
+            if (value is int) {
+              initialContentIndex = value;
+            } else if (value is num) {
+              initialContentIndex = value.toInt();
+            }
+            // If value is not a number, defaults to 0
+          }
+
+          if (stories == null || stories.isEmpty) {
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: Scaffold(
+                body: Center(
+                  child: Text(
+                    'No stories to display',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: StoryViewerScreen(
+              stories: stories,
+              initialStoryIndex: initialStoryIndex,
+              initialContentIndex: initialContentIndex,
+            ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.storyCreation,
+        name: RouteNames.storyCreation,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const StoryCreationScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
 
       // Utility screens

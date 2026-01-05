@@ -27,6 +27,8 @@ class AppRoutes {
   static const String profileCurated = '/onboarding/profile-curated';
   static const String discover = '/discover';
   static const String chat = '/chat/:userId';
+  static const String storyViewer = '/stories/viewer';
+  static const String storyCreation = '/stories/create';
   // static const String settings = '/settings';
 
   // Utility/debug screens
@@ -51,6 +53,8 @@ class RouteNames {
   static const String discover = 'discover';
   static const String chat = 'chat';
   static const String matches = 'matches';
+  static const String storyViewer = 'story-viewer';
+  static const String storyCreation = 'story-creation';
   static const String designSystem = 'design-system';
 }
 
