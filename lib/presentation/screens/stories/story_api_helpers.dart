@@ -13,13 +13,21 @@ class StoryApiHelpers {
   /// - expiresAt: Date (milliseconds since epoch or ISO string)
   static Story storyFromApiJson(Map<String, dynamic> json) {
     // Parse dates - handle both milliseconds and ISO strings
+    // Epoch timestamps are UTC-based, so use UTC when parsing
     DateTime? parseDate(dynamic dateValue) {
       if (dateValue == null) return null;
       if (dateValue is int) {
-        return DateTime.fromMillisecondsSinceEpoch(dateValue);
+        // Epoch timestamps are UTC milliseconds since epoch
+        return DateTime.fromMillisecondsSinceEpoch(dateValue, isUtc: true);
       }
       if (dateValue is String) {
-        return DateTime.tryParse(dateValue);
+        // ISO strings may include timezone info, tryParse handles it
+        final parsed = DateTime.tryParse(dateValue);
+        // If no timezone info, assume UTC
+        if (parsed != null && !parsed.isUtc) {
+          return parsed.toUtc();
+        }
+        return parsed;
       }
       return null;
     }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +34,7 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   bool _isDragging = false;
   bool _isOverDeleteButton = false; // Track if finger is over delete button
   bool _isUploading = false; // Track upload state
+  CancelToken? _uploadCancelToken; // Cancel token for upload cancellation
   final GlobalKey _stackKey = GlobalKey();
   final GlobalKey _deleteButtonKey = GlobalKey();
 
@@ -44,6 +46,8 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
 
   @override
   void dispose() {
+    // Cancel any in-flight uploads when screen is disposed
+    _uploadCancelToken?.cancel();
     super.dispose();
   }
 
@@ -130,19 +134,26 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   Future<void> _saveStory() async {
     if (_selectedImage == null || _isUploading) return;
 
+    // Create cancel token for this upload
+    _uploadCancelToken = CancelToken();
+
     setState(() {
       _isUploading = true;
     });
 
+    File? compositedImageFile;
     try {
       // Composite text overlays onto the image
-      final compositedImageFile = await StoryImageCompositor.compositeImage(
+      compositedImageFile = await StoryImageCompositor.compositeImage(
         imageFile: _selectedImage!,
         overlays: _overlays,
       );
 
       final repository = ref.read(storiesRepositoryProvider);
-      await repository.uploadStory(imageFile: compositedImageFile);
+      await repository.uploadStory(
+        imageFile: compositedImageFile,
+        cancelToken: _uploadCancelToken,
+      );
 
       // Clean up temporary composited file if it's different from original
       if (compositedImageFile.path != _selectedImage!.path) {
@@ -154,6 +165,9 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
       }
 
       if (mounted) {
+        setState(() {
+          _isUploading = false; // Reset upload state on success
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Story uploaded successfully!'),
@@ -161,30 +175,59 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
         );
         context.popRoute();
       }
-    } on ApiError catch (e) {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload story: ${e.message}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload story: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+      if (e is DioException) {
+        // Handle cancellation separately - don't show error for user-initiated cancellation
+        if (e.type == DioExceptionType.cancel) {
+          if (mounted) {
+            setState(() {
+              _isUploading = false;
+            });
+          }
+          return;
+        }
+        // Handle DioException errors
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Failed to upload story: ${e.message ?? 'Unknown error'}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      } else if (e is ApiError) {
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload story: ${e.message}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      } else {
+        // Handle other errors
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to upload story: ${e.toString()}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
+    } finally {
+      // Clean up cancel token
+      _uploadCancelToken = null;
     }
   }
 

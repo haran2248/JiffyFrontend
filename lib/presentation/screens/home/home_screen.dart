@@ -256,6 +256,8 @@ class HomeScreen extends ConsumerWidget {
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    // Capture stable context for navigation (outer screen context, not builder context)
+    final stableContext = context;
 
     showModalBottomSheet(
       context: context,
@@ -263,7 +265,7 @@ class HomeScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
@@ -289,14 +291,15 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
+                  // Convert stories before popping
                   final userStories = userStoriesJson
                       .map((json) => StoryApiHelpers.storyFromApiJson(json))
                       .toList();
-                  // Use a post-frame callback to ensure the bottom sheet is fully dismissed
+                  Navigator.of(sheetContext).pop();
+                  // Use stable context for navigation
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      context.navigation.pushNamed(
+                    if (stableContext.mounted) {
+                      stableContext.navigation.pushNamed(
                         RouteNames.storyViewer,
                         extra: {
                           'stories': userStories,
@@ -318,11 +321,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  // Use a post-frame callback to ensure the bottom sheet is fully dismissed
+                  Navigator.of(sheetContext).pop();
+                  // Use stable context for navigation
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      context.navigation.pushNamed(RouteNames.storyCreation);
+                    if (stableContext.mounted) {
+                      stableContext.navigation
+                          .pushNamed(RouteNames.storyCreation);
                     }
                   });
                 },

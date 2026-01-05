@@ -12,14 +12,14 @@ This document outlines the standardized architecture for handling network calls,
 
 ## 📋 Table of Contents
 
-1. [Architecture Overview](#architecture-overview)
-2. [Data Flow Pattern](#data-flow-pattern)
-3. [Layer Responsibilities](#layer-responsibilities)
-4. [Implementation Patterns](#implementation-patterns)
-5. [Error Handling](#error-handling)
-6. [State Management](#state-management)
-7. [Templates & Examples](#templates--examples)
-8. [Decision Guide](#decision-guide)
+1. [Architecture Overview](#1-architecture-overview)
+2. [Data Flow Pattern](#2-data-flow-pattern)
+3. [Layer Responsibilities](#3-layer-responsibilities)
+4. [Implementation Patterns](#4-implementation-patterns)
+5. [Error Handling](#5-error-handling)
+6. [State Management](#6-state-management)
+7. [Templates & Examples](#7-templates--examples)
+8. [Decision Guide](#8-decision-guide)
 
 ---
 

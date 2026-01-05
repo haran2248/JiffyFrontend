@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Helper class to composite text overlays onto an image
 class StoryImageCompositor {
@@ -19,47 +20,67 @@ class StoryImageCompositor {
   }) async {
     // If no overlays, return original image
     if (overlays.isEmpty) {
+      debugPrint('[StoryImageCompositor] No overlays, returning original image');
       return imageFile;
     }
+
+    debugPrint('[StoryImageCompositor] Starting compositing with ${overlays.length} overlay(s)');
 
     // Load the image
     final imageBytes = await imageFile.readAsBytes();
     final codec = await ui.instantiateImageCodec(imageBytes);
     final frame = await codec.getNextFrame();
     final image = frame.image;
+    debugPrint('[StoryImageCompositor] Image loaded: ${image.width}x${image.height}');
 
-    // Create a picture recorder and canvas
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
+    try {
+      // Create a picture recorder and canvas
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
 
-    // Draw the original image
-    canvas.drawImage(image, Offset.zero, Paint());
+      // Draw the original image
+      canvas.drawImage(image, Offset.zero, Paint());
 
-    // Draw each text overlay
-    for (final overlay in overlays) {
-      _drawTextOverlay(canvas, overlay, image.width, image.height);
+      // Draw each text overlay
+      for (final overlay in overlays) {
+        debugPrint('[StoryImageCompositor] Drawing overlay: "${overlay.text}" at (${overlay.x}, ${overlay.y})');
+        _drawTextOverlay(canvas, overlay, image.width, image.height);
+      }
+
+      // Convert the canvas to an image
+      final picture = recorder.endRecording();
+      final compositedImage = await picture.toImage(image.width, image.height);
+
+      try {
+        // Convert the image to bytes
+        final byteData = await compositedImage.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+
+        if (byteData == null) {
+          throw Exception('Failed to encode composited image to PNG');
+        }
+
+        final compositedBytes = byteData.buffer.asUint8List();
+
+        // Write the composited image to a temporary file
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File(
+            '${tempDir.path}/composited_story_${DateTime.now().millisecondsSinceEpoch}.png');
+        await tempFile.writeAsBytes(compositedBytes);
+        debugPrint('[StoryImageCompositor] Composited image saved to: ${tempFile.path} (${compositedBytes.length} bytes)');
+
+        return tempFile;
+      } finally {
+        // Dispose composited image resources
+        compositedImage.dispose();
+        picture.dispose();
+      }
+    } finally {
+      // Dispose original image resources
+      image.dispose();
+      codec.dispose();
     }
-
-    // Convert the canvas to an image
-    final picture = recorder.endRecording();
-    final compositedImage = await picture.toImage(image.width, image.height);
-
-    // Convert the image to bytes
-    final byteData = await compositedImage.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-    final compositedBytes = byteData!.buffer.asUint8List();
-
-    // Dispose resources
-    image.dispose();
-    compositedImage.dispose();
-    picture.dispose();
-
-    // Write the composited image to a temporary file
-    final tempFile = File('${imageFile.path}_composited.png');
-    await tempFile.writeAsBytes(compositedBytes);
-
-    return tempFile;
   }
 
   /// Draws a single text overlay on the canvas
@@ -73,42 +94,72 @@ class StoryImageCompositor {
     final xPx = (imageWidth * overlay.x / 100.0);
     final yPx = (imageHeight * overlay.y / 100.0);
 
-    // Create text style
-    final textStyle = TextStyle(
+    debugPrint('[StoryImageCompositor] Drawing text "${overlay.text}" at percentage (${overlay.x}, ${overlay.y}), pixel (${xPx.toStringAsFixed(1)}, ${yPx.toStringAsFixed(1)})');
+
+    // Create text style (no shadows by default)
+    final textStyle = ui.TextStyle(
       color: overlay.color,
       fontSize: overlay.fontSizePx,
-      fontWeight: FontWeight.bold,
-      shadows: [
-        Shadow(
-          offset: const Offset(2, 2),
-          blurRadius: 8,
-          color: Colors.black.withValues(alpha: 0.8),
-        ),
-      ],
+      fontWeight: ui.FontWeight.bold,
     );
 
-    // Create text painter
-    final textPainter = TextPainter(
-      text: TextSpan(text: overlay.text, style: textStyle),
-      textAlign: overlay.textAlign,
-      textDirection: TextDirection.ltr,
-    );
+    // Convert TextAlign to ui.TextAlign
+    ui.TextAlign uiTextAlign;
+    switch (overlay.textAlign) {
+      case TextAlign.left:
+        uiTextAlign = ui.TextAlign.left;
+        break;
+      case TextAlign.center:
+        uiTextAlign = ui.TextAlign.center;
+        break;
+      case TextAlign.right:
+        uiTextAlign = ui.TextAlign.right;
+        break;
+      default:
+        uiTextAlign = ui.TextAlign.center;
+    }
 
-    // Layout the text
-    textPainter.layout(
-      maxWidth: imageWidth * 0.9, // Allow text to use 90% of image width
+    // Create paragraph builder for text rendering
+    final paragraphBuilder = ui.ParagraphBuilder(
+      ui.ParagraphStyle(
+        textAlign: uiTextAlign,
+        textDirection: ui.TextDirection.ltr,
+      ),
     );
+    paragraphBuilder.pushStyle(textStyle);
+    paragraphBuilder.addText(overlay.text);
+    paragraphBuilder.pop();
+
+    // Build and layout the paragraph
+    final paragraph = paragraphBuilder.build();
+    paragraph.layout(ui.ParagraphConstraints(width: imageWidth * 0.9));
+
+    debugPrint('[StoryImageCompositor] Text size: ${paragraph.width.toStringAsFixed(1)}x${paragraph.height.toStringAsFixed(1)}');
 
     // Calculate position based on alignment
     // The x/y coordinates represent the center of the text
-    double textX = xPx - textPainter.width / 2; // Center horizontally
-    final textY = yPx - textPainter.height / 2; // Center vertically
+    double textX = xPx - paragraph.width / 2; // Center horizontally
+    double textY = yPx - paragraph.height / 2; // Center vertically
 
-    // Position is center of text, so adjust to top-left of text bounds
+    debugPrint('[StoryImageCompositor] Text center position: (${textX.toStringAsFixed(1)}, ${textY.toStringAsFixed(1)})');
+
+    // Clamp text position to ensure it stays within image bounds
+    final originalX = textX;
+    final originalY = textY;
+    textX = textX.clamp(0.0, imageWidth - paragraph.width);
+    textY = textY.clamp(0.0, imageHeight - paragraph.height);
+
+    if (textX != originalX || textY != originalY) {
+      debugPrint('[StoryImageCompositor] Text position clamped from (${originalX.toStringAsFixed(1)}, ${originalY.toStringAsFixed(1)}) to (${textX.toStringAsFixed(1)}, ${textY.toStringAsFixed(1)})');
+    }
+
+    // Position is top-left of text bounds
     final textPosition = Offset(textX, textY);
 
-    // Draw the text
-    textPainter.paint(canvas, textPosition);
+    debugPrint('[StoryImageCompositor] Final text position: (${textX.toStringAsFixed(1)}, ${textY.toStringAsFixed(1)}), color: ${overlay.color}');
+
+    // Draw the paragraph
+    canvas.drawParagraph(paragraph, textPosition);
   }
 }
 

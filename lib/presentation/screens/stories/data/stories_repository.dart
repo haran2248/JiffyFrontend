@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as path;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
@@ -46,11 +47,18 @@ class StoriesRepository {
         queryParameters: {'userId': userId},
       );
 
-      if (response.statusCode == 200) {
+      // Accept all 2xx status codes as success
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
         if (response.data is List) {
           return (response.data as List)
               .map((item) => item as Map<String, dynamic>)
               .toList();
+        }
+        // For 204 No Content, return empty list
+        if (response.statusCode == 204) {
+          return [];
         }
         throw ApiError.unknown(
           message: 'Invalid response format',
@@ -96,11 +104,18 @@ class StoriesRepository {
         queryParameters: {'userId': userId},
       );
 
-      if (response.statusCode == 200) {
+      // Accept all 2xx status codes as success
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
         if (response.data is List) {
           return (response.data as List)
               .map((item) => item as Map<String, dynamic>)
               .toList();
+        }
+        // For 204 No Content, return empty list
+        if (response.statusCode == 204) {
+          return [];
         }
         throw ApiError.unknown(
           message: 'Invalid response format',
@@ -128,11 +143,13 @@ class StoriesRepository {
   ///
   /// [imageFile] - The image file to upload
   /// [mediaType] - Type of media (e.g., "IMAGE")
+  /// [cancelToken] - Optional cancel token to cancel the upload
   ///
   /// Throws [ApiError] on failure.
   Future<void> uploadStory({
     required File imageFile,
     String mediaType = 'IMAGE',
+    CancelToken? cancelToken,
   }) async {
     try {
       final user = _authRepo.currentUser;
@@ -146,18 +163,20 @@ class StoriesRepository {
       final userId = user.uid;
 
       // Create multipart form data
+      // Use path.basename for cross-platform filename extraction
       final formData = FormData.fromMap({
         'userId': userId,
         'mediaType': mediaType,
         'file': await MultipartFile.fromFile(
           imageFile.path,
-          filename: imageFile.path.split('/').last,
+          filename: path.basename(imageFile.path),
         ),
       });
 
       final response = await _dio.post(
         StoriesApiEndpoints.upload,
         data: formData,
+        cancelToken: cancelToken,
       );
 
       if (response.statusCode != null &&
