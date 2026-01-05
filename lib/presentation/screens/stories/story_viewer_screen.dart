@@ -61,7 +61,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
   void _nextContent() {
     final currentStory = widget.stories[_currentStoryIndex];
-    
+
     if (_currentContentIndex < currentStory.contents.length - 1) {
       // Move to next content in same story
       setState(() {
@@ -114,7 +114,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     setState(() {
       _isPaused = !_isPaused;
     });
-    
+
     if (_isPaused) {
       _timer?.cancel();
     } else {
@@ -136,7 +136,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   /// Build tap zone indicators (left/right chevrons) when paused
   List<Widget> _buildTapZoneIndicators() {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return [
       // Left indicator
       Positioned(
@@ -182,7 +182,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   void _onTap(TapDownDetails details) {
     final screenWidth = MediaQuery.of(context).size.width;
     final tapX = details.globalPosition.dx;
-    
+
     if (tapX < screenWidth / 3) {
       // Left side - previous
       _previousContent();
@@ -211,9 +211,11 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               itemBuilder: (context, index) {
                 final story = widget.stories[index];
                 return _StoryContentPage(
-                  key: ValueKey('story_${story.id}_content_${index == _currentStoryIndex ? _currentContentIndex : 0}'),
+                  key: ValueKey(
+                      'story_${story.id}_content_${index == _currentStoryIndex ? _currentContentIndex : 0}'),
                   story: story,
-                  contentIndex: index == _currentStoryIndex ? _currentContentIndex : 0,
+                  contentIndex:
+                      index == _currentStoryIndex ? _currentContentIndex : 0,
                 );
               },
             ),
@@ -283,8 +285,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
 
             // Tap zone indicators when paused
-            if (_isPaused)
-              ..._buildTapZoneIndicators(),
+            if (_isPaused) ..._buildTapZoneIndicators(),
 
             // Story counter at bottom
             Positioned(
@@ -323,7 +324,8 @@ class _StoryContentPageState extends State<_StoryContentPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.story.contents.isEmpty || widget.contentIndex >= widget.story.contents.length) {
+    if (widget.story.contents.isEmpty ||
+        widget.contentIndex >= widget.story.contents.length) {
       return Container(
         color: Colors.black,
         child: Center(
@@ -389,43 +391,48 @@ class _StoryContentPageState extends State<_StoryContentPage> {
   /// Build all overlay widgets with percentage-based positioning (read-only)
   List<Widget> _buildOverlays(BuildContext context, StoryContent content) {
     final screenSize = MediaQuery.of(context).size;
-    
+
     return content.overlays.map((overlay) {
       // Convert percentage (0-100) to pixel position
       final xPercent = overlay.x.clamp(0.0, 100.0);
       final yPercent = overlay.y.clamp(0.0, 100.0);
-      
+
       // Convert percentage to pixels
       final xPx = (screenSize.width * xPercent / 100.0);
       final yPx = (screenSize.height * yPercent / 100.0);
-      
+
       final fontSize = overlay.fontSizePx;
-      
+
       return Positioned(
         left: xPx,
         top: yPx,
         child: IgnorePointer(
           // Make overlays non-interactive in viewer
-          child: Transform.translate(
-            offset: Offset(-50, -fontSize / 2), // Center the text
-            child: Container(
-              constraints: BoxConstraints(maxWidth: screenSize.width * 0.8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                overlay.text,
-                style: TextStyle(
-                  color: overlay.color,
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      offset: const Offset(2, 2),
-                      blurRadius: 8,
-                      color: Colors.black.withValues(alpha: 0.8),
-                    ),
-                  ],
+          child: SizedBox(
+            width: screenSize.width * 0.9,
+            height: fontSize + 50, // Ensure enough height for layout
+            child: Align(
+              alignment: Alignment.center,
+              child: Container(
+                constraints: BoxConstraints(maxWidth: screenSize.width * 0.8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  overlay.text,
+                  style: TextStyle(
+                    color: overlay.color,
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(2, 2),
+                        blurRadius: 8,
+                        color: Colors.black.withValues(alpha: 0.8),
+                      ),
+                    ],
+                  ),
+                  textAlign: overlay.textAlign,
                 ),
-                textAlign: overlay.textAlign,
               ),
             ),
           ),
@@ -511,7 +518,7 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
   @override
   void didUpdateWidget(_StoryProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isCompleted) {
       _controller.value = 1.0;
     } else if (widget.isActive) {
@@ -607,10 +614,10 @@ class _StoryTopBar extends StatelessWidget {
                 ),
                 Text(
                   _formatTime(story.createdAt),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
-                        ),
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
+                ),
               ],
             ),
           ),
@@ -689,4 +696,3 @@ class _StoryCounter extends StatelessWidget {
     );
   }
 }
-

@@ -14,7 +14,8 @@ class StoryCreationScreen extends ConsumerStatefulWidget {
   const StoryCreationScreen({super.key});
 
   @override
-  ConsumerState<StoryCreationScreen> createState() => _StoryCreationScreenState();
+  ConsumerState<StoryCreationScreen> createState() =>
+      _StoryCreationScreenState();
 }
 
 class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
@@ -22,8 +23,10 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   final List<TextOverlay> _overlays = [];
   String? _editingOverlayId; // ID of overlay being edited
   String? _draggingOverlayId; // ID of overlay being dragged
-  final Map<String, Offset> _dragStartPositions = {}; // Track drag start per overlay
-  final Map<String, Offset> _accumulatedDeltas = {}; // Track accumulated delta per overlay
+  final Map<String, Offset> _dragStartPositions =
+      {}; // Track drag start per overlay
+  final Map<String, Offset> _accumulatedDeltas =
+      {}; // Track accumulated delta per overlay
   bool _isDragging = false;
   bool _isOverDeleteButton = false; // Track if finger is over delete button
   final GlobalKey _stackKey = GlobalKey();
@@ -43,7 +46,7 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   Future<void> _pickImage() async {
     final photoUploadService = ref.read(photoUploadServiceProvider);
     final imageFile = await photoUploadService.pickImageFromGallery();
-    
+
     if (imageFile != null && mounted) {
       setState(() {
         _selectedImage = imageFile;
@@ -56,9 +59,10 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
 
   void _showTextOverlayEditor({String? overlayId}) {
     final existingOverlay = overlayId != null
-        ? _overlays.firstWhere((o) => o.id == overlayId, orElse: () => throw StateError('Overlay not found'))
+        ? _overlays.firstWhere((o) => o.id == overlayId,
+            orElse: () => throw StateError('Overlay not found'))
         : null;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -77,14 +81,16 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
               // Add new overlay
               _overlays.add(overlay);
             }
-            _editingOverlayId = null; // Clear editing state to show buttons again
+            _editingOverlayId =
+                null; // Clear editing state to show buttons again
           });
         },
         onDelete: overlayId != null
             ? () {
                 setState(() {
                   _overlays.removeWhere((o) => o.id == overlayId);
-                  _editingOverlayId = null; // Clear editing state to show buttons again
+                  _editingOverlayId =
+                      null; // Clear editing state to show buttons again
                 });
                 Navigator.of(context).pop();
               }
@@ -119,27 +125,28 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   List<Widget> _buildOverlays(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return _overlays.map((overlay) {
       // Convert percentage (0-100) to pixel position
       // Position is center of text, so we need to account for text size
       final xPercent = overlay.x.clamp(0.0, 100.0);
       final yPercent = overlay.y.clamp(0.0, 100.0);
-      
+
       // Convert percentage to pixels
       final xPx = (screenSize.width * xPercent / 100.0);
       final yPx = (screenSize.height * yPercent / 100.0);
-      
+
       // Get text style for size estimation
       final fontSize = overlay.fontSizePx;
       final isSelected = _editingOverlayId == overlay.id;
-      
+
       return Positioned(
         left: xPx,
         top: yPx,
         child: SizedBox(
           width: screenSize.width * 0.9,
-          height: fontSize + 50, // Ensure enough height for hit testing
+          height: fontSize * 3 +
+              60, // Ensure enough height for multi-line text and hit testing
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () {
@@ -151,7 +158,8 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
                 });
               } else {
                 setState(() {
-                  _editingOverlayId = overlay.id; // Set editing state to hide buttons
+                  _editingOverlayId =
+                      overlay.id; // Set editing state to hide buttons
                 });
                 _showTextOverlayEditor(overlayId: overlay.id);
               }
@@ -160,90 +168,86 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
               setState(() {
                 _isDragging = true;
                 _draggingOverlayId = overlay.id;
-                _editingOverlayId = null; // Clear edit state when dragging starts
+                _editingOverlayId =
+                    null; // Clear edit state when dragging starts
                 // Store initial position in pixels for drag calculation
                 _dragStartPositions[overlay.id] = Offset(xPx, yPx);
                 _accumulatedDeltas[overlay.id] = Offset.zero;
               });
             },
             onPanUpdate: (details) {
-            if (_dragStartPositions.containsKey(overlay.id)) {
-              // Check if finger is over delete button
-              final deleteButtonBox = _deleteButtonKey.currentContext?.findRenderObject() as RenderBox?;
-              bool overDeleteButton = false;
-              
-              if (deleteButtonBox != null && _isDragging && _draggingOverlayId == overlay.id) {
-                try {
-                  final localPosition = deleteButtonBox.globalToLocal(details.globalPosition);
-                  final buttonSize = deleteButtonBox.size;
-                  
-                  overDeleteButton = localPosition.dx >= 0 &&
-                      localPosition.dx <= buttonSize.width &&
-                      localPosition.dy >= 0 &&
-                      localPosition.dy <= buttonSize.height;
-                } catch (e) {
-                  // Ignore coordinate conversion errors
+              if (_dragStartPositions.containsKey(overlay.id)) {
+                // Check if finger is over delete button
+                final deleteButtonBox = _deleteButtonKey.currentContext
+                    ?.findRenderObject() as RenderBox?;
+                bool overDeleteButton = false;
+
+                if (deleteButtonBox != null &&
+                    _isDragging &&
+                    _draggingOverlayId == overlay.id) {
+                  try {
+                    final localPosition =
+                        deleteButtonBox.globalToLocal(details.globalPosition);
+                    final buttonSize = deleteButtonBox.size;
+
+                    overDeleteButton = localPosition.dx >= 0 &&
+                        localPosition.dx <= buttonSize.width &&
+                        localPosition.dy >= 0 &&
+                        localPosition.dy <= buttonSize.height;
+                  } catch (e) {
+                    // Ignore coordinate conversion errors
+                  }
                 }
+
+                setState(() {
+                  _isOverDeleteButton = overDeleteButton;
+
+                  // Accumulate delta
+                  _accumulatedDeltas[overlay.id] =
+                      (_accumulatedDeltas[overlay.id] ?? Offset.zero) +
+                          details.delta;
+
+                  // Calculate new position in pixels
+                  final startPos = _dragStartPositions[overlay.id]!;
+                  final delta = _accumulatedDeltas[overlay.id]!;
+                  final newXPx = startPos.dx + delta.dx;
+                  final newYPx = startPos.dy + delta.dy;
+
+                  // Convert back to percentage and clamp to 0-100
+                  final newXPercent =
+                      ((newXPx / screenSize.width) * 100.0).clamp(0.0, 100.0);
+                  final newYPercent =
+                      ((newYPx / screenSize.height) * 100.0).clamp(0.0, 100.0);
+
+                  // Update overlay position
+                  final index = _overlays.indexWhere((o) => o.id == overlay.id);
+                  if (index != -1) {
+                    _overlays[index] =
+                        overlay.copyWith(x: newXPercent, y: newYPercent);
+                  }
+                });
               }
-              
-              setState(() {
-                _isOverDeleteButton = overDeleteButton;
-                
-                // Accumulate delta
-                _accumulatedDeltas[overlay.id] = 
-                    (_accumulatedDeltas[overlay.id] ?? Offset.zero) + details.delta;
-                
-                // Calculate new position in pixels
-                final startPos = _dragStartPositions[overlay.id]!;
-                final delta = _accumulatedDeltas[overlay.id]!;
-                final newXPx = startPos.dx + delta.dx;
-                final newYPx = startPos.dy + delta.dy;
-                
-                // Convert back to percentage and clamp to 0-100
-                final newXPercent = ((newXPx / screenSize.width) * 100.0).clamp(0.0, 100.0);
-                final newYPercent = ((newYPx / screenSize.height) * 100.0).clamp(0.0, 100.0);
-                
-                // Update overlay position
-                final index = _overlays.indexWhere((o) => o.id == overlay.id);
-                if (index != -1) {
-                  _overlays[index] = overlay.copyWith(x: newXPercent, y: newYPercent);
-                }
-              });
-            }
             },
             onPanEnd: (details) {
-            // Check if the finger ended up in the delete button area
-            final deleteButtonBox = _deleteButtonKey.currentContext?.findRenderObject() as RenderBox?;
-            if (deleteButtonBox != null && _isDragging && _draggingOverlayId == overlay.id) {
-              // Convert global position to local position relative to delete button
-              try {
-                final localPosition = deleteButtonBox.globalToLocal(details.globalPosition);
-                final buttonSize = deleteButtonBox.size;
-                
-                // Check if the position is within the delete button bounds
-                if (localPosition.dx >= 0 &&
-                    localPosition.dx <= buttonSize.width &&
-                    localPosition.dy >= 0 &&
-                    localPosition.dy <= buttonSize.height) {
-                  // Delete the overlay
-                  setState(() {
-                    _overlays.removeWhere((o) => o.id == overlay.id);
-                  });
-                }
-              } catch (e) {
-                // If coordinate conversion fails, ignore
-                debugPrint('Error checking delete button hit: $e');
+              // Use _isOverDeleteButton which is tracked during onPanUpdate
+              // DragEndDetails doesn't have globalPosition, so we rely on the boolean flag
+              if (_isDragging &&
+                  _draggingOverlayId == overlay.id &&
+                  _isOverDeleteButton) {
+                // Delete the overlay
+                setState(() {
+                  _overlays.removeWhere((o) => o.id == overlay.id);
+                });
               }
-            }
-            
-            setState(() {
-              _isDragging = false;
-              _isOverDeleteButton = false;
-              _draggingOverlayId = null;
-              _dragStartPositions.remove(overlay.id);
-              _accumulatedDeltas.remove(overlay.id);
-            });
-          },
+
+              setState(() {
+                _isDragging = false;
+                _isOverDeleteButton = false;
+                _draggingOverlayId = null;
+                _dragStartPositions.remove(overlay.id);
+                _accumulatedDeltas.remove(overlay.id);
+              });
+            },
             onPanCancel: () {
               setState(() {
                 _isDragging = false;
@@ -254,58 +258,65 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
               });
             },
             child: Align(
-            alignment: Alignment.center,
-            child: Container(
-              constraints: BoxConstraints(maxWidth: screenSize.width * 0.8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? colorScheme.primary.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-                border: isSelected
-                    ? Border.all(
-                        color: colorScheme.primary,
-                        width: 2,
-                        style: BorderStyle.solid,
-                      )
-                    : Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                        style: BorderStyle.solid,
+              alignment: Alignment.center,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: screenSize.width * 0.8,
+                  minHeight: fontSize + 16, // Minimum height for single line
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colorScheme.primary.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: isSelected
+                      ? Border.all(
+                          color: colorScheme.primary,
+                          width: 2,
+                          style: BorderStyle.solid,
+                        )
+                      : Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 1,
+                          style: BorderStyle.solid,
+                        ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        overlay.text,
+                        style: TextStyle(
+                          color: overlay.color,
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              offset: const Offset(2, 2),
+                              blurRadius: 8,
+                              color: Colors.black.withValues(alpha: 0.8),
+                            ),
+                          ],
+                        ),
+                        textAlign: overlay.textAlign,
+                        maxLines: null, // Allow unlimited lines
+                        overflow:
+                            TextOverflow.visible, // Show all text, don't clip
                       ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      overlay.text,
-                      style: TextStyle(
-                        color: overlay.color,
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: const Offset(2, 2),
-                            blurRadius: 8,
-                            color: Colors.black.withValues(alpha: 0.8),
-                          ),
-                        ],
-                      ),
-                      textAlign: overlay.textAlign,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.edit_outlined,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    size: 16,
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.edit_outlined,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      size: 16,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
         ),
       );
@@ -367,7 +378,8 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
                       onTap: _selectedImage != null ? _saveStory : null,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         alignment: Alignment.center,
                         child: Text(
                           'Post',
@@ -395,18 +407,22 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
             fit: BoxFit.cover,
           ),
 
-        // Render all text overlays
-        ..._buildOverlays(context),
+          // Render all text overlays
+          ..._buildOverlays(context),
 
           // Delete button (shows when dragging) - positioned at bottom right to avoid Post button
           if (_isDragging && _draggingOverlayId != null)
             Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 120, // Above the control buttons
+              bottom: MediaQuery.of(context).padding.bottom +
+                  120, // Above the control buttons
               right: 16,
               child: Material(
                 color: _isOverDeleteButton
                     ? Theme.of(context).colorScheme.error.withValues(alpha: 0.9)
-                    : Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+                    : Theme.of(context)
+                        .colorScheme
+                        .error
+                        .withValues(alpha: 0.8),
                 shape: const CircleBorder(),
                 elevation: _isOverDeleteButton ? 8 : 4,
                 child: Container(
@@ -416,8 +432,14 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _isOverDeleteButton
-                        ? Theme.of(context).colorScheme.error.withValues(alpha: 0.9)
-                        : Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+                        ? Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withValues(alpha: 0.9)
+                        : Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withValues(alpha: 0.8),
                     border: _isOverDeleteButton
                         ? Border.all(
                             color: Theme.of(context).colorScheme.onError,
@@ -441,50 +463,50 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
               left: 0,
               right: 0,
               child: Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom + 24,
-                top: 24,
-                left: 16,
-                right: 16,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.8),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom + 24,
+                  top: 24,
+                  left: 16,
+                  right: 16,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.8),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IgnorePointer(
+                      ignoring: _isDragging,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Change photo
+                          _ControlButton(
+                            icon: Icons.photo_library,
+                            label: 'Photo',
+                            onTap: _pickImage,
+                          ),
+                          // Add text overlay
+                          _ControlButton(
+                            icon: Icons.text_fields,
+                            label: 'Text',
+                            onTap: () => _showTextOverlayEditor(),
+                            isActive: _overlays.isNotEmpty,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IgnorePointer(
-                    ignoring: _isDragging,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Change photo
-                        _ControlButton(
-                          icon: Icons.photo_library,
-                          label: 'Photo',
-                          onTap: _pickImage,
-                        ),
-                        // Add text overlay
-                        _ControlButton(
-                          icon: Icons.text_fields,
-                          label: 'Text',
-                          onTap: () => _showTextOverlayEditor(),
-                          isActive: _overlays.isNotEmpty,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
         ],
       ),
     );
@@ -582,7 +604,8 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
       text: widget.initialOverlay?.text ?? '',
     );
     _selectedColor = widget.initialOverlay?.color ?? StoryOverlayColors.white;
-    _alignment = widget.initialOverlay?.alignment ?? TextOverlayAlignment.center;
+    _alignment =
+        widget.initialOverlay?.alignment ?? TextOverlayAlignment.center;
     _fontSize = widget.initialOverlay?.fontSize ?? TextOverlayFontSize.medium;
   }
 
@@ -615,7 +638,9 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.initialOverlay != null ? 'Edit Text Overlay' : 'Add Text Overlay',
+                widget.initialOverlay != null
+                    ? 'Edit Text Overlay'
+                    : 'Add Text Overlay',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               IconButton(
@@ -625,7 +650,7 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Text input field
           TextField(
             controller: _controller,
@@ -646,7 +671,7 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
             style: TextStyle(color: colorScheme.onSurface),
           ),
           const SizedBox(height: 16),
-          
+
           // Font size selector
           Text(
             'Size',
@@ -660,24 +685,27 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                 label: 'Small',
                 fontSize: TextOverlayFontSize.small,
                 isSelected: _fontSize == TextOverlayFontSize.small,
-                onTap: () => setState(() => _fontSize = TextOverlayFontSize.small),
+                onTap: () =>
+                    setState(() => _fontSize = TextOverlayFontSize.small),
               ),
               _SizeButton(
                 label: 'Medium',
                 fontSize: TextOverlayFontSize.medium,
                 isSelected: _fontSize == TextOverlayFontSize.medium,
-                onTap: () => setState(() => _fontSize = TextOverlayFontSize.medium),
+                onTap: () =>
+                    setState(() => _fontSize = TextOverlayFontSize.medium),
               ),
               _SizeButton(
                 label: 'Large',
                 fontSize: TextOverlayFontSize.large,
                 isSelected: _fontSize == TextOverlayFontSize.large,
-                onTap: () => setState(() => _fontSize = TextOverlayFontSize.large),
+                onTap: () =>
+                    setState(() => _fontSize = TextOverlayFontSize.large),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Alignment selector
           Text(
             'Alignment',
@@ -691,24 +719,27 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                 icon: Icons.format_align_left,
                 alignment: TextOverlayAlignment.left,
                 isSelected: _alignment == TextOverlayAlignment.left,
-                onTap: () => setState(() => _alignment = TextOverlayAlignment.left),
+                onTap: () =>
+                    setState(() => _alignment = TextOverlayAlignment.left),
               ),
               _AlignmentButton(
                 icon: Icons.format_align_center,
                 alignment: TextOverlayAlignment.center,
                 isSelected: _alignment == TextOverlayAlignment.center,
-                onTap: () => setState(() => _alignment = TextOverlayAlignment.center),
+                onTap: () =>
+                    setState(() => _alignment = TextOverlayAlignment.center),
               ),
               _AlignmentButton(
                 icon: Icons.format_align_right,
                 alignment: TextOverlayAlignment.right,
                 isSelected: _alignment == TextOverlayAlignment.right,
-                onTap: () => setState(() => _alignment = TextOverlayAlignment.right),
+                onTap: () =>
+                    setState(() => _alignment = TextOverlayAlignment.right),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Color picker
           Text(
             'Color',
@@ -744,7 +775,7 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
             }).toList(),
           ),
           const SizedBox(height: 24),
-          
+
           // Action buttons
           Row(
             children: [
@@ -770,7 +801,10 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                         child: Center(
                           child: Text(
                             'Delete',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                                   color: colorScheme.error,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -790,9 +824,9 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                         Navigator.of(context).pop();
                         return;
                       }
-                      
+
                       final overlay = TextOverlay(
-                        id: widget.initialOverlay?.id ?? 
+                        id: widget.initialOverlay?.id ??
                             DateTime.now().millisecondsSinceEpoch.toString(),
                         text: _controller.text.trim(),
                         x: widget.initialOverlay?.x ?? 50.0,
@@ -822,7 +856,8 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFA855F7).withValues(alpha: 0.3),
+                            color:
+                                const Color(0xFFA855F7).withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -831,10 +866,11 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                       child: Center(
                         child: Text(
                           widget.initialOverlay != null ? 'Save' : 'Add',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ),
                     ),
@@ -958,13 +994,10 @@ class _AlignmentButton extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.onSurface,
+            color: isSelected ? colorScheme.primary : colorScheme.onSurface,
           ),
         ),
       ),
     );
   }
 }
-
