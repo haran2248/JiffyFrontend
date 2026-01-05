@@ -45,15 +45,32 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
 
   Future<void> _pickImage() async {
     final photoUploadService = ref.read(photoUploadServiceProvider);
-    final imageFile = await photoUploadService.pickImageFromGallery();
 
-    if (imageFile != null && mounted) {
-      setState(() {
-        _selectedImage = imageFile;
-      });
-    } else if (mounted && _selectedImage == null) {
-      // User cancelled, go back
-      context.popRoute();
+    try {
+      final imageFile = await photoUploadService.pickImageFromGallery();
+
+      if (imageFile != null && mounted) {
+        setState(() {
+          _selectedImage = imageFile;
+        });
+      } else if (mounted && _selectedImage == null) {
+        // User explicitly cancelled, go back
+        context.popRoute();
+      }
+    } catch (e) {
+      // Handle errors (permission denied, etc.)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        // Only navigate back if we don't have a selected image
+        if (_selectedImage == null) {
+          context.popRoute();
+        }
+      }
     }
   }
 

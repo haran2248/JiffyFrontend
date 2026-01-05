@@ -203,31 +203,16 @@ class HomeScreen extends ConsumerWidget {
             story: story,
             onTap: () async {
               if (story.isUserStory) {
-                // User's own story - allow photo upload
-                final photoUploadService = ref.read(photoUploadServiceProvider);
-                final imageFile = await photoUploadService.pickAndCropImage(
-                  aspectRatio: ImageSizeConfig.profilePhotoAspectRatio,
-                  width: ImageSizeConfig.profilePhotoSize,
-                  height: ImageSizeConfig.profilePhotoSize,
-                );
-
-                if (imageFile != null) {
-                  // TODO: Upload story image to server
-                  // For now, just show a snackbar
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Story photo selected! Upload functionality coming soon.'),
-                      ),
-                    );
-                  }
+                // User's own story - navigate to story creation screen
+                if (context.mounted) {
+                  context.navigation.pushNamed(RouteNames.storyCreation);
                 }
               } else {
                 // Other user's story - view story
                 final allStories = StoryHelpers.storyItemsToStories(stories);
-                final storyIndex = allStories.indexWhere((s) => s.userId == story.userId);
-                
+                final storyIndex =
+                    allStories.indexWhere((s) => s.userId == story.userId);
+
                 if (context.mounted && storyIndex != -1) {
                   context.navigation.pushNamed(
                     RouteNames.storyViewer,

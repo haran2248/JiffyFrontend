@@ -260,10 +260,47 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.storyViewer,
         name: RouteNames.storyViewer,
         pageBuilder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          final stories = extra?['stories'] as List<Story>?;
-          final initialStoryIndex = extra?['initialStoryIndex'] as int? ?? 0;
-          final initialContentIndex = extra?['initialContentIndex'] as int? ?? 0;
+          // Safely extract extra data, falling back to null if type is incorrect
+          final extra = state.extra is Map<String, dynamic>
+              ? state.extra as Map<String, dynamic>
+              : null;
+
+          // Safely extract stories list, validating type
+          List<Story>? stories;
+          if (extra != null && extra['stories'] is List) {
+            try {
+              final storiesList = extra['stories'] as List;
+              // Validate that all items are Story instances
+              if (storiesList.every((item) => item is Story)) {
+                stories = storiesList.cast<Story>();
+              }
+            } catch (_) {
+              // Type mismatch, stories remains null
+            }
+          }
+
+          // Safely extract indices with type validation
+          int initialStoryIndex = 0;
+          if (extra != null && extra['initialStoryIndex'] != null) {
+            final value = extra['initialStoryIndex'];
+            if (value is int) {
+              initialStoryIndex = value;
+            } else if (value is num) {
+              initialStoryIndex = value.toInt();
+            }
+            // If value is not a number, defaults to 0
+          }
+
+          int initialContentIndex = 0;
+          if (extra != null && extra['initialContentIndex'] != null) {
+            final value = extra['initialContentIndex'];
+            if (value is int) {
+              initialContentIndex = value;
+            } else if (value is num) {
+              initialContentIndex = value.toInt();
+            }
+            // If value is not a number, defaults to 0
+          }
 
           if (stories == null || stories.isEmpty) {
             return CustomTransitionPage(
@@ -286,7 +323,8 @@ GoRouter appRouter(Ref ref) {
               initialStoryIndex: initialStoryIndex,
               initialContentIndex: initialContentIndex,
             ),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
           );
