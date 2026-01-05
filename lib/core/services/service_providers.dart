@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'home_service.dart';
 import 'permission_service.dart';
@@ -10,7 +11,8 @@ part 'service_providers.g.dart';
 
 @riverpod
 HomeService homeService(Ref ref) {
-  return HomeService();
+  final dio = ref.watch(dioProvider);
+  return HomeService(dio);
 }
 
 @riverpod

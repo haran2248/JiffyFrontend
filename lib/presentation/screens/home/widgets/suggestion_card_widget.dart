@@ -95,21 +95,51 @@ class SuggestionCardWidget extends StatelessWidget {
                             ),
                           ),
                           padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                          child: Text(
-                            '${suggestion.name}, ${suggestion.age}',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  offset: const Offset(0, 1),
-                                  blurRadius: 3,
-                                  color: Colors.black.withValues(alpha: 0.5),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${suggestion.name}, ${suggestion.age}',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 3,
+                                      color:
+                                          Colors.black.withValues(alpha: 0.5),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (suggestion.distanceKm != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 14,
+                                        color:
+                                            Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${suggestion.distanceKm!.toInt()} km away',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),

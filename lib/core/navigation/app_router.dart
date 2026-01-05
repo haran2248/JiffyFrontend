@@ -215,7 +215,7 @@ GoRouter appRouter(Ref ref) {
           },
         ),
       ),
-      // Chat Route
+
       GoRoute(
         path: AppRoutes.chat,
         name: RouteNames.chat,
