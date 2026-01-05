@@ -53,7 +53,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   }
 
   void _startTimer() {
-    if (_isPaused) return;
+    if (_isPaused || !_isImageLoaded)
+      return; // Don't start timer if paused or image not loaded
 
     _timer?.cancel();
     _timer = Timer(_storyDuration, () {
@@ -292,6 +293,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                 currentIndex: _currentContentIndex,
                 isPaused: _isPaused ||
                     !_isImageLoaded, // Pause progress bar if image not loaded
+                isImageLoaded: _isImageLoaded,
               ),
             ),
 
@@ -333,8 +335,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
             ),
 
-            // Pause indicator (shows play icon when paused)
-            if (_isPaused)
+            // Pause/loading indicator (shows play icon when paused, hourglass when loading)
+            if (_isPaused || !_isImageLoaded)
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -349,8 +351,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.play_arrow,
+                  child: Icon(
+                    _isImageLoaded ? Icons.play_arrow : Icons.hourglass_empty,
                     color: Colors.white,
                     size: 24,
                   ),
@@ -557,12 +559,14 @@ class _StoryProgressIndicator extends StatelessWidget {
   final Story story;
   final int currentIndex;
   final bool isPaused;
+  final bool isImageLoaded;
 
   const _StoryProgressIndicator({
     super.key,
     required this.story,
     required this.currentIndex,
     required this.isPaused,
+    required this.isImageLoaded,
   });
 
   @override
@@ -583,6 +587,7 @@ class _StoryProgressIndicator extends StatelessWidget {
                 isActive: index == currentIndex,
                 isCompleted: index < currentIndex,
                 isPaused: isPaused && index == currentIndex,
+                isImageLoaded: isImageLoaded && index == currentIndex,
               ),
             ),
           );
@@ -597,12 +602,14 @@ class _StoryProgressBar extends StatefulWidget {
   final bool isActive;
   final bool isCompleted;
   final bool isPaused;
+  final bool isImageLoaded;
 
   const _StoryProgressBar({
     super.key,
     required this.isActive,
     required this.isCompleted,
     required this.isPaused,
+    required this.isImageLoaded,
   });
 
   @override
@@ -621,27 +628,62 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
       duration: const Duration(seconds: 5),
     );
 
+    // Explicitly set initial value and stop controller
     if (widget.isCompleted) {
       _controller.value = 1.0;
-    } else if (widget.isActive && !widget.isPaused) {
-      _controller.forward();
+    } else {
+      // For active/inactive bars, always start at 0.0
+      _controller.value = 0.0;
     }
+    // Explicitly stop the controller to ensure no animation starts
+    _controller.stop();
+
+    // Never start animation in initState - wait for post-frame callback
+    // This ensures the widget tree is built and isPaused/isImageLoaded state is correctly applied
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _updateAnimationState();
+    });
   }
 
   @override
   void didUpdateWidget(_StoryProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _updateAnimationState();
+  }
 
+  void _updateAnimationState() {
     if (widget.isCompleted) {
+      // Completed bars should be at 100%
       _controller.value = 1.0;
+      _controller.stop();
     } else if (widget.isActive) {
-      if (widget.isPaused) {
+      // Active bar
+      if (!widget.isImageLoaded) {
+        // Image hasn't loaded yet: set value to 0 and ensure controller is stopped
+        // Don't use reset() as it might have side effects - explicitly set value and stop
+        if (_controller.value != 0.0) {
+          _controller.value = 0.0;
+        }
+        _controller.stop();
+        // Ensure status is stopped, not dismissed or other states
+        if (_controller.status == AnimationStatus.forward) {
+          _controller.stop();
+        }
+      } else if (widget.isPaused) {
+        // User paused: stop animation but keep current progress value
         _controller.stop();
       } else {
-        _controller.forward();
+        // Image loaded and not paused: start/resume animation
+        // forward() resumes from current value if paused, starts from 0 if at 0
+        if (_controller.status != AnimationStatus.forward) {
+          _controller.forward();
+        }
       }
     } else {
+      // Inactive bar - reset to 0 and stop
       _controller.reset();
+      _controller.stop();
     }
   }
 

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
@@ -9,7 +11,6 @@ import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.d
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
-import 'package:jiffy/presentation/screens/stories/story_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
 
@@ -226,20 +227,41 @@ class HomeScreen extends ConsumerWidget {
                   }
                 }
               } else {
-                // Other user's story - view story
-                final allStories = StoryHelpers.storyItemsToStories(stories);
-                final storyIndex =
-                    allStories.indexWhere((s) => s.userId == story.userId);
+                // Other user's story - fetch actual stories from API
+                final repository = ref.read(storiesRepositoryProvider);
+                try {
+                  final storiesJson = await repository.fetchStories();
 
-                if (context.mounted && storyIndex != -1) {
-                  context.navigation.pushNamed(
-                    RouteNames.storyViewer,
-                    extra: {
-                      'stories': allStories,
-                      'initialStoryIndex': storyIndex,
-                      'initialContentIndex': 0,
-                    },
-                  );
+                  if (context.mounted) {
+                    // Convert API response to Story objects
+                    final allStories =
+                        StoryApiHelpers.storiesFromApiJson(storiesJson);
+
+                    // Filter stories for this specific user and group them
+                    final userStories = allStories
+                        .where((s) => s.userId == story.userId)
+                        .toList();
+
+                    if (userStories.isNotEmpty) {
+                      // Group multiple stories into one Story object with multiple contents
+                      final groupedStory = StoryApiHelpers.groupStoriesByUser(
+                        userStories,
+                        story.userId,
+                      );
+
+                      context.navigation.pushNamed(
+                        RouteNames.storyViewer,
+                        extra: {
+                          'stories': [groupedStory],
+                          'initialStoryIndex': 0,
+                          'initialContentIndex': 0,
+                        },
+                      );
+                    }
+                  }
+                } catch (e) {
+                  debugPrint('Error fetching match stories: $e');
+                  // On error, do nothing (user can try again)
                 }
               }
             },
@@ -292,23 +314,50 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 onTap: () {
                   // Convert stories before popping
-                  final userStories = userStoriesJson
+                  final allUserStories = userStoriesJson
                       .map((json) => StoryApiHelpers.storyFromApiJson(json))
                       .toList();
-                  Navigator.of(sheetContext).pop();
-                  // Use stable context for navigation
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (stableContext.mounted) {
-                      stableContext.navigation.pushNamed(
-                        RouteNames.storyViewer,
-                        extra: {
-                          'stories': userStories,
-                          'initialStoryIndex': 0,
-                          'initialContentIndex': 0,
-                        },
-                      );
-                    }
-                  });
+
+                  // Get current user ID to group stories
+                  final currentUser =
+                      ref.read(authRepositoryProvider).currentUser;
+                  if (currentUser != null && allUserStories.isNotEmpty) {
+                    // Group all user stories into a single Story object with multiple contents
+                    final groupedStory = StoryApiHelpers.groupStoriesByUser(
+                      allUserStories,
+                      currentUser.uid,
+                    );
+
+                    Navigator.of(sheetContext).pop();
+                    // Use stable context for navigation
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (stableContext.mounted) {
+                        stableContext.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': [groupedStory],
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      }
+                    });
+                  } else {
+                    // Fallback: use original behavior if grouping fails
+                    Navigator.of(sheetContext).pop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (stableContext.mounted) {
+                        stableContext.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': allUserStories,
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      }
+                    });
+                  }
                 },
               ),
               // Add New Story option
