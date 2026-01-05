@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import 'package:jiffy/presentation/screens/stories/story_image_compositor.dart';
 import 'package:jiffy/presentation/screens/stories/story_overlay_colors.dart';
 
 /// Screen for creating a new story with photo and text overlay
@@ -29,6 +32,7 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
       {}; // Track accumulated delta per overlay
   bool _isDragging = false;
   bool _isOverDeleteButton = false; // Track if finger is over delete button
+  bool _isUploading = false; // Track upload state
   final GlobalKey _stackKey = GlobalKey();
   final GlobalKey _deleteButtonKey = GlobalKey();
 
@@ -124,17 +128,63 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
   }
 
   Future<void> _saveStory() async {
-    if (_selectedImage == null) return;
+    if (_selectedImage == null || _isUploading) return;
 
-    // TODO: Upload story to backend with overlays
-    // For now, just show a message and go back
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Story saved! (Upload functionality coming soon)'),
-        ),
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      // Composite text overlays onto the image
+      final compositedImageFile = await StoryImageCompositor.compositeImage(
+        imageFile: _selectedImage!,
+        overlays: _overlays,
       );
-      context.popRoute();
+
+      final repository = ref.read(storiesRepositoryProvider);
+      await repository.uploadStory(imageFile: compositedImageFile);
+
+      // Clean up temporary composited file if it's different from original
+      if (compositedImageFile.path != _selectedImage!.path) {
+        try {
+          await compositedImageFile.delete();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Story uploaded successfully!'),
+          ),
+        );
+        context.popRoute();
+      }
+    } on ApiError catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload story: ${e.message}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload story: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
@@ -392,22 +442,36 @@ class _StoryCreationScreenState extends ConsumerState<StoryCreationScreen> {
                     color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
-                      onTap: _selectedImage != null ? _saveStory : null,
+                      onTap: (_selectedImage != null && !_isUploading)
+                          ? _saveStory
+                          : null,
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         alignment: Alignment.center,
-                        child: Text(
-                          'Post',
-                          style: TextStyle(
-                            color: _selectedImage != null
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.5),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: _isUploading
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                'Post',
+                                style: TextStyle(
+                                  color:
+                                      (_selectedImage != null && !_isUploading)
+                                          ? Colors.white
+                                          : Colors.white.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                   ),
