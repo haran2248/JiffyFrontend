@@ -36,12 +36,16 @@ class SuggestionCard {
   final String userId;
   final String name;
   final int age;
-  final String? imageUrl;
+  final String?
+      imageUrl; // Kept for backward compatibility, returns first image
+  final List<String> imageUrls; // Full list of images
   final String bio; // Short bio text
   final String relationshipPreview; // Full relationship preview text
   final List<ComparisonInsight>
       comparisonInsights; // Profile comparison insights
   final List<String> interests; // e.g., ["Hiking", "Photography"]
+  final bool isTopPick;
+  final double? distanceKm;
 
   const SuggestionCard({
     required this.id,
@@ -49,10 +53,13 @@ class SuggestionCard {
     required this.name,
     required this.age,
     this.imageUrl,
+    this.imageUrls = const [],
     required this.bio,
     required this.relationshipPreview,
     this.comparisonInsights = const [],
     this.interests = const [],
+    this.isTopPick = false,
+    this.distanceKm,
   });
 }
 
@@ -101,12 +108,14 @@ class MatchPrompt {
 class HomeData {
   final List<StoryItem> stories;
   final List<SuggestionCard> suggestions;
+  final List<SuggestionCard> matches; // New matches list
   final List<TrendingItem> trendingItems;
   final MatchPrompt? currentPrompt;
 
   const HomeData({
     this.stories = const [],
     this.suggestions = const [],
+    this.matches = const [],
     this.trendingItems = const [],
     this.currentPrompt,
   });
@@ -114,12 +123,14 @@ class HomeData {
   HomeData copyWith({
     List<StoryItem>? stories,
     List<SuggestionCard>? suggestions,
+    List<SuggestionCard>? matches,
     List<TrendingItem>? trendingItems,
     MatchPrompt? Function()? currentPrompt,
   }) {
     return HomeData(
       stories: stories ?? this.stories,
       suggestions: suggestions ?? this.suggestions,
+      matches: matches ?? this.matches,
       trendingItems: trendingItems ?? this.trendingItems,
       currentPrompt:
           currentPrompt != null ? currentPrompt() : this.currentPrompt,
