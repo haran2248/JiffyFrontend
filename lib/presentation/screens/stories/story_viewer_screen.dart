@@ -352,7 +352,9 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                     ],
                   ),
                   child: Icon(
-                    _isImageLoaded ? Icons.play_arrow : Icons.hourglass_empty,
+                    // Show play icon if paused (regardless of loading state),
+                    // or hourglass if not paused but still loading
+                    _isPaused ? Icons.play_arrow : Icons.hourglass_empty,
                     color: Colors.white,
                     size: 24,
                   ),
@@ -672,10 +674,12 @@ class _StoryProgressBarState extends State<_StoryProgressBar>
         }
       } else if (widget.isPaused) {
         // User paused: stop animation but keep current progress value
-        _controller.stop();
+        // Use stop(canceled: false) to preserve status for resume
+        _controller.stop(canceled: false);
       } else {
         // Image loaded and not paused: start/resume animation
         // forward() resumes from current value if paused, starts from 0 if at 0
+        // Check if not already animating (status could be forward, reverse, or completed)
         if (_controller.status != AnimationStatus.forward) {
           _controller.forward();
         }

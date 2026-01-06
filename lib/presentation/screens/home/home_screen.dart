@@ -243,20 +243,47 @@ class HomeScreen extends ConsumerWidget {
                         .toList();
 
                     if (userStories.isNotEmpty) {
-                      // Group multiple stories into one Story object with multiple contents
-                      final groupedStory = StoryApiHelpers.groupStoriesByUser(
-                        userStories,
-                        story.userId,
-                      );
+                      try {
+                        // Group multiple stories into one Story object with multiple contents
+                        final groupedStory = StoryApiHelpers.groupStoriesByUser(
+                          userStories,
+                          story.userId,
+                        );
 
-                      context.navigation.pushNamed(
-                        RouteNames.storyViewer,
-                        extra: {
-                          'stories': [groupedStory],
-                          'initialStoryIndex': 0,
-                          'initialContentIndex': 0,
-                        },
-                      );
+                        context.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': [groupedStory],
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      } on ArgumentError catch (e) {
+                        // Handle ArgumentError from groupStoriesByUser
+                        debugPrint('Error grouping match stories: $e');
+                        // Fallback: use ungrouped stories
+                        context.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': userStories,
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      } catch (e) {
+                        // Handle any other exception
+                        debugPrint(
+                            'Unexpected error grouping match stories: $e');
+                        // Fallback: use ungrouped stories
+                        context.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': userStories,
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      }
                     }
                   }
                 } catch (e) {
@@ -322,28 +349,69 @@ class HomeScreen extends ConsumerWidget {
                   final currentUser =
                       ref.read(authRepositoryProvider).currentUser;
                   if (currentUser != null && allUserStories.isNotEmpty) {
-                    // Group all user stories into a single Story object with multiple contents
-                    final groupedStory = StoryApiHelpers.groupStoriesByUser(
-                      allUserStories,
-                      currentUser.uid,
-                    );
+                    // Filter stories to ensure they belong to current user before grouping
+                    final userStories = allUserStories
+                        .where((s) => s.userId == currentUser.uid)
+                        .toList();
 
-                    Navigator.of(sheetContext).pop();
-                    // Use stable context for navigation
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (stableContext.mounted) {
-                        stableContext.navigation.pushNamed(
-                          RouteNames.storyViewer,
-                          extra: {
-                            'stories': [groupedStory],
-                            'initialStoryIndex': 0,
-                            'initialContentIndex': 0,
-                          },
-                        );
-                      }
-                    });
+                    try {
+                      // Group all user stories into a single Story object with multiple contents
+                      final groupedStory = StoryApiHelpers.groupStoriesByUser(
+                        userStories,
+                        currentUser.uid,
+                      );
+
+                      Navigator.of(sheetContext).pop();
+                      // Use stable context for navigation
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (stableContext.mounted) {
+                          stableContext.navigation.pushNamed(
+                            RouteNames.storyViewer,
+                            extra: {
+                              'stories': [groupedStory],
+                              'initialStoryIndex': 0,
+                              'initialContentIndex': 0,
+                            },
+                          );
+                        }
+                      });
+                    } on ArgumentError catch (e) {
+                      // Handle ArgumentError from groupStoriesByUser
+                      debugPrint('Error grouping stories: $e');
+                      // Fallback: use original behavior if grouping fails
+                      Navigator.of(sheetContext).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (stableContext.mounted) {
+                          stableContext.navigation.pushNamed(
+                            RouteNames.storyViewer,
+                            extra: {
+                              'stories': allUserStories,
+                              'initialStoryIndex': 0,
+                              'initialContentIndex': 0,
+                            },
+                          );
+                        }
+                      });
+                    } catch (e) {
+                      // Handle any other exception
+                      debugPrint('Unexpected error grouping stories: $e');
+                      // Fallback: use original behavior if grouping fails
+                      Navigator.of(sheetContext).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (stableContext.mounted) {
+                          stableContext.navigation.pushNamed(
+                            RouteNames.storyViewer,
+                            extra: {
+                              'stories': allUserStories,
+                              'initialStoryIndex': 0,
+                              'initialContentIndex': 0,
+                            },
+                          );
+                        }
+                      });
+                    }
                   } else {
-                    // Fallback: use original behavior if grouping fails
+                    // Fallback: use original behavior if no user or no stories
                     Navigator.of(sheetContext).pop();
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (stableContext.mounted) {

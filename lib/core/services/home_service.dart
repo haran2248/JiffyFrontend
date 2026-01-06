@@ -135,10 +135,21 @@ class HomeService {
       // Create a map of userId -> match info for quick lookup
       final matchesMap = <String, Map<String, dynamic>>{};
       for (final match in matchesJson) {
-        final uid = match['uid'] as String?;
-        if (uid != null) {
+        final uid = match['uid']?.toString();
+        if (uid != null && uid.isNotEmpty) {
           matchesMap[uid] = match;
         }
+      }
+
+      // Helper to parse timestamp (int or ISO String) to milliseconds
+      int? _parseTimestamp(dynamic timestamp) {
+        if (timestamp == null) return null;
+        if (timestamp is int) return timestamp;
+        if (timestamp is String) {
+          final dateTime = DateTime.tryParse(timestamp);
+          return dateTime?.millisecondsSinceEpoch;
+        }
+        return null;
       }
 
       // Group stories by userId and get the most recent one per user
@@ -152,12 +163,10 @@ class HomeService {
           storiesByUser[userId] = story;
         } else {
           // Compare createdAt to keep the most recent
-          final existingCreatedAt = existingStory['createdAt'];
-          final currentCreatedAt = story['createdAt'];
-          if (currentCreatedAt != null &&
-              (existingCreatedAt == null ||
-                  (currentCreatedAt is int && existingCreatedAt is int &&
-                      currentCreatedAt > existingCreatedAt))) {
+          final existingTs = _parseTimestamp(existingStory['createdAt']);
+          final currentTs = _parseTimestamp(story['createdAt']);
+          if (currentTs != null &&
+              (existingTs == null || currentTs > existingTs)) {
             storiesByUser[userId] = story;
           }
         }

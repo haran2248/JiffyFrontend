@@ -88,7 +88,16 @@ class StoryApiHelpers {
 
     // Use the first story's metadata as the base
     final firstStory = userStories.first;
-    final lastStory = userStories.last;
+
+    // Find the maximum expiresAt across all stories (not just the last one)
+    DateTime? maxExpiresAt;
+    for (final story in userStories) {
+      if (story.expiresAt != null) {
+        if (maxExpiresAt == null || story.expiresAt!.isAfter(maxExpiresAt)) {
+          maxExpiresAt = story.expiresAt;
+        }
+      }
+    }
 
     return Story(
       id: firstStory.id, // Use first story's ID
@@ -97,7 +106,7 @@ class StoryApiHelpers {
       userImageUrl: firstStory.userImageUrl,
       contents: allContents,
       createdAt: firstStory.createdAt, // Use earliest createdAt
-      expiresAt: lastStory.expiresAt, // Use latest expiresAt
+      expiresAt: maxExpiresAt, // Use maximum expiresAt across all stories
     );
   }
 }
