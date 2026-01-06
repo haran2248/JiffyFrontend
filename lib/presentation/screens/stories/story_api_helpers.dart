@@ -62,5 +62,51 @@ class StoryApiHelpers {
         .map((item) => storyFromApiJson(item as Map<String, dynamic>))
         .toList();
   }
-}
 
+  /// Group multiple Story objects by userId and combine into a single Story with multiple contents.
+  /// This is useful when a user has multiple stories that should be displayed together.
+  ///
+  /// Stories are sorted by createdAt (oldest first) to maintain chronological order.
+  static Story groupStoriesByUser(List<Story> stories, String userId) {
+    if (stories.isEmpty) {
+      throw ArgumentError('Cannot group empty list of stories');
+    }
+
+    // Filter stories for the given user and sort by createdAt
+    final userStories = stories.where((s) => s.userId == userId).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    if (userStories.isEmpty) {
+      throw ArgumentError('No stories found for userId: $userId');
+    }
+
+    // Combine all contents from all stories
+    final allContents = <StoryContent>[];
+    for (final story in userStories) {
+      allContents.addAll(story.contents);
+    }
+
+    // Use the first story's metadata as the base
+    final firstStory = userStories.first;
+
+    // Find the maximum expiresAt across all stories (not just the last one)
+    DateTime? maxExpiresAt;
+    for (final story in userStories) {
+      if (story.expiresAt != null) {
+        if (maxExpiresAt == null || story.expiresAt!.isAfter(maxExpiresAt)) {
+          maxExpiresAt = story.expiresAt;
+        }
+      }
+    }
+
+    return Story(
+      id: firstStory.id, // Use first story's ID
+      userId: userId,
+      userName: firstStory.userName,
+      userImageUrl: firstStory.userImageUrl,
+      contents: allContents,
+      createdAt: firstStory.createdAt, // Use earliest createdAt
+      expiresAt: maxExpiresAt, // Use maximum expiresAt across all stories
+    );
+  }
+}
