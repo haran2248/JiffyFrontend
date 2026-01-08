@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
@@ -560,7 +561,16 @@ class HomeScreen extends ConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    // TODO: Handle prompt answer
+                    context.pushNamed(
+                      RouteNames.chat,
+                      pathParameters: {
+                        RouteParams.userId: ChatConstants.jiffyBotId,
+                      },
+                      extra: {
+                        'name': 'Jiffy AI',
+                        'promptText': prompt.promptText,
+                      },
+                    );
                   },
                   borderRadius: BorderRadius.circular(24),
                   child: Container(

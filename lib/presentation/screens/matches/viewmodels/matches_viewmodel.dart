@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import '../models/match_item.dart';
 import '../models/matches_filter.dart';
 
@@ -167,16 +168,28 @@ class MatchesViewModel extends _$MatchesViewModel {
       final List<MatchItem> matchItems =
           results.whereType<MatchItem>().toList();
 
-      // Add Jiffy AI manually if desired (keeping mock logic for it)
+      // Add Jiffy AI manually with real chat data
       final now = DateTime.now();
+      String jiffyLastMessage = "Hey! 👋 I'm here to help you ...";
+      DateTime jiffyLastTime = now.subtract(const Duration(hours: 12));
+
+      try {
+        final jiffyMsg =
+            await chatRepo.getLastMessage(ChatConstants.jiffyBotId);
+        if (jiffyMsg != null) {
+          jiffyLastMessage = jiffyMsg.message;
+          jiffyLastTime = jiffyMsg.timestamp;
+        }
+      } catch (_) {}
+
       matchItems.insert(
           0,
           MatchItem(
-            id: 'jiffy-ai',
+            id: ChatConstants.jiffyBotId,
             name: 'Jiffy AI',
             imageUrl: null,
-            lastMessage: "Hey! 👋 I'm here to help you ...",
-            lastMessageTime: now.subtract(const Duration(hours: 12)),
+            lastMessage: jiffyLastMessage,
+            lastMessageTime: jiffyLastTime,
             isJiffyAi: true,
             compatibilityScore: 1.0,
             matchedAt: now.subtract(const Duration(days: 30)),

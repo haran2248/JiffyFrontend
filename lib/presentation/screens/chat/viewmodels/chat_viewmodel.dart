@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../chat_constants.dart';
 import '../data/chat_repository.dart';
 import '../models/chat_message.dart';
 
@@ -21,5 +23,25 @@ class ChatViewModel extends _$ChatViewModel {
 
   Future<void> markAsRead() async {
     await _repository.markAsRead(otherUserId);
+  }
+
+  Future<void> checkAndSendPrompt(String prompt) async {
+    // Only proceed if this is the Jiffy Bot
+    if (otherUserId != ChatConstants.jiffyBotId) return;
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    // Check last message to avoid duplicates
+    final lastMsg = await _repository.getLastMessage(otherUserId);
+    if (lastMsg != null &&
+        lastMsg.message == prompt &&
+        lastMsg.senderId == ChatConstants.jiffyBotId) {
+      return;
+    }
+
+    // Send as system message
+    await _repository.sendSystemMessage(
+        currentUser.uid, prompt, ChatConstants.jiffyBotId);
   }
 }
