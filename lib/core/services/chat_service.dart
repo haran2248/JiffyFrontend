@@ -45,6 +45,37 @@ class ChatService {
     }
   }
 
+  // Send a system message (or bot message) with arbitrary sender ID
+  Future<void> sendSystemMessage(
+      String receiverID, String message, String senderID) async {
+    try {
+      final Timestamp timestamp = Timestamp.now();
+
+      Map<String, dynamic> newMessage = {
+        'senderID': senderID,
+        'receiverID': receiverID,
+        'message': message,
+        'timestamp': timestamp,
+        'isRead': false,
+        'type': 'text',
+      };
+
+      List<String> ids = [senderID, receiverID];
+      ids.sort();
+      String chatroomID = ids.join("_");
+
+      // Add to Firestore
+      await _firestore
+          .collection("chat_rooms")
+          .doc(chatroomID)
+          .collection("messages")
+          .add(newMessage);
+    } catch (e) {
+      debugPrint("Error sending system message: $e");
+      // Don't rethrow, just log, so we don't crash UI if permission denied
+    }
+  }
+
   // Get messages stream
   Stream<QuerySnapshot> getMessages(String otherUserID) {
     final currentUser = _auth.currentUser;

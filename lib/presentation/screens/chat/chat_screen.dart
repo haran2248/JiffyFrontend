@@ -9,12 +9,14 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String otherUserId;
   final String otherUserName;
   final String? otherUserImage;
+  final String? promptText;
 
   const ChatScreen({
     super.key,
     required this.otherUserId,
     required this.otherUserName,
     this.otherUserImage,
+    this.promptText,
   });
 
   @override
@@ -29,7 +31,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     // Mark messages as read when entering
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatViewModelProvider(widget.otherUserId).notifier).markAsRead();
+      final viewModel =
+          ref.read(chatViewModelProvider(widget.otherUserId).notifier);
+      viewModel.markAsRead();
+
+      // If there is a prompt text, try to send it as a system message
+      if (widget.promptText != null && widget.promptText!.isNotEmpty) {
+        viewModel.checkAndSendPrompt(widget.promptText!);
+      }
     });
   }
 

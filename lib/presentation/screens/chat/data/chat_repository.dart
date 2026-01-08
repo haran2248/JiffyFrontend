@@ -14,6 +14,11 @@ class ChatRepository {
     return _chatService.sendMessage(receiverID, message);
   }
 
+  Future<void> sendSystemMessage(
+      String receiverID, String message, String senderID) async {
+    return _chatService.sendSystemMessage(receiverID, message, senderID);
+  }
+
   Stream<List<ChatMessage>> messagesStream(String otherUserId) {
     return _chatService.getMessages(otherUserId).map((snapshot) {
       return snapshot.docs.map((doc) {
