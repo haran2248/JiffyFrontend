@@ -20,13 +20,13 @@ class ProfileService {
   ProfileService({required Dio dio}) : _dio = dio;
 
   /// Check if user has completed onboarding
-  /// 
+  ///
   /// A user is considered onboarded if they have:
   /// - Basic profile details (basicDetails with name, photo, dateOfBirth, gender)
   /// - Profile setup completed (prompts map is not null/empty)
-  /// 
+  ///
   /// [userId] - The user ID to check
-  /// 
+  ///
   /// Returns true if onboarding is complete, false otherwise
   /// On error, returns false (safer to show onboarding than skip it)
   Future<bool> isOnboardingComplete(String userId) async {
@@ -94,15 +94,16 @@ class ProfileService {
       return false;
     }
   }
+
   /// Fetch conversation starter data (spark ideas) for a user
-  /// 
+  ///
   /// This will call the backend API to get:
   /// - List of spark ideas (location-based, interest-based, AI-generated, etc.)
   /// - User online status
   /// - Maximum message length
-  /// 
+  ///
   /// [userId] - The user ID for whom to fetch conversation starter data
-  /// 
+  ///
   /// Throws [TimeoutException] if the request times out
   /// Throws [FormatException] if the response cannot be parsed
   /// Throws [Exception] for other network or server errors
@@ -112,11 +113,11 @@ class ProfileService {
     try {
       // TODO: Replace with actual API call
       // TODO: Remove or replace debugPrint with proper logging framework before production
-      debugPrint('ProfileService: Fetching conversation starter data for user: $userId');
-      
+      debugPrint(
+          'ProfileService: Fetching conversation starter data for user: $userId');
+
       // Simulate network delay with timeout
-      await Future.delayed(const Duration(milliseconds: 500))
-          .timeout(
+      await Future.delayed(const Duration(milliseconds: 500)).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw TimeoutException(
@@ -125,7 +126,7 @@ class ProfileService {
           );
         },
       );
-      
+
       // Mock data - replace with actual API call
       // Backend should return JSON with structure:
       // {
@@ -149,13 +150,15 @@ class ProfileService {
           SparkIdea(
             id: 'spark-1',
             category: 'Based on Local Spots',
-            message: "I see you love hiking at Mission Peak. What's your favorite trail?",
+            message:
+                "I see you love hiking at Mission Peak. What's your favorite trail?",
             type: SparkIdeaType.location,
           ),
           SparkIdea(
             id: 'spark-2',
             category: 'Based on Interests',
-            message: "We both love craft beer! Have you tried any new breweries lately?",
+            message:
+                "We both love craft beer! Have you tried any new breweries lately?",
             type: SparkIdeaType.interests,
           ),
           SparkIdea(
@@ -178,9 +181,9 @@ class ProfileService {
       rethrow;
     } on Exception catch (e) {
       // TODO: Replace with proper logging framework
-      debugPrint('ProfileService: Error fetching conversation starter data for user $userId - $e');
+      debugPrint(
+          'ProfileService: Error fetching conversation starter data for user $userId - $e');
       rethrow;
     }
   }
 }
-

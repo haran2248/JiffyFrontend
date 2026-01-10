@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -36,7 +36,9 @@ class OnboardingRepository {
         queryParameters: {'uid': uid},
       );
 
-      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
         throw Exception(
             "Failed to save user information: ${response.statusCode}");
       }
@@ -66,7 +68,9 @@ class OnboardingRepository {
         queryParameters: {'uid': uid},
       );
 
-      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
         throw Exception(
             "Failed to save desired qualities: ${response.statusCode}");
       }
@@ -79,6 +83,102 @@ class OnboardingRepository {
       }
     } catch (e) {
       throw Exception("Error saving desired qualities: $e");
+    }
+  }
+
+  /// Initialize onboarding with predefined answers and get conversational questions
+  /// Endpoint: POST /api/onboarding/context
+  Future<List<String>> initializeOnboarding(
+      Map<String, String> predefinedAnswers) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.post(
+        '/api/onboarding/context',
+        data: {
+          'uid': uid,
+          'predefinedAnswers': predefinedAnswers,
+        },
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to initialize onboarding: ${response.statusCode}");
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      final questions = (data['questions'] as List<dynamic>?)
+              ?.map((q) => q.toString())
+              .toList() ??
+          [];
+
+      return questions;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to initialize onboarding: ${e.response?.statusCode} - ${e.response?.data}");
+      } else {
+        throw Exception("Network error initializing onboarding: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error initializing onboarding: $e");
+    }
+  }
+
+  /// Submit answers and get next set of questions
+  /// Endpoint: POST /api/onboarding/answers
+  Future<List<String>> submitAnswers(
+      List<String> questions, List<String> answers) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.post(
+        '/api/onboarding/answers',
+        data: {
+          'uid': uid,
+          'questions': questions,
+          'answers': answers,
+        },
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception("Failed to submit answers: ${response.statusCode}");
+      }
+
+      final data = response.data as Map<String, dynamic>;
+
+      // Debug: Log the full response to see what fields are present
+      debugPrint('📥 Response from /api/onboarding/answers: $data');
+      debugPrint('📥 Response keys: ${data.keys.toList()}');
+
+      // The API may return next questions in the response
+      final nextQuestions = (data['nextQuestions'] as List<dynamic>?)
+          ?.map((q) => q.toString())
+          .toList();
+
+      final isComplete = data['isComplete'] as bool? ?? true;
+      debugPrint(
+          '📥 Next questions: ${nextQuestions?.length ?? 0}, isComplete: $isComplete');
+
+      // Return next questions if available, otherwise empty list (onboarding complete)
+      return nextQuestions ?? [];
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to submit answers: ${e.response?.statusCode} - ${e.response?.data}");
+      } else {
+        throw Exception("Network error submitting answers: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error submitting answers: $e");
     }
   }
 }

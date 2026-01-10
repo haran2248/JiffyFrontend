@@ -51,6 +51,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
     });
 
+    // Show completion dialog when onboarding is complete
+    if (formData.showCompletionDialog == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showCompletionDialog(context, viewModel);
+        }
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
@@ -69,7 +78,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             child: Text(
               "Skip",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
           ),
@@ -119,6 +128,58 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCompletionDialog(
+      BuildContext context, ProfileSetupViewModel viewModel) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+          title: const Text(
+            'Profile Setup Complete! 🎉',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            "Perfect! I've got everything I need. Your profile is looking great!",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                viewModel.onCompletionDialogDismissed();
+                Navigator.of(context).pop();
+                // Navigate to home screen
+                context.goToRoute(AppRoutes.home);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+              ),
+              child: const Text(
+                'Next',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
