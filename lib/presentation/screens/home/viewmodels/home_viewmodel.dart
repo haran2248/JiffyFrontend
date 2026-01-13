@@ -53,6 +53,26 @@ class HomeViewModel extends _$HomeViewModel {
       // 1. Fetch base home data (stories, trending, prompts)
       var data = await homeService.fetchHomeData();
 
+      // ROTATING PROMPTS LOGIC
+      final List<String> promptTexts = [
+        "What's the most adventurous thing you've ever done?",
+        "If you could have dinner with anyone, who would it be?",
+        "What's your biggest pet peeve?",
+        "Describe your perfect Sunday.",
+      ];
+      final randomPrompt =
+          promptTexts[DateTime.now().millisecond % promptTexts.length];
+
+      // Override the prompt with a random one
+      data = data.copyWith(
+        currentPrompt: () => MatchPrompt(
+          id: data.currentPrompt?.id ?? 'rotating_prompt',
+          promptText: randomPrompt,
+          isNew: true,
+          createdAt: DateTime.now(),
+        ),
+      );
+
       // 2. Fetch suggestions (Direct API call)
       List<SuggestionCard> suggestions = [];
 

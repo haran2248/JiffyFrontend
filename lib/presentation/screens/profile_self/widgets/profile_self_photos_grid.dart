@@ -33,7 +33,7 @@ class ProfileSelfPhotosGrid extends StatelessWidget {
               ),
             ),
         // Add photo slot
-        _AddPhotoSlot(onTap: onAddPhoto),
+        if (onAddPhoto != null) _AddPhotoSlot(onTap: onAddPhoto),
       ],
     );
   }
