@@ -33,7 +33,6 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    // Start from login screen
     initialLocation: AppRoutes.login,
     debugLogDiagnostics: true,
     routes: [

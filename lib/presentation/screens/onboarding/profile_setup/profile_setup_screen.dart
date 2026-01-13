@@ -51,6 +51,36 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
     });
 
+    // Show completion dialog when onboarding is complete
+    final shouldShowDialog = formData.showCompletionDialog;
+    if (shouldShowDialog == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Profile Setup Complete! 🎉'),
+              content: const Text(
+                "Perfect! I've got everything I need. Your profile is looking great!",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    viewModel.dismissCompletionDialog();
+                    Navigator.of(context).pop();
+                    // Navigate to next screen (permissions)
+                    context.goToRoute(AppRoutes.onboardingPermissions);
+                  },
+                  child: const Text('Next'),
+                ),
+              ],
+            ),
+          );
+        }
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(
