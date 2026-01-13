@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/presentation/widgets/chat_bubble.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart';
-import 'package:jiffy/core/services/conversation_service.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'widgets/chat_action_chip.dart';
 
@@ -25,8 +23,6 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
-  List<ConversationSuggestion> _conversationSuggestions = [];
-  bool _isLoadingSuggestions = false;
 
   @override
   void initState() {
@@ -34,49 +30,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Mark messages as read when entering
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(chatViewModelProvider(widget.otherUserId).notifier).markAsRead();
-      _loadConversationSuggestions();
     });
   }
 
-  Future<void> _loadConversationSuggestions() async {
-    setState(() {
-      _isLoadingSuggestions = true;
-      _conversationSuggestions = []; // Clear previous suggestions
-    });
-
-    try {
-      debugPrint(
-          '🔄 Loading conversation suggestions for ${widget.otherUserId}...');
-      final suggestions = await ref
-          .read(chatViewModelProvider(widget.otherUserId).notifier)
-          .generateConversationSuggestions();
-
-      debugPrint('✅ Received ${suggestions.length} conversation suggestions');
-      for (var suggestion in suggestions) {
-        debugPrint('  - ${suggestion.text} (${suggestion.category})');
-      }
-
-      setState(() {
-        _conversationSuggestions = suggestions;
-        _isLoadingSuggestions = false;
-      });
-    } catch (e, stackTrace) {
-      debugPrint('❌ Error loading conversation suggestions: $e');
-      debugPrint('Stack trace: $stackTrace');
-      setState(() {
-        _isLoadingSuggestions = false;
-      });
-
-      // Show error snackbar for debugging
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load suggestions: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -117,14 +80,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
-          // Debug: Regenerate conversation suggestions
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            tooltip: 'Regenerate conversation suggestions',
-            onPressed: () {
-              _loadConversationSuggestions();
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onPressed: () {
@@ -200,36 +155,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
 
           // Bottom Suggestions
-          if (_conversationSuggestions.isNotEmpty || _isLoadingSuggestions)
-            Container(
-              height: 60,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: _isLoadingSuggestions
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFFD81B60), // AppColors.primaryRaspberry
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _conversationSuggestions.map((suggestion) {
-                          return ChatActionChip(
-                            label: suggestion.text,
-                            icon: _getIconForCategory(suggestion.category),
-                            onTap: () {
-                              ref
-                                  .read(
-                                      chatViewModelProvider(widget.otherUserId)
-                                          .notifier)
-                                  .sendMessage(suggestion.text);
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                ChatActionChip(
+                  label: "Ask about her trip",
+                  icon: Icons.flight,
+                  onTap: () {
+                    ref
+                        .read(
+                            chatViewModelProvider(widget.otherUserId).notifier)
+                        .sendMessage("How was your trip?");
+                  },
+                ),
+                ChatActionChip(
+                  label: "Suggest a fun question",
+                  icon: Icons.chat_bubble_outline,
+                  onTap: () {
+                    // TODO: Generate question
+                    ref
+                        .read(
+                            chatViewModelProvider(widget.otherUserId).notifier)
+                        .sendMessage(
+                            "If you could have any superpower, what would it be?");
+                  },
+                ),
+              ],
             ),
+          ),
 
           // Input Area
           Container(
@@ -248,17 +203,5 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
     );
-  }
-
-  IconData _getIconForCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'icebreaker':
-        return Icons.wb_sunny;
-      case 'topic':
-        return Icons.topic;
-      case 'question':
-      default:
-        return Icons.chat_bubble_outline;
-    }
   }
 }
