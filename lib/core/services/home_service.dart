@@ -97,7 +97,6 @@ class HomeService {
         }
       }
 
-      // Helper to parse timestamp (int or ISO String) to milliseconds
       int? _parseTimestamp(dynamic timestamp) {
         if (timestamp == null) return null;
         if (timestamp is int) return timestamp;
@@ -192,8 +191,6 @@ class HomeService {
     }
   }
 
-  /// Fetch suggestions for a specific user
-  /// [userId] - Current user's ID
   Future<SuggestionResponse> fetchSuggestions(String userId) async {
     try {
       debugPrint('HomeService: Fetching real suggestions for $userId...');
@@ -210,7 +207,6 @@ class HomeService {
     }
   }
 
-  /// Fetch user matches (reusing same logic as MatchesRepository to allow display on Home)
   Future<List<Map<String, dynamic>>> fetchMatches(String userId) async {
     try {
       debugPrint('HomeService: Fetching matches for $userId...');
@@ -232,7 +228,6 @@ class HomeService {
     }
   }
 
-  /// Refresh home data
   Future<HomeData> refreshHomeData() async {
     return fetchHomeData();
   }

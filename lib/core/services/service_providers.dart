@@ -36,8 +36,6 @@ NotificationService notificationService(Ref ref) {
   return NotificationService();
 }
 
-// ProfileService is now defined in profile_service.dart with its own provider
-
 @riverpod
 PhotoUploadService photoUploadService(Ref ref) {
   return PhotoUploadService();
