@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/repository/onboarding_repository.dart';
 import '../models/profile_setup_form_data.dart';
@@ -23,8 +22,8 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
       _typingTimer = null;
     });
 
-    // Initialize onboarding when viewmodel is created
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Initialize onboarding when viewmodel is created (using microtask for testability)
+    Future.microtask(() {
       if (!_isInitialized) {
         _initializeOnboarding();
       }
@@ -290,7 +289,7 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
 
       final errorMessage = ChatMessage(
         text:
-            "Thanks for sharing! I've saved your responses. Let's continue building your profile.",
+            "Sorry, something went wrong saving your responses. Please try again.",
         isFromUser: false,
         timestamp: DateTime.now(),
       );

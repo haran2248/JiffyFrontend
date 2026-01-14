@@ -111,9 +111,12 @@ class OnboardingRepository {
             "Failed to initialize onboarding: ${response.statusCode}");
       }
 
-      final data = response.data as Map<String, dynamic>;
-      final success = data['success'] as bool? ?? false;
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw Exception("Invalid response format from server");
+      }
 
+      final success = data['success'] as bool? ?? false;
       if (!success) {
         throw Exception(
             data['message'] as String? ?? "Failed to initialize onboarding");
@@ -127,9 +130,11 @@ class OnboardingRepository {
       return questions;
     } on DioException catch (e) {
       if (e.response != null) {
-        final errorData = e.response?.data as Map<String, dynamic>?;
-        final message = errorData?['message'] as String? ??
-            "Failed to initialize onboarding";
+        final errorData = e.response?.data;
+        final message = (errorData is Map<String, dynamic>)
+            ? (errorData['message'] as String? ??
+                "Failed to initialize onboarding")
+            : "Failed to initialize onboarding";
         throw Exception("$message (${e.response?.statusCode})");
       } else {
         throw Exception("Network error initializing onboarding: ${e.message}");
@@ -164,9 +169,12 @@ class OnboardingRepository {
         throw Exception("Failed to submit answers: ${response.statusCode}");
       }
 
-      final data = response.data as Map<String, dynamic>;
-      final success = data['success'] as bool? ?? false;
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw Exception("Invalid response format from server");
+      }
 
+      final success = data['success'] as bool? ?? false;
       if (!success) {
         throw Exception(
             data['message'] as String? ?? "Failed to submit answers");
@@ -188,9 +196,10 @@ class OnboardingRepository {
       };
     } on DioException catch (e) {
       if (e.response != null) {
-        final errorData = e.response?.data as Map<String, dynamic>?;
-        final message =
-            errorData?['message'] as String? ?? "Failed to submit answers";
+        final errorData = e.response?.data;
+        final message = (errorData is Map<String, dynamic>)
+            ? (errorData['message'] as String? ?? "Failed to submit answers")
+            : "Failed to submit answers";
         throw Exception("$message (${e.response?.statusCode})");
       } else {
         throw Exception("Network error submitting answers: ${e.message}");

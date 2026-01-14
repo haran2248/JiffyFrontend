@@ -17,9 +17,11 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _isCompletionDialogShowing = false;
 
   @override
   void dispose() {
+    _isCompletionDialogShowing = false;
     _scrollController.dispose();
     super.dispose();
   }
@@ -51,11 +53,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
     });
 
-    // Show completion dialog when onboarding is complete
-    final shouldShowDialog = formData.showCompletionDialog;
-    if (shouldShowDialog == true) {
+    // Show completion dialog when onboarding is complete (only once)
+    if (formData.showCompletionDialog && !_isCompletionDialogShowing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && !_isCompletionDialogShowing) {
+          _isCompletionDialogShowing = true;
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -69,6 +71,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   onPressed: () {
                     viewModel.dismissCompletionDialog();
                     Navigator.of(context).pop();
+                    _isCompletionDialogShowing = false;
                     // Navigate to next screen (permissions)
                     context.goToRoute(AppRoutes.onboardingPermissions);
                   },
