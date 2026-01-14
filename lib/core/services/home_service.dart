@@ -1,6 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart' show debugPrint, Icons;
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
+import 'package:jiffy/presentation/screens/home/models/suggestion_response.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/matches/data/matches_repository.dart';
@@ -10,17 +12,20 @@ class HomeService {
   final StoriesRepository _storiesRepository;
   final MatchesRepository _matchesRepository;
   final AuthRepository _authRepository;
+  final Dio _dio;
 
   HomeService({
     required StoriesRepository storiesRepository,
     required MatchesRepository matchesRepository,
     required AuthRepository authRepository,
+    required Dio dio,
   })  : _storiesRepository = storiesRepository,
         _matchesRepository = matchesRepository,
-        _authRepository = authRepository;
+        _authRepository = authRepository,
+        _dio = dio;
 
   /// Fetch all home screen data
-  /// 
+  ///
   /// This will call the backend API to get:
   /// - Stories (from matched users)
   /// - Suggestions for the day
@@ -35,50 +40,7 @@ class HomeService {
     // Mock data for other sections - TODO: Replace with actual API calls
     return HomeData(
       stories: stories,
-      suggestions: [
-        SuggestionCard(
-          id: 'suggestion-1',
-          userId: 'user-3',
-          name: 'Alex',
-          age: 24,
-          bio: 'Weekend adventurer, weekday coffee...',
-          relationshipPreview: 'Expect lots of outdoor dates, spontaneous road trips, and deep conversations under the stars. You\'ll bond over shared love for adventure and discovering hidden gems in the city.',
-          comparisonInsights: [
-            ComparisonInsight(
-              label: 'Similar conversation style',
-              type: InsightType.common,
-            ),
-            ComparisonInsight(
-              label: 'Shared sense of humor',
-              type: InsightType.common,
-            ),
-            ComparisonInsight(
-              label: 'Similar activity levels',
-              type: InsightType.common,
-            ),
-          ],
-          interests: ['Hiking', 'Photography'],
-        ),
-        SuggestionCard(
-          id: 'suggestion-2',
-          userId: 'user-4',
-          name: 'Jordan',
-          age: 26,
-          bio: 'Art gallery regular, live music fanatic. Foodie...',
-          relationshipPreview: 'Think art exhibitions, live concerts, cooking together, and trying new restaurants. Your creative energies will complement each other beautifully.',
-          comparisonInsights: [
-            ComparisonInsight(
-              label: 'Complementary creative interests',
-              type: InsightType.uncommon,
-            ),
-            ComparisonInsight(
-              label: 'Shared appreciation for arts',
-              type: InsightType.common,
-            ),
-          ],
-          interests: ['Art', 'Live Music'],
-        ),
-      ],
+      suggestions: [], // Suggestions now fetched separately via fetchSuggestions
       trendingItems: [
         TrendingItem(
           id: 'trending-1',
@@ -86,13 +48,6 @@ class HomeService {
           description: 'Do you love it or hate it?',
           type: TrendingItemType.hotTake,
           iconData: Icons.local_fire_department,
-        ),
-        TrendingItem(
-          id: 'trending-2',
-          title: 'Favorite Local Hiking Trails',
-          description: 'Top picks for hiking spots',
-          type: TrendingItemType.location,
-          iconData: Icons.location_on,
         ),
       ],
       currentPrompt: MatchPrompt(
@@ -108,7 +63,8 @@ class HomeService {
     try {
       final user = _authRepository.currentUser;
       if (user == null) {
-        debugPrint('HomeService: User not authenticated, returning empty stories');
+        debugPrint(
+            'HomeService: User not authenticated, returning empty stories');
         return [];
       }
 
@@ -141,7 +97,6 @@ class HomeService {
         }
       }
 
-      // Helper to parse timestamp (int or ISO String) to milliseconds
       int? _parseTimestamp(dynamic timestamp) {
         if (timestamp == null) return null;
         if (timestamp is int) return timestamp;
@@ -198,7 +153,8 @@ class HomeService {
         final createdAt = story['createdAt'];
         DateTime? createdAtDate;
         if (createdAt is int) {
-          createdAtDate = DateTime.fromMillisecondsSinceEpoch(createdAt, isUtc: true);
+          createdAtDate =
+              DateTime.fromMillisecondsSinceEpoch(createdAt, isUtc: true);
         } else if (createdAt is String) {
           createdAtDate = DateTime.tryParse(createdAt)?.toUtc();
         }
@@ -235,22 +191,44 @@ class HomeService {
     }
   }
 
-  /// Refresh home data
+  Future<SuggestionResponse> fetchSuggestions(String userId) async {
+    try {
+      debugPrint('HomeService: Fetching real suggestions for $userId...');
+      final response = await _dio.get('/api/suggestions/$userId');
+
+      if (response.statusCode == 200) {
+        return SuggestionResponse.fromJson(response.data);
+      } else {
+        throw Exception('Failed to fetch suggestions: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('HomeService: Error fetching suggestions: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMatches(String userId) async {
+    try {
+      debugPrint('HomeService: Fetching matches for $userId...');
+      final response = await _dio.get(
+        '/api/v1/match/myMatches',
+        queryParameters: {'uid': userId},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception("Failed to fetch matches: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint('HomeService: Error fetching matches: $e');
+      // Return empty list on error instead of breaking home screen
+      return [];
+    }
+  }
+
   Future<HomeData> refreshHomeData() async {
     return fetchHomeData();
   }
-
-  /// Fetch more suggestions (pagination)
-  Future<List<SuggestionCard>> fetchMoreSuggestions({
-    int page = 1,
-    int limit = 10,
-  }) async {
-    // TODO: Remove or replace debugPrint with proper logging framework before production
-    debugPrint('HomeService: Fetching more suggestions (page: $page)...');
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // TODO: Replace with actual API call
-    return const [];
-  }
 }
-

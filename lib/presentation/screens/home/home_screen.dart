@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
@@ -81,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                         // Current Matches Section
                         _buildCurrentMatchesSection(
                           context,
-                          state.data!.suggestions,
+                          state.data!.matches,
                         ),
 
                         const SizedBox(height: 80), // Space for bottom nav
@@ -466,11 +468,31 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Suggestions for the Day',
-            style: textTheme.displayMedium?.copyWith(
-              color: colorScheme.onSurface,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  'Suggestions for the Day',
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => context.pushNamed(RouteNames.discover),
+                child: Text(
+                  "See All",
+                  style: textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFFE040FB), // Accent color
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -549,10 +571,9 @@ class HomeScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Use suggestions as matches for now (or create separate matches data)
-    final matchUsers = matches.take(4).toList();
-
-    if (matchUsers.isEmpty) {
+    // Use real matches data
+    // If empty, we can hide the section or show a "No matches yet" empty state
+    if (matches.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -561,29 +582,45 @@ class HomeScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Current Matches',
-            style: textTheme.displayMedium?.copyWith(
-              color: colorScheme.onSurface,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Matches',
+                style: textTheme.headlineSmall?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    context.goNamed('matches'), // Navigate to Matches tab
+                child: Text(
+                  "See All",
+                  style: textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFFE040FB),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           SizedBox(
             height: 340,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: matchUsers.length,
+              itemCount: matches.length,
               itemBuilder: (context, index) {
                 return SuggestionCardWidget(
-                  suggestion: matchUsers[index],
+                  suggestion: matches[index],
                   onTap: () {
                     final profile = ProfileHelpers.suggestionCardToProfileData(
-                      matchUsers[index],
+                      matches[index],
                     );
                     context.navigation.pushNamed(
                       RouteNames.profileView,
                       pathParameters: {
-                        RouteParams.userId: matchUsers[index].userId,
+                        RouteParams.userId: matches[index].userId,
                       },
                       extra: profile,
                     );
@@ -641,7 +678,16 @@ class HomeScreen extends ConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    // TODO: Handle prompt answer
+                    context.pushNamed(
+                      RouteNames.chat,
+                      pathParameters: {
+                        RouteParams.userId: ChatConstants.jiffyBotId,
+                      },
+                      extra: {
+                        'name': 'Jiffy AI',
+                        'promptText': prompt.promptText,
+                      },
+                    );
                   },
                   borderRadius: BorderRadius.circular(24),
                   child: Container(

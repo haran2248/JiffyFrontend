@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:jiffy/core/navigation/app_routes.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
@@ -7,6 +8,7 @@ import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_hea
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_about_me.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
+import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
 
 /// Profile Self Screen (Editable View)
 ///
@@ -27,13 +29,7 @@ class ProfileSelfScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: colorScheme.onSurface,
-          ),
-          onPressed: () => context.popRoute(),
-        ),
+        automaticallyImplyLeading: false, // Remove default back button
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -80,6 +76,9 @@ class ProfileSelfScreen extends ConsumerWidget {
         ],
       ),
       body: _buildBody(context, state, viewModel),
+      bottomNavigationBar: const BottomNavigationBarWidget(
+        currentRoute: AppRoutes.profileSelf,
+      ),
     );
   }
 
@@ -168,9 +167,9 @@ class ProfileSelfScreen extends ConsumerWidget {
               // Header card with photos
               ProfileSelfHeaderCard(
                 data: data,
-                onPreview: viewModel.onPreviewProfile,
-                onManagePhotos: viewModel.onManagePhotos,
-                onEditMainPhoto: viewModel.onManagePhotos,
+                onPreview: null,
+                onManagePhotos: null,
+                onEditMainPhoto: null,
               ),
               const SizedBox(height: 24),
               // About Me section
@@ -178,8 +177,8 @@ class ProfileSelfScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfAboutMe(
                   aboutMeText: data.aboutMe,
-                  onEdit: viewModel.onEditAboutMe,
-                  onBeginnerEdit: viewModel.onEditAboutMe,
+                  onEdit: null,
+                  onBeginnerEdit: null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -188,7 +187,7 @@ class ProfileSelfScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfInterests(
                   interests: data.interests,
-                  onEdit: viewModel.onEditInterests,
+                  onEdit: null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -198,8 +197,8 @@ class ProfileSelfScreen extends ConsumerWidget {
                 child: ProfileSelfConversationStyle(
                   title: data.conversationStyleTitle,
                   description: data.conversationStyleDescription,
-                  onEdit: viewModel.onReviewPromptAnswers,
-                  onReviewPromptAnswers: viewModel.onReviewPromptAnswers,
+                  onEdit: null,
+                  onReviewPromptAnswers: null,
                 ),
               ),
               // Bottom padding for safe area

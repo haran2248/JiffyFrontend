@@ -155,37 +155,38 @@ class ProfileSelfHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Manage Photos button
-          SizedBox(
-            width: double.infinity,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onManagePhotos,
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        colorScheme.primary,
-                        colorScheme.secondary,
-                      ],
+          if (onManagePhotos != null)
+            SizedBox(
+              width: double.infinity,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onManagePhotos,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary,
+                          colorScheme.secondary,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Center(
-                    child: Text(
-                      "Manage Photos",
-                      style: textTheme.labelLarge?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.w600,
+                    child: Center(
+                      child: Text(
+                        "Manage Photos",
+                        style: textTheme.labelLarge?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

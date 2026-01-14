@@ -214,7 +214,7 @@ GoRouter appRouter(Ref ref) {
           },
         ),
       ),
-      // Chat Route
+
       GoRoute(
         path: AppRoutes.chat,
         name: RouteNames.chat,
@@ -223,6 +223,7 @@ GoRouter appRouter(Ref ref) {
           final extra = state.extra as Map<String, dynamic>?;
           final userName = extra?['name'] ?? 'Chat';
           final userImage = extra?['image'];
+          final promptText = extra?['promptText'];
 
           // Defensive handling: if userId is missing, show error screen
           if (userId.isEmpty) {
@@ -245,6 +246,7 @@ GoRouter appRouter(Ref ref) {
               otherUserId: userId,
               otherUserName: userName,
               otherUserImage: userImage,
+              promptText: promptText,
             ),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {

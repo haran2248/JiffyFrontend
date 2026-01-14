@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
@@ -16,10 +17,12 @@ HomeService homeService(Ref ref) {
   final storiesRepository = ref.watch(storiesRepositoryProvider);
   final matchesRepository = ref.watch(matchesRepositoryProvider);
   final authRepository = ref.watch(authRepositoryProvider);
+  final dio = ref.watch(dioProvider);
   return HomeService(
     storiesRepository: storiesRepository,
     matchesRepository: matchesRepository,
     authRepository: authRepository,
+    dio: dio,
   );
 }
 
@@ -32,8 +35,6 @@ PermissionService permissionService(Ref ref) {
 NotificationService notificationService(Ref ref) {
   return NotificationService();
 }
-
-// ProfileService is now defined in profile_service.dart with its own provider
 
 @riverpod
 PhotoUploadService photoUploadService(Ref ref) {

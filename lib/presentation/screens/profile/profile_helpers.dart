@@ -8,37 +8,48 @@ class ProfileHelpers {
     // Create mock photos with multiline captions
     final mockPhotos = <Photo>[];
 
-    // Main photo (from suggestion)
-    if (suggestion.imageUrl != null) {
+    // Use real images from suggestion if available
+    if (suggestion.imageUrls.isNotEmpty) {
+      mockPhotos.addAll(
+        suggestion.imageUrls.map(
+          (url) => Photo(
+            url: url,
+            caption: null, // Captions might need to come from backend later
+          ),
+        ),
+      );
+    } else if (suggestion.imageUrl != null) {
+      // Fallback to legacy single image
       mockPhotos.add(
         Photo(
           url: suggestion.imageUrl!,
-          caption: null, // Main photo doesn't have caption
+          caption: null,
         ),
       );
     }
 
-    // Additional photos with multiline captions
-    mockPhotos.addAll(const [
-      Photo(
-        url:
-            "https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400",
-        caption:
-            "Conquering my fear of heights one climb at a time. The view from the top is always worth it.",
-      ),
-      Photo(
-        url:
-            "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
-        caption:
-            "Capturing moments that take my breath away. Photography is my way of preserving memories.",
-      ),
-      Photo(
-        url:
-            "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
-        caption:
-            "Sunset hikes are my favorite way to end the day. Nature never fails to amaze me.",
-      ),
-    ]);
+    // Add mock placeholders only if we have NO images (or maybe fewer than 2 to look good?)
+    // For now, let's assume if backend provides images, we show ONLY those.
+    // If backend provides 0 images, we show placeholders to avoid broken UI.
+    if (mockPhotos.isEmpty) {
+      mockPhotos.addAll(const [
+        Photo(
+          url:
+              "https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400",
+          caption: "Conquering my fear of heights one climb at a time.",
+        ),
+        Photo(
+          url:
+              "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
+          caption: "Photography is my way of preserving memories.",
+        ),
+        Photo(
+          url:
+              "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
+          caption: "Nature never fails to amaze me.",
+        ),
+      ]);
+    }
 
     return ProfileData(
       id: suggestion.id,

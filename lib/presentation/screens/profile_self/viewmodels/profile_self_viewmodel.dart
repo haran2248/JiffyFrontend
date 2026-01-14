@@ -33,21 +33,16 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       // Mock data for development
       const mockData = ProfileSelfData(
         id: "user-self-1",
-        name: "Jessica",
+        name: "Shruti",
         age: 28,
         location: "San Francisco, CA",
         photos: [
           ProfileSelfPhoto(
             id: "photo-1",
             url:
-                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+                "https://jiffystorebucket.s3.ap-south-1.amazonaws.com/2da3acec-b36d-48a1-8ea6-d131d59a8360",
             isPrimary: true,
-          ),
-          ProfileSelfPhoto(
-            id: "photo-2",
-            url:
-                "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400",
-          ),
+          )
         ],
         aboutMe:
             "Based on our chat, you seem like a curious soul who values authenticity. You're always looking for meaningful connections and you're not afraid to try new things. You have a playful sense of humor and enjoy discovering hidden gems.",
