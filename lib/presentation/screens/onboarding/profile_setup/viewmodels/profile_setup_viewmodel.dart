@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/repository/onboarding_repository.dart';
 import '../models/profile_setup_form_data.dart';
 
 part 'profile_setup_viewmodel.g.dart';
@@ -7,6 +9,11 @@ part 'profile_setup_viewmodel.g.dart';
 @riverpod
 class ProfileSetupViewModel extends _$ProfileSetupViewModel {
   Timer? _typingTimer;
+  final List<String> _currentQuestions = [];
+  final List<String> _currentAnswers = [];
+  int _currentQuestionIndex = 0;
+  bool _isInitialized = false;
+  bool _onboardingComplete = false;
 
   @override
   ProfileSetupFormData build() {
@@ -14,29 +21,111 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
       _typingTimer?.cancel();
       _typingTimer = null;
     });
-    // Initialize with first AI message
+
+    // Initialize onboarding when viewmodel is created (using microtask for testability)
+    Future.microtask(() {
+      if (!_isInitialized) {
+        _initializeOnboarding();
+      }
+    });
+
+    // Show initial welcome message
     final initialMessage = ChatMessage(
       text:
-          "Hey there! 👋 I'm here to help create your perfect profile. Let's start easy - what do you love doing on a lazy Sunday?",
+          "Hey there! 👋 I'm here to help create your perfect profile. Let me get to know you better...",
       isFromUser: false,
       timestamp: DateTime.now(),
     );
 
     return ProfileSetupFormData(
       messages: [initialMessage],
-      suggestedResponses: const [
-        "Hiking in nature ⛰️",
-        "Brunch and coffee ☕",
-        "Reading a good book 📚",
-        "Exploring new places 🏞️",
-      ],
-      currentQuestion: "What do you love doing on a lazy Sunday?",
+      suggestedResponses: const [],
+      currentQuestion: null,
       currentStep: 2, // Step 2 of 3
+      isTyping: true, // Show typing while initializing
+      showCompletionDialog: false,
     );
   }
 
+  Future<void> _initializeOnboarding() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
+    try {
+      debugPrint('🔄 Initializing onboarding...');
+
+      final repository = ref.read(onboardingRepositoryProvider);
+
+      // Get predefined answers from user's existing profile data
+      // These should come from earlier onboarding steps (basics, preferences, etc.)
+      final predefinedAnswers = await _getPredefinedAnswers();
+
+      if (predefinedAnswers.isEmpty) {
+        debugPrint(
+            '⚠️ No predefined answers found - using minimal fallback data');
+        // Fallback: Add minimal required data if user data is not available
+        // In production, this should rarely happen as predefined answers come from
+        // earlier onboarding steps (basics, preferences, etc.)
+        predefinedAnswers['name'] = 'User';
+      }
+
+      debugPrint(
+          '📝 Using predefined answers: ${predefinedAnswers.keys.toList()}');
+      final questions =
+          await repository.initializeOnboarding(predefinedAnswers);
+
+      debugPrint('✅ Received ${questions.length} onboarding questions');
+
+      // Store questions and reset tracking
+      _currentQuestions.clear();
+      _currentQuestions.addAll(questions);
+      _currentQuestionIndex = 0;
+      _currentAnswers.clear();
+
+      // Show first question as AI message
+      if (questions.isNotEmpty) {
+        final firstQuestion = ChatMessage(
+          text: questions[0],
+          isFromUser: false,
+          timestamp: DateTime.now(),
+        );
+
+        state = state.copyWith(
+          messages: [...state.messages, firstQuestion],
+          isTyping: false,
+          currentQuestion: questions[0],
+          suggestedResponses: const [], // No suggested responses for AI-generated questions
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error initializing onboarding: $e');
+      debugPrint('Stack trace: $stackTrace');
+
+      // Fallback to error message
+      final errorMessage = ChatMessage(
+        text:
+            "Sorry, I'm having trouble connecting right now. Please try again later.",
+        isFromUser: false,
+        timestamp: DateTime.now(),
+      );
+
+      state = state.copyWith(
+        messages: [...state.messages, errorMessage],
+        isTyping: false,
+        suggestedResponses: const [],
+      );
+    }
+  }
+
   void addUserMessage(String text) {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || _onboardingComplete) return;
+
+    // Don't accept answers if we don't have questions yet
+    if (!_isInitialized || _currentQuestions.isEmpty) {
+      debugPrint(
+          '⚠️ Cannot accept answer: initialized=$_isInitialized, questions=${_currentQuestions.length}');
+      return;
+    }
 
     final userMessage = ChatMessage(
       text: text.trim(),
@@ -44,14 +133,31 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
       timestamp: DateTime.now(),
     );
 
+    // Add answer to current batch
+    _currentAnswers.add(text.trim());
+
     state = state.copyWith(
       messages: [...state.messages, userMessage],
       userInput: () => null,
       clearUserInput: true,
     );
 
-    // Simulate AI typing
-    _simulateAITyping();
+    // Move to next question in current batch
+    _currentQuestionIndex++;
+
+    // Check if we've answered all questions in current batch
+    if (_currentQuestions.isEmpty) {
+      debugPrint('⚠️ No questions available yet - waiting for initialization');
+      return;
+    }
+
+    if (_currentQuestionIndex >= _currentQuestions.length) {
+      // All questions in this batch answered, submit and get next batch
+      _submitAnswersAndGetNextBatch();
+    } else {
+      // Show next question from current batch
+      _showNextQuestion();
+    }
   }
 
   void selectSuggestedResponse(String response) {
@@ -62,111 +168,163 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     state = state.copyWith(userInput: () => input);
   }
 
-  void _simulateAITyping() {
-    // Set typing indicator
+  void _showNextQuestion() {
+    if (_currentQuestionIndex < _currentQuestions.length) {
+      final nextQuestion = _currentQuestions[_currentQuestionIndex];
+
+      // Set typing indicator
+      state = state.copyWith(isTyping: true);
+
+      // Show next question after short delay
+      _typingTimer?.cancel();
+      _typingTimer = Timer(const Duration(milliseconds: 800), () {
+        final questionMessage = ChatMessage(
+          text: nextQuestion,
+          isFromUser: false,
+          timestamp: DateTime.now(),
+        );
+
+        state = state.copyWith(
+          messages: [...state.messages, questionMessage],
+          isTyping: false,
+          currentQuestion: nextQuestion,
+          suggestedResponses: const [], // No suggested responses for AI-generated questions
+        );
+      });
+    }
+  }
+
+  Future<void> _submitAnswersAndGetNextBatch() async {
+    if (_onboardingComplete) return;
+
+    // Guard: Don't submit if we don't have questions or answers
+    if (_currentQuestions.isEmpty || _currentAnswers.isEmpty) {
+      debugPrint(
+          '⚠️ Cannot submit: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
+      return;
+    }
+
+    // Ensure questions and answers arrays match in length
+    if (_currentQuestions.length != _currentAnswers.length) {
+      debugPrint(
+          '⚠️ Mismatch: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
+      // Only submit the matching pairs
+      final minLength = _currentQuestions.length < _currentAnswers.length
+          ? _currentQuestions.length
+          : _currentAnswers.length;
+      _currentQuestions.removeRange(minLength, _currentQuestions.length);
+      _currentAnswers.removeRange(minLength, _currentAnswers.length);
+    }
+
     state = state.copyWith(isTyping: true);
 
-    // Cancel any existing timer before creating a new one
-    _typingTimer?.cancel();
-    // Simulate AI response after delay
-    _typingTimer = Timer(const Duration(seconds: 2), () {
-      final aiResponse = ChatMessage(
-        text: _generateAIResponse(state.messages.last.text),
+    try {
+      debugPrint('🔄 Submitting batch of ${_currentAnswers.length} answers...');
+      debugPrint('📝 Questions: ${_currentQuestions.join(", ")}');
+      debugPrint('📝 Answers: ${_currentAnswers.join(", ")}');
+      final repository = ref.read(onboardingRepositoryProvider);
+
+      // Submit current batch of answers
+      final result =
+          await repository.submitAnswers(_currentQuestions, _currentAnswers);
+
+      final nextQuestions = result['nextQuestions'] as List<String>? ?? [];
+      final isComplete = result['isComplete'] as bool? ??
+          false; // Default to false (more questions might come)
+
+      debugPrint(
+          '✅ Answers submitted. Next questions: ${nextQuestions.length}, isComplete: $isComplete');
+
+      // Check if we got next batch of questions
+      if (nextQuestions.isNotEmpty && !isComplete) {
+        debugPrint(
+            '✅ Starting next batch with ${nextQuestions.length} questions');
+
+        // Start new batch
+        _currentQuestions.clear();
+        _currentQuestions.addAll(nextQuestions);
+        _currentAnswers.clear();
+        _currentQuestionIndex = 0;
+
+        // Show first question of next batch after short delay
+        _typingTimer?.cancel();
+        _typingTimer = Timer(const Duration(milliseconds: 500), () {
+          final nextQuestion = ChatMessage(
+            text: nextQuestions[0],
+            isFromUser: false,
+            timestamp: DateTime.now(),
+          );
+
+          state = state.copyWith(
+            messages: [...state.messages, nextQuestion],
+            isTyping: false,
+            currentQuestion: nextQuestions[0],
+            suggestedResponses: const [], // No suggested responses for AI-generated questions
+          );
+        });
+        return;
+      }
+
+      // No more questions, onboarding complete
+      debugPrint('✅ Onboarding complete');
+      _onboardingComplete = true;
+
+      final completionMessage = ChatMessage(
+        text:
+            "Perfect! I've got everything I need. Your profile is looking great! 🎉",
         isFromUser: false,
         timestamp: DateTime.now(),
       );
 
       state = state.copyWith(
-        messages: [...state.messages, aiResponse],
+        messages: [...state.messages, completionMessage],
         isTyping: false,
-        suggestedResponses: _generateSuggestedResponses(aiResponse.text),
-        currentQuestion: _extractQuestion(aiResponse.text),
+        suggestedResponses: const [],
+        currentQuestion: null,
+        showCompletionDialog: true, // Show dialog with "Next" button
       );
-    });
-  }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error submitting answers: $e');
+      debugPrint('Stack trace: $stackTrace');
 
-  String _generateAIResponse(String userMessage) {
-    // This will be replaced with actual API call later
-    // For now, generate contextual responses
-    final lowerMessage = userMessage.toLowerCase();
+      final errorMessage = ChatMessage(
+        text:
+            "Sorry, something went wrong saving your responses. Please try again.",
+        isFromUser: false,
+        timestamp: DateTime.now(),
+      );
 
-    if (lowerMessage.contains('hiking') || lowerMessage.contains('nature')) {
-      return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('brunch') ||
-        lowerMessage.contains('coffee')) {
-      return "Love that! What's your ideal way to spend a weekend morning?";
-    } else if (lowerMessage.contains('reading') ||
-        lowerMessage.contains('book')) {
-      return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('exploring') ||
-        lowerMessage.contains('places')) {
-      return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('food') ||
-        lowerMessage.contains('sleep')) {
-      return "That sounds amazing! What kind of activities make you lose track of time?";
-    } else if (lowerMessage.contains('work') ||
-        lowerMessage.contains('project')) {
-      return "That's awesome! What drives you to work on side projects?";
-    } else {
-      return "That sounds amazing! What kind of activities make you lose track of time?";
+      state = state.copyWith(
+        messages: [...state.messages, errorMessage],
+        isTyping: false,
+        suggestedResponses: const [],
+      );
     }
   }
 
-  List<String> _generateSuggestedResponses(String aiMessage) {
-    // Generate contextual suggested responses based on AI message
-    final lowerMessage = aiMessage.toLowerCase();
-
-    if (lowerMessage.contains('lose track of time') ||
-        lowerMessage.contains('activities')) {
-      return const [
-        "Working on side projects 💻",
-        "Cooking new recipes 🍳",
-        "Photography 📸",
-        "Playing music 🎵",
-      ];
-    } else if (lowerMessage.contains('weekend morning')) {
-      return const [
-        "Sleeping in 😴",
-        "Early workout 🏋️",
-        "Reading with coffee ☕",
-        "Exploring the city 🏙️",
-      ];
-    } else if (lowerMessage.contains('drives you')) {
-      return const [
-        "Creative expression 🎨",
-        "Problem solving 🧩",
-        "Learning new skills 📚",
-        "Building something meaningful 🚀",
-      ];
-    } else {
-      return const [
-        "Working on side projects 💻",
-        "Cooking new recipes 🍳",
-        "Photography 📸",
-        "Playing music 🎵",
-      ];
+  /// Get predefined answers from user's existing profile data
+  /// These should come from earlier onboarding steps (basics, preferences, etc.)
+  /// Returns empty map if no data is available (fallback will be used in caller)
+  Future<Map<String, String>> _getPredefinedAnswers() async {
+    try {
+      // TODO: Fetch user data from API and extract predefined answers
+      // This should include: name, gender, preferredGender, relationshipGoals, etc.
+      // from earlier onboarding screens
+      return <String, String>{};
+    } catch (e) {
+      debugPrint('⚠️ Error fetching predefined answers: $e');
+      return <String, String>{};
     }
-  }
-
-  String? _extractQuestion(String aiMessage) {
-    // Extract question from AI message for context
-    if (aiMessage.contains('?')) {
-      final questionIndex = aiMessage.indexOf('?');
-      final startIndex =
-          aiMessage.lastIndexOf(RegExp(r'[.!?]\s+'), questionIndex - 20);
-      return aiMessage
-          .substring(
-            startIndex > 0 ? startIndex + 2 : 0,
-            questionIndex + 1,
-          )
-          .trim();
-    }
-    return null;
   }
 
   void nextStep() {
-    // Navigate to next step (Step 3)
+    // Navigate to next step (permissions screen)
     // This will be handled by navigation logic
+    debugPrint('🚀 Navigating to next step (permissions)');
+  }
+
+  void dismissCompletionDialog() {
+    state = state.copyWith(showCompletionDialog: false);
   }
 
   void skip() {

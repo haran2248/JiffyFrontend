@@ -17,9 +17,11 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _isCompletionDialogShowing = false;
 
   @override
   void dispose() {
+    _isCompletionDialogShowing = false;
     _scrollController.dispose();
     super.dispose();
   }
@@ -50,6 +52,37 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         _scrollToBottom();
       }
     });
+
+    // Show completion dialog when onboarding is complete (only once)
+    if (formData.showCompletionDialog && !_isCompletionDialogShowing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isCompletionDialogShowing) {
+          _isCompletionDialogShowing = true;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Profile Setup Complete! 🎉'),
+              content: const Text(
+                "Perfect! I've got everything I need. Your profile is looking great!",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    viewModel.dismissCompletionDialog();
+                    Navigator.of(context).pop();
+                    _isCompletionDialogShowing = false;
+                    // Navigate to next screen (permissions)
+                    context.goToRoute(AppRoutes.onboardingPermissions);
+                  },
+                  child: const Text('Next'),
+                ),
+              ],
+            ),
+          );
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
