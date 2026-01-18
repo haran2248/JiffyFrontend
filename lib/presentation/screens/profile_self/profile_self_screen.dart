@@ -172,6 +172,17 @@ class ProfileSelfScreen extends ConsumerWidget {
                 onEditMainPhoto: null,
               ),
               const SizedBox(height: 24),
+              // Personality Traits section (from curated profile)
+              if (data.personalityTraits.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfInterests(
+                    interests: data.personalityTraits,
+                    onEdit: null,
+                    title: "Personality Traits",
+                  ),
+                ),
+              if (data.personalityTraits.isNotEmpty) const SizedBox(height: 16),
               // About Me section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -5,20 +5,23 @@ import "profile_self_section_card.dart";
 /// Interests section widget for profile self screen.
 ///
 /// Displays interest chips in a responsive wrap layout.
+/// Can be reused for personality traits by passing a custom title.
 class ProfileSelfInterests extends StatelessWidget {
   final List<String> interests;
   final VoidCallback? onEdit;
+  final String title;
 
   const ProfileSelfInterests({
     super.key,
     required this.interests,
     this.onEdit,
+    this.title = "Interests",
   });
 
   @override
   Widget build(BuildContext context) {
     return ProfileSelfSectionCard(
-      title: "Interests",
+      title: title,
       onEdit: onEdit,
       child: interests.isEmpty
           ? Row(

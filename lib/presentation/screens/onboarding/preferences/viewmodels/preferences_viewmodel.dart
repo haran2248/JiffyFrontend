@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/basic_details.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/desired_qualities.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart';
+import 'package:jiffy/presentation/screens/onboarding/basics/viewmodels/basics_viewmodel.dart';
 import '../models/preferences_state.dart';
 import '../models/gender_preference.dart';
 import '../models/relationship_goal.dart';
@@ -30,10 +31,30 @@ class PreferencesViewModel extends _$PreferencesViewModel {
     try {
       final repo = ref.read(onboardingRepositoryProvider);
 
-      // Map UI model to DTO
-      final gender = state.selectedGender!.label;
+      // Get basics data from the BasicsViewModel
+      final basicsData = ref.read(basicsViewModelProvider);
 
-      await repo.saveUserInformation(BasicDetails(preferredGender: gender));
+      // Map UI model to DTO - include all basics data along with preferred gender
+      final preferredGender = state.selectedGender!.label;
+
+      // First, upload the profile image if one was selected
+      if (basicsData.photoUrl != null && basicsData.photoUrl!.isNotEmpty) {
+        // Check if it's a local file path (starts with /)
+        if (basicsData.photoUrl!.startsWith('/')) {
+          await repo.uploadProfileImage(
+            basicsData.photoUrl!,
+            name: basicsData.firstName,
+          );
+        }
+      }
+
+      // Then save the user information
+      await repo.saveUserInformation(BasicDetails(
+        name: basicsData.firstName,
+        gender: basicsData.gender,
+        birthDate: basicsData.dateOfBirth,
+        preferredGender: preferredGender,
+      ));
 
       state = state.copyWith(isLoading: false);
       return true;

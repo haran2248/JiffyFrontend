@@ -2,6 +2,11 @@ import "package:flutter/material.dart" show debugPrint;
 import "package:riverpod_annotation/riverpod_annotation.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_data.dart";
+import "package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart";
+import "package:jiffy/presentation/screens/onboarding/data/models/curated_profile.dart";
+import "package:jiffy/core/auth/auth_repository.dart";
+import "package:dio/dio.dart";
+import "package:jiffy/core/network/dio_provider.dart";
 
 part "profile_self_viewmodel.g.dart";
 
@@ -17,43 +22,129 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
     return const ProfileSelfState(isLoading: true);
   }
 
+  OnboardingRepository get _onboardingRepository =>
+      ref.read(onboardingRepositoryProvider);
+
+  AuthRepository get _authRepository => ref.read(authRepositoryProvider);
+
+  Dio get _dio => ref.read(dioProvider);
+
+  /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
+  int _calculateAge(String? dobString) {
+    if (dobString == null || dobString.isEmpty) return 0;
+    try {
+      final dob = DateTime.parse(dobString);
+      final now = DateTime.now();
+      int age = now.year - dob.year;
+      if (now.month < dob.month ||
+          (now.month == dob.month && now.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      debugPrint("ProfileSelfViewModel: Error parsing DOB: $e");
+      return 0;
+    }
+  }
+
   /// Load profile data from backend
   Future<void> loadProfileData() async {
     if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, error: () => null);
 
     try {
-      // TODO: Replace with actual API call via repository
-      // Example: final data = await ref.read(profileSelfRepositoryProvider).fetchProfile();
       debugPrint("ProfileSelfViewModel: Loading profile data...");
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
+      final user = _authRepository.currentUser;
+      if (user == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: () => "User not authenticated",
+        );
+        return;
+      }
 
-      // Mock data for development
-      const mockData = ProfileSelfData(
-        id: "user-self-1",
-        name: "Shruti",
-        age: 28,
-        location: "San Francisco, CA",
-        photos: [
-          ProfileSelfPhoto(
-            id: "photo-1",
-            url:
-                "https://jiffystorebucket.s3.ap-south-1.amazonaws.com/2da3acec-b36d-48a1-8ea6-d131d59a8360",
-            isPrimary: true,
-          )
-        ],
-        aboutMe:
-            "Based on our chat, you seem like a curious soul who values authenticity. You're always looking for meaningful connections and you're not afraid to try new things. You have a playful sense of humor and enjoy discovering hidden gems.",
-        interests: ["Travel", "Hiking", "Photography", "Cooking"],
-        conversationStyleTitle: "Witty & Inquisitive",
-        conversationStyleDescription:
-            "You love clever banter and asking questions that make others think.",
+      final uid = user.uid;
+
+      // Fetch user basic info
+      String name = "You";
+      int age = 0;
+      String? location;
+      List<ProfileSelfPhoto> photos = [];
+
+      try {
+        final userResponse = await _dio.get(
+          '/api/users/getUser',
+          queryParameters: {'uid': uid},
+        );
+
+        final userData = userResponse.data as Map<String, dynamic>?;
+        if (userData != null) {
+          // Get name from basicDetails or root
+          final basicDetails =
+              userData['basicDetails'] as Map<String, dynamic>?;
+          name = basicDetails?['name'] as String? ??
+              userData['name'] as String? ??
+              "You";
+
+          // Calculate age from DOB
+          final dobString = basicDetails?['dob'] as String?;
+          age = _calculateAge(dobString);
+
+          // Get location
+          location = basicDetails?['location'] as String?;
+
+          // Get photos from imageIds
+          final imageIds = userData['imageIds'] as List<dynamic>?;
+          if (imageIds != null && imageIds.isNotEmpty) {
+            photos = imageIds.asMap().entries.map((entry) {
+              final imageId = entry.value as String;
+              return ProfileSelfPhoto(
+                id: imageId,
+                url:
+                    'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId',
+                isPrimary: entry.key == 0,
+              );
+            }).toList();
+          }
+
+          debugPrint(
+              "ProfileSelfViewModel: Loaded user - name: $name, age: $age, photos: ${photos.length}");
+        }
+      } catch (e) {
+        debugPrint("ProfileSelfViewModel: Error fetching user data: $e");
+      }
+
+      // Fetch curated profile from API
+      CuratedProfile? curatedProfile;
+      try {
+        curatedProfile = await _onboardingRepository.getCuratedProfile();
+      } catch (e) {
+        debugPrint(
+            "ProfileSelfViewModel: No curated profile found, using defaults");
+      }
+
+      // Build profile data
+      final profileData = ProfileSelfData(
+        id: uid,
+        name: name,
+        age: age,
+        location: location,
+        photos: photos,
+        aboutMe: curatedProfile?.conversationStyleDescription ??
+            "Complete your onboarding to see your AI-generated profile summary.",
+        interests: curatedProfile?.interests ?? [],
+        conversationStyleTitle: curatedProfile != null
+            ? "Your Conversation Style"
+            : "Not yet analyzed",
+        conversationStyleDescription: curatedProfile
+                ?.conversationStyleDescription ??
+            "Complete your onboarding to see your AI-generated conversation style.",
+        personalityTraits: curatedProfile?.personalityTraits ?? [],
       );
 
       if (!ref.mounted) return;
-      state = state.copyWith(data: mockData, isLoading: false);
+      state = state.copyWith(data: profileData, isLoading: false);
     } catch (e) {
       debugPrint("ProfileSelfViewModel: Error loading profile - $e");
       if (!ref.mounted) return;
@@ -67,6 +158,62 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
   /// Refresh profile data
   Future<void> refresh() async {
     await loadProfileData();
+  }
+
+  /// Update personality traits via API
+  Future<void> updateTraits(List<String> newTraits) async {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final updatedProfile = CuratedProfile(
+        personalityTraits: newTraits,
+        interests: currentData.interests,
+        conversationStyleDescription: currentData.conversationStyleDescription,
+      );
+
+      await _onboardingRepository.updateCuratedProfile(updatedProfile);
+
+      // Reload to get fresh data
+      await loadProfileData();
+    } catch (e) {
+      debugPrint("ProfileSelfViewModel: Error updating traits - $e");
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: () => "Failed to update traits. Please try again.",
+      );
+    }
+  }
+
+  /// Update interests via API
+  Future<void> updateInterests(List<String> newInterests) async {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final updatedProfile = CuratedProfile(
+        personalityTraits: currentData.personalityTraits,
+        interests: newInterests,
+        conversationStyleDescription: currentData.conversationStyleDescription,
+      );
+
+      await _onboardingRepository.updateCuratedProfile(updatedProfile);
+
+      // Reload to get fresh data
+      await loadProfileData();
+    } catch (e) {
+      debugPrint("ProfileSelfViewModel: Error updating interests - $e");
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: () => "Failed to update interests. Please try again.",
+      );
+    }
   }
 
   /// Navigate to photo management
