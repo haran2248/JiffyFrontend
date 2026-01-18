@@ -87,8 +87,10 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               userData['name'] as String? ??
               "You";
 
-          // Calculate age from DOB
-          final dobString = basicDetails?['dob'] as String?;
+          // Calculate age from birthDate
+          final dobString = basicDetails?['birthDate'] as String?;
+          debugPrint(
+              "ProfileSelfViewModel: DOB string from server: $dobString");
           age = _calculateAge(dobString);
 
           // Get location
@@ -119,9 +121,26 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       CuratedProfile? curatedProfile;
       try {
         curatedProfile = await _onboardingRepository.getCuratedProfile();
-      } catch (e) {
         debugPrint(
-            "ProfileSelfViewModel: No curated profile found, using defaults");
+            "ProfileSelfViewModel: Curated profile fetched - traits: ${curatedProfile?.personalityTraits}, interests: ${curatedProfile?.interests}");
+      } catch (e) {
+        debugPrint("ProfileSelfViewModel: Error fetching curated profile: $e");
+      }
+
+      // Build "About Me" text from curated profile
+      String aboutMe =
+          "Complete your onboarding to see your AI-generated profile summary.";
+      if (curatedProfile != null) {
+        final traits = curatedProfile.personalityTraits;
+        final interests = curatedProfile.interests;
+        if (traits.isNotEmpty || interests.isNotEmpty) {
+          final traitsPart =
+              traits.isNotEmpty ? "I'm ${traits.join(', ')}." : "";
+          final interestsPart =
+              interests.isNotEmpty ? "I love ${interests.join(', ')}." : "";
+          aboutMe =
+              [traitsPart, interestsPart].where((s) => s.isNotEmpty).join(" ");
+        }
       }
 
       // Build profile data
@@ -131,8 +150,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         age: age,
         location: location,
         photos: photos,
-        aboutMe: curatedProfile?.conversationStyleDescription ??
-            "Complete your onboarding to see your AI-generated profile summary.",
+        aboutMe: aboutMe,
         interests: curatedProfile?.interests ?? [],
         conversationStyleTitle: curatedProfile != null
             ? "Your Conversation Style"
@@ -212,6 +230,35 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       state = state.copyWith(
         isLoading: false,
         error: () => "Failed to update interests. Please try again.",
+      );
+    }
+  }
+
+  /// Update conversation style via API
+  Future<void> updateConversationStyle(String newDescription) async {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final updatedProfile = CuratedProfile(
+        personalityTraits: currentData.personalityTraits,
+        interests: currentData.interests,
+        conversationStyleDescription: newDescription,
+      );
+
+      await _onboardingRepository.updateCuratedProfile(updatedProfile);
+
+      // Reload to get fresh data
+      await loadProfileData();
+    } catch (e) {
+      debugPrint(
+          "ProfileSelfViewModel: Error updating conversation style - $e");
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: () => "Failed to update conversation style. Please try again.",
       );
     }
   }

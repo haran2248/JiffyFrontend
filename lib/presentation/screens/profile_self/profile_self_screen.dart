@@ -1,7 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/app_routes.dart";
-import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_header_card.dart";
@@ -9,6 +8,8 @@ import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_abo
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
+import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
+import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
 
 /// Profile Self Screen (Editable View)
 ///
@@ -80,6 +81,60 @@ class ProfileSelfScreen extends ConsumerWidget {
         currentRoute: AppRoutes.profileSelf,
       ),
     );
+  }
+
+  Future<void> _showEditTraitsDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    List<String> currentTraits,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Personality Traits',
+      items: currentTraits,
+      addHintText: 'Add a trait (e.g., Adventurous)',
+      maxItems: 5,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateTraits(result);
+    }
+  }
+
+  Future<void> _showEditInterestsDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    List<String> currentInterests,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Interests',
+      items: currentInterests,
+      addHintText: 'Add an interest (e.g., Hiking)',
+      maxItems: 8,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateInterests(result);
+    }
+  }
+
+  Future<void> _showEditConversationStyleDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    String currentDescription,
+  ) async {
+    final result = await EditTextDialog.show(
+      context: context,
+      title: 'Edit Conversation Style',
+      text: currentDescription,
+      hintText: 'Describe your conversation style...',
+      maxLength: 500,
+      minLength: 20,
+    );
+    if (result != null) {
+      await viewModel.updateConversationStyle(result);
+    }
   }
 
   Widget _buildBody(
@@ -178,7 +233,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ProfileSelfInterests(
                     interests: data.personalityTraits,
-                    onEdit: null,
+                    onEdit: () => _showEditTraitsDialog(
+                      context,
+                      viewModel,
+                      data.personalityTraits,
+                    ),
                     title: "Personality Traits",
                   ),
                 ),
@@ -198,7 +257,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfInterests(
                   interests: data.interests,
-                  onEdit: null,
+                  onEdit: () => _showEditInterestsDialog(
+                    context,
+                    viewModel,
+                    data.interests,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -208,7 +271,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                 child: ProfileSelfConversationStyle(
                   title: data.conversationStyleTitle,
                   description: data.conversationStyleDescription,
-                  onEdit: null,
+                  onEdit: () => _showEditConversationStyleDialog(
+                    context,
+                    viewModel,
+                    data.conversationStyleDescription,
+                  ),
                   onReviewPromptAnswers: null,
                 ),
               ),
