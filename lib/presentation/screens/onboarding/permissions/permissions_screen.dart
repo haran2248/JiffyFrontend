@@ -109,8 +109,8 @@ class PermissionsScreen extends ConsumerWidget {
                 child: Button(
                   text: "Continue",
                   onTap: () {
-                    // Navigate to onboarding basics after permissions
-                    context.pushRoute(AppRoutes.onboardingBasics);
+                    // Navigate to curated profile screen after permissions
+                    context.goToRoute(AppRoutes.profileCurated);
                   },
                 ),
               ),
