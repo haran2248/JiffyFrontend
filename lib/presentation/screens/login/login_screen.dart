@@ -47,32 +47,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     try {
-      // First check if user has completed onboarding
+      // Get the onboarding step the user needs to complete
       final profileService = ref.read(profileServiceProvider);
-      final isOnboarded = await profileService.isOnboardingComplete(userId);
+      final step = await profileService.getOnboardingStep(userId);
 
       if (!mounted) return;
 
-      if (isOnboarded) {
-        // User has completed onboarding - go directly to home
-        debugPrint('LoginScreen: User already onboarded, going to home');
+      if (step == null) {
+        // User is fully onboarded - go directly to home
+        debugPrint('LoginScreen: User fully onboarded, going to home');
         context.goToRoute(AppRoutes.home);
         return;
       }
 
-      // User hasn't completed onboarding - check phone verification
+      // User needs to complete some onboarding step - check phone verification first
       final phoneService = ref.read(phoneVerificationServiceProvider);
       final isVerified = await phoneService.isPhoneVerified(uid: userId);
 
       if (!mounted) return;
 
-      if (isVerified) {
-        debugPrint(
-            'LoginScreen: Phone verified but not onboarded, going to basics');
-        context.goToRoute(AppRoutes.onboardingBasics);
-      } else {
+      if (!isVerified) {
         debugPrint('LoginScreen: Phone not verified, going to verification');
         context.goToRoute(AppRoutes.phoneVerification);
+        return;
+      }
+
+      // Phone is verified, route to the appropriate onboarding step
+      if (step == 'basics') {
+        debugPrint('LoginScreen: Phone verified, needs basics onboarding');
+        context.goToRoute(AppRoutes.onboardingBasics);
+      } else if (step == 'chat') {
+        debugPrint('LoginScreen: Basics done, needs chat onboarding');
+        context.goToRoute(AppRoutes.onboardingCoPilotIntro);
+      } else {
+        // Unknown step, default to basics
+        debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');
+        context.goToRoute(AppRoutes.onboardingBasics);
       }
     } catch (e) {
       debugPrint('LoginScreen: Error checking user status: $e');

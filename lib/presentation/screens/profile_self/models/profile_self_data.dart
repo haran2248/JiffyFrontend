@@ -32,6 +32,7 @@ class ProfileSelfData {
   final List<ProfileSelfPhoto> photos;
   final String aboutMe;
   final List<String> interests;
+  final List<String> personalityTraits;
   final String conversationStyleTitle;
   final String conversationStyleDescription;
 
@@ -43,6 +44,7 @@ class ProfileSelfData {
     this.photos = const [],
     required this.aboutMe,
     this.interests = const [],
+    this.personalityTraits = const [],
     required this.conversationStyleTitle,
     required this.conversationStyleDescription,
   });
@@ -55,6 +57,7 @@ class ProfileSelfData {
     List<ProfileSelfPhoto>? photos,
     String? aboutMe,
     List<String>? interests,
+    List<String>? personalityTraits,
     String? conversationStyleTitle,
     String? conversationStyleDescription,
   }) {
@@ -66,6 +69,7 @@ class ProfileSelfData {
       photos: photos ?? this.photos,
       aboutMe: aboutMe ?? this.aboutMe,
       interests: interests ?? this.interests,
+      personalityTraits: personalityTraits ?? this.personalityTraits,
       conversationStyleTitle:
           conversationStyleTitle ?? this.conversationStyleTitle,
       conversationStyleDescription:

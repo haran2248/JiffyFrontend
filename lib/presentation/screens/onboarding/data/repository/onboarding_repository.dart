@@ -5,6 +5,7 @@ import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/basic_details.dart';
+import '../models/curated_profile.dart';
 import '../models/desired_qualities.dart';
 
 part 'onboarding_repository.g.dart';
@@ -51,6 +52,52 @@ class OnboardingRepository {
       }
     } catch (e) {
       throw Exception("Error saving user information: $e");
+    }
+  }
+
+  /// Uploads profile image to the server.
+  /// Endpoint: POST /api/users/uploadImages
+  /// [imagePath] - Local file path of the image to upload
+  /// [name] - User's display name (optional)
+  Future<void> uploadProfileImage(String imagePath, {String? name}) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+
+      final formData = FormData.fromMap({
+        'uid': uid,
+        if (name != null) 'name': name,
+        'images': await MultipartFile.fromFile(
+          imagePath,
+          filename: imagePath.split('/').last,
+        ),
+      });
+
+      final response = await _dio.post(
+        '/api/users/uploadImages',
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to upload profile image: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to upload profile image: ${e.response?.statusCode} - ${e.response?.data}");
+      } else {
+        throw Exception("Network error uploading profile image: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error uploading profile image: $e");
     }
   }
 
@@ -206,6 +253,154 @@ class OnboardingRepository {
       }
     } catch (e) {
       throw Exception("Error submitting answers: $e");
+    }
+  }
+
+  /// Generate curated profile from AI analysis of Q&A
+  /// Endpoint: POST /api/onboarding/curated-profile/generate
+  Future<CuratedProfile> generateCuratedProfile() async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.post(
+        '/api/onboarding/curated-profile/generate',
+        queryParameters: {'uid': uid},
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to generate curated profile: ${response.statusCode}");
+      }
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw Exception("Invalid response format from server");
+      }
+
+      final success = data['success'] as bool? ?? false;
+      if (!success) {
+        throw Exception(
+            data['message'] as String? ?? "Failed to generate curated profile");
+      }
+
+      final curatedProfileData =
+          data['curatedProfile'] as Map<String, dynamic>?;
+      if (curatedProfileData == null) {
+        throw Exception("No curated profile data returned");
+      }
+
+      return CuratedProfile.fromJson(curatedProfileData);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response?.data;
+        final message = (errorData is Map<String, dynamic>)
+            ? (errorData['message'] as String? ??
+                "Failed to generate curated profile")
+            : "Failed to generate curated profile";
+        throw Exception("$message (${e.response?.statusCode})");
+      } else {
+        throw Exception(
+            "Network error generating curated profile: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error generating curated profile: $e");
+    }
+  }
+
+  /// Get existing curated profile
+  /// Endpoint: GET /api/onboarding/curated-profile
+  Future<CuratedProfile?> getCuratedProfile() async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.get(
+        '/api/onboarding/curated-profile',
+        queryParameters: {'uid': uid},
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to get curated profile: ${response.statusCode}");
+      }
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw Exception("Invalid response format from server");
+      }
+
+      final curatedProfileData =
+          data['curatedProfile'] as Map<String, dynamic>?;
+      if (curatedProfileData == null) {
+        return null;
+      }
+
+      return CuratedProfile.fromJson(curatedProfileData);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to get curated profile: ${e.response?.statusCode}");
+      } else {
+        throw Exception("Network error getting curated profile: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error getting curated profile: $e");
+    }
+  }
+
+  /// Update curated profile (for user edits)
+  /// Endpoint: PUT /api/onboarding/curated-profile
+  Future<CuratedProfile> updateCuratedProfile(CuratedProfile profile) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.put(
+        '/api/onboarding/curated-profile',
+        data: profile.toJson(),
+        queryParameters: {'uid': uid},
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to update curated profile: ${response.statusCode}");
+      }
+
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw Exception("Invalid response format from server");
+      }
+
+      final curatedProfileData =
+          data['curatedProfile'] as Map<String, dynamic>?;
+      if (curatedProfileData == null) {
+        throw Exception("No curated profile data returned");
+      }
+
+      return CuratedProfile.fromJson(curatedProfileData);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorData = e.response?.data;
+        final message = (errorData is Map<String, dynamic>)
+            ? (errorData['message'] as String? ??
+                "Failed to update curated profile")
+            : "Failed to update curated profile";
+        throw Exception("$message (${e.response?.statusCode})");
+      } else {
+        throw Exception("Network error updating curated profile: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error updating curated profile: $e");
     }
   }
 }
