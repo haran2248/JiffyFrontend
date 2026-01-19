@@ -3,11 +3,13 @@ class CuratedProfile {
   final List<String> personalityTraits;
   final List<String> interests;
   final String conversationStyleDescription;
+  final String? aboutMe;
 
   CuratedProfile({
     required this.personalityTraits,
     required this.interests,
     required this.conversationStyleDescription,
+    this.aboutMe,
   });
 
   factory CuratedProfile.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class CuratedProfile {
           [],
       conversationStyleDescription:
           json['conversationStyleDescription'] as String? ?? '',
+      aboutMe: json['aboutMe'] as String?,
     );
   }
 
@@ -30,6 +33,7 @@ class CuratedProfile {
       'personalityTraits': personalityTraits,
       'interests': interests,
       'conversationStyleDescription': conversationStyleDescription,
+      if (aboutMe != null) 'aboutMe': aboutMe,
     };
   }
 
@@ -37,12 +41,14 @@ class CuratedProfile {
     List<String>? personalityTraits,
     List<String>? interests,
     String? conversationStyleDescription,
+    String? aboutMe,
   }) {
     return CuratedProfile(
       personalityTraits: personalityTraits ?? this.personalityTraits,
       interests: interests ?? this.interests,
       conversationStyleDescription:
           conversationStyleDescription ?? this.conversationStyleDescription,
+      aboutMe: aboutMe ?? this.aboutMe,
     );
   }
 }

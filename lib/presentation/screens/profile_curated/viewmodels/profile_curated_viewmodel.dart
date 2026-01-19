@@ -88,7 +88,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
               "You";
 
           // Calculate age from DOB
-          final dobString = basicDetails?['dob'] as String?;
+          final dobString = basicDetails?['birthDate'] as String?;
           age = _calculateAge(dobString);
 
           // Get first photo URL from imageIds

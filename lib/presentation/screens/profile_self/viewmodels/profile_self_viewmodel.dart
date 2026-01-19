@@ -131,15 +131,22 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       String aboutMe =
           "Complete your onboarding to see your AI-generated profile summary.";
       if (curatedProfile != null) {
-        final traits = curatedProfile.personalityTraits;
-        final interests = curatedProfile.interests;
-        if (traits.isNotEmpty || interests.isNotEmpty) {
-          final traitsPart =
-              traits.isNotEmpty ? "I'm ${traits.join(', ')}." : "";
-          final interestsPart =
-              interests.isNotEmpty ? "I love ${interests.join(', ')}." : "";
-          aboutMe =
-              [traitsPart, interestsPart].where((s) => s.isNotEmpty).join(" ");
+        // Use stored aboutMe if available, otherwise generate from traits/interests
+        if (curatedProfile.aboutMe != null &&
+            curatedProfile.aboutMe!.isNotEmpty) {
+          aboutMe = curatedProfile.aboutMe!;
+        } else {
+          final traits = curatedProfile.personalityTraits;
+          final interests = curatedProfile.interests;
+          if (traits.isNotEmpty || interests.isNotEmpty) {
+            final traitsPart =
+                traits.isNotEmpty ? "I'm ${traits.join(', ')}." : "";
+            final interestsPart =
+                interests.isNotEmpty ? "I love ${interests.join(', ')}." : "";
+            aboutMe = [traitsPart, interestsPart]
+                .where((s) => s.isNotEmpty)
+                .join(" ");
+          }
         }
       }
 
@@ -259,6 +266,35 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       state = state.copyWith(
         isLoading: false,
         error: () => "Failed to update conversation style. Please try again.",
+      );
+    }
+  }
+
+  /// Update about me via API
+  Future<void> updateAboutMe(String newAboutMe) async {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final updatedProfile = CuratedProfile(
+        personalityTraits: currentData.personalityTraits,
+        interests: currentData.interests,
+        conversationStyleDescription: currentData.conversationStyleDescription,
+        aboutMe: newAboutMe,
+      );
+
+      await _onboardingRepository.updateCuratedProfile(updatedProfile);
+
+      // Reload to get fresh data
+      await loadProfileData();
+    } catch (e) {
+      debugPrint("ProfileSelfViewModel: Error updating about me - $e");
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: () => "Failed to update about me. Please try again.",
       );
     }
   }

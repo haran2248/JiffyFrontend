@@ -49,32 +49,6 @@ class ProfileSelfScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          // Preview button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: viewModel.onPreviewProfile,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  "Preview",
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: _buildBody(context, state, viewModel),
       bottomNavigationBar: const BottomNavigationBarWidget(
@@ -134,6 +108,24 @@ class ProfileSelfScreen extends ConsumerWidget {
     );
     if (result != null) {
       await viewModel.updateConversationStyle(result);
+    }
+  }
+
+  Future<void> _showEditAboutMeDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    String currentAboutMe,
+  ) async {
+    final result = await EditTextDialog.show(
+      context: context,
+      title: 'Edit About Me',
+      text: currentAboutMe,
+      hintText: 'Tell others about yourself...',
+      maxLength: 500,
+      minLength: 10,
+    );
+    if (result != null) {
+      await viewModel.updateAboutMe(result);
     }
   }
 
@@ -247,7 +239,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfAboutMe(
                   aboutMeText: data.aboutMe,
-                  onEdit: null,
+                  onEdit: () => _showEditAboutMeDialog(
+                    context,
+                    viewModel,
+                    data.aboutMe,
+                  ),
                   onBeginnerEdit: null,
                 ),
               ),
