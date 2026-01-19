@@ -78,8 +78,8 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
       );
 
       if (response.isSuccess && response.data?.verificationId != null) {
-        // Extract otpLength from response data, default to 6
-        final otpLength = response.data?.otpLength ?? 6;
+        // Extract otpLength from response data, default to 4
+        final otpLength = response.data?.otpLength ?? 4;
         state = state.copyWith(
           isSendingOtp: false,
           isOtpSent: true,
