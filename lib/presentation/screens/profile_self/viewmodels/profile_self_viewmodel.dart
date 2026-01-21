@@ -115,6 +115,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         }
       } catch (e) {
         debugPrint("ProfileSelfViewModel: Error fetching user data: $e");
+        rethrow;
       }
 
       // Fetch curated profile from API
