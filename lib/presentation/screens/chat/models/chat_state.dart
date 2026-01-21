@@ -38,6 +38,9 @@ class ChatMessageDisplay {
   /// True if this message is pending confirmation from Firestore
   final bool isPending;
 
+  /// True if this message failed to send
+  final bool hasError;
+
   const ChatMessageDisplay({
     required this.id,
     required this.senderId,
@@ -47,6 +50,7 @@ class ChatMessageDisplay {
     this.isRead = false,
     this.type = 'text',
     this.isPending = false,
+    this.hasError = false,
   });
 
   /// Create from a confirmed ChatMessage
@@ -60,6 +64,7 @@ class ChatMessageDisplay {
       isRead: msg.isRead,
       type: msg.type,
       isPending: false,
+      hasError: false,
     );
   }
 
@@ -76,6 +81,7 @@ class ChatMessageDisplay {
       message: message,
       timestamp: DateTime.now(),
       isPending: true,
+      hasError: false,
     );
   }
 }

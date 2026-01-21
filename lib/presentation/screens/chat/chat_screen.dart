@@ -5,6 +5,7 @@ import 'package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat
 import 'viewmodels/chat_viewmodel.dart';
 import 'widgets/chat_action_chip.dart';
 import 'widgets/typing_indicator.dart';
+import 'models/chat_state.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String otherUserId;
@@ -143,7 +144,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  Widget _buildMessagesList(dynamic chatState) {
+  Widget _buildMessagesList(ChatState chatState) {
     // ChatState contains messages and isAiTyping
     final messages = chatState.messages;
     final isAiTyping = chatState.isAiTyping;
@@ -207,13 +208,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 const SizedBox(height: 4),
               ],
-              Opacity(
-                // Slightly fade pending messages to indicate they're not yet confirmed
-                opacity: isPending ? 0.7 : 1.0,
-                child: ChatBubble(
-                  text: msg.message,
-                  isMe: isSender,
-                ),
+              Row(
+                mainAxisAlignment:
+                    isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Error Icon (Left of message for sender if error)
+                  if (isSender && msg.hasError)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          // Retry sending
+                          ref
+                              .read(chatViewModelProvider(widget.otherUserId)
+                                  .notifier)
+                              .retryMessage(msg);
+                        },
+                        child: const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+
+                  // Message Bubble
+                  Flexible(
+                    child: Opacity(
+                      // Slightly fade pending messages to indicate they're not yet confirmed
+                      opacity: isPending ? 0.7 : 1.0,
+                      child: ChatBubble(
+                        text: msg.message,
+                        isMe: isSender,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -50,12 +50,28 @@ class ChatViewModel extends _$ChatViewModel {
         .map((m) => ChatMessageDisplay.fromChatMessage(m))
         .toList();
 
-    // Remove pending messages that are now confirmed
-    _pendingMessages.removeWhere((pending) {
-      return confirmedMessages.any((confirmed) =>
-          confirmed.message == pending.message &&
-          confirmed.senderId == pending.senderId);
-    });
+    // Reconcile pending messages: One-to-one matching
+    // For each confirmed message, remove the FIRST matching pending message
+    // Match logic: Same message content and senderId
+    // We iterate backwards through confirmed messages to match naturally with pending queue
+    final pendingToRemove = <ChatMessageDisplay>[];
+
+    for (final confirmed in confirmedMessages) {
+      // Find the first matching pending message that hasn't been marked for removal
+      try {
+        final match = _pendingMessages.firstWhere((pending) {
+          return !pendingToRemove.contains(pending) &&
+              pending.message == confirmed.message &&
+              pending.senderId == confirmed.senderId;
+        });
+        pendingToRemove.add(match);
+      } catch (e) {
+        // No match found, that's fine (message wasn't pending or already handled)
+      }
+    }
+
+    // Remove matched pending messages
+    _pendingMessages.removeWhere((p) => pendingToRemove.contains(p));
 
     // If we received a NEW AI message (i.e. the latest message is from AI), stop typing
     // We sort by timestamp to find the latest
@@ -84,50 +100,72 @@ class ChatViewModel extends _$ChatViewModel {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    // If chatting with Jiffy AI, send via AI chat API
-    if (otherUserId == ChatConstants.jiffyBotId) {
-      // Add optimistic message immediately
-      final pendingMsg = ChatMessageDisplay.pending(
-        senderId: currentUser.uid,
-        receiverId: otherUserId,
-        message: text,
+    final pendingMsg = ChatMessageDisplay.pending(
+      senderId: currentUser.uid,
+      receiverId: otherUserId,
+      message: text,
+    );
+    _pendingMessages.add(pendingMsg);
+
+    // Update state immediately
+    _updateState();
+
+    try {
+      if (otherUserId == ChatConstants.jiffyBotId) {
+        // Show typing indicator
+        _isAiTyping = true;
+        _updateState();
+
+        // Send to AI API
+        await _sendToAiChat(currentUser.uid, text, pendingMsg);
+      } else {
+        // Regular user-to-user chat: send directly to Firestore
+        await _repository.sendMessage(otherUserId, text);
+      }
+    } catch (e) {
+      _handleSendError(pendingMsg);
+    }
+  }
+
+  void _updateState() {
+    final currentMessages = state.messages.where((m) => !m.isPending).toList();
+    final allMessages = [...currentMessages, ..._pendingMessages];
+    allMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    state = state.copyWith(
+      messages: allMessages,
+      isAiTyping: _isAiTyping,
+    );
+  }
+
+  void _handleSendError(ChatMessageDisplay pendingMsg) {
+    debugPrint('ChatViewModel: Error sending message');
+
+    // Find message and mark as error
+    final index = _pendingMessages.indexOf(pendingMsg);
+    if (index != -1) {
+      // Create copy with error flag
+      final errorMsg = ChatMessageDisplay(
+        id: pendingMsg.id,
+        senderId: pendingMsg.senderId,
+        receiverId: pendingMsg.receiverId,
+        message: pendingMsg.message,
+        timestamp: pendingMsg.timestamp,
+        isRead: pendingMsg.isRead,
+        type: pendingMsg.type,
+        isPending: true, // Still pending (retryable)
+        hasError: true,
       );
-      _pendingMessages.add(pendingMsg);
 
-      // Show typing indicator
-      _isAiTyping = true;
-
-      // Update state immediately
-      final currentMessages = state.messages;
-      state = ChatState(
-        messages: [...currentMessages, pendingMsg],
-        isAiTyping: true,
-      );
-
-      // Send to AI API
-      await _sendToAiChat(currentUser.uid, text);
-    } else {
-      // Regular user-to-user chat: add optimistic message
-      final pendingMsg = ChatMessageDisplay.pending(
-        senderId: currentUser.uid,
-        receiverId: otherUserId,
-        message: text,
-      );
-      _pendingMessages.add(pendingMsg);
-
-      // Update state immediately
-      final currentMessages = state.messages;
-      state = state.copyWith(
-        messages: [...currentMessages, pendingMsg],
-      );
-
-      // Send to Firestore
-      await _repository.sendMessage(otherUserId, text);
+      _pendingMessages[index] = errorMsg;
+      _isAiTyping = false; // Stop typing if error
+      _updateState();
     }
   }
 
   /// Send message to Jiffy AI via backend API.
-  Future<void> _sendToAiChat(String userId, String text) async {
+  Future<void> _sendToAiChat(
+      String userId, String text, ChatMessageDisplay pendingMsg) async {
     try {
       final aiChatService = ref.read(aiChatServiceProvider);
       final success = await aiChatService.sendMessageToAI(
@@ -136,16 +174,11 @@ class ChatViewModel extends _$ChatViewModel {
       );
 
       if (!success) {
-        debugPrint('ChatViewModel: AI chat API call failed');
-        // Stop typing indicator on failure
-        _isAiTyping = false;
-        state = state.copyWith(isAiTyping: false);
+        _handleSendError(pendingMsg);
       }
       // Response will appear via Firestore stream
     } catch (e) {
-      debugPrint('ChatViewModel: Error sending to AI: $e');
-      _isAiTyping = false;
-      state = state.copyWith(isAiTyping: false);
+      _handleSendError(pendingMsg);
     }
   }
 
@@ -161,18 +194,78 @@ class ChatViewModel extends _$ChatViewModel {
     if (currentUser == null) return;
 
     // Check last message to avoid duplicates
-    final lastMsg = await _repository.getLastMessage(otherUserId);
-    if (lastMsg != null &&
-        lastMsg.message == prompt &&
-        lastMsg.senderId == ChatConstants.jiffyBotId) {
-      return;
+    // Use local state if available to save a read
+    final messages = state.messages;
+    if (messages.isNotEmpty) {
+      final lastMsg = messages.last; // Sorted ASC, so last is newest
+      if (lastMsg.message == prompt &&
+          lastMsg.senderId == ChatConstants.jiffyBotId) {
+        return;
+      }
+    } else {
+      // Fallback to fetch if local state empty (edge case)
+      final lastMsg = await _repository.getLastMessage(otherUserId);
+      if (lastMsg != null &&
+          lastMsg.message == prompt &&
+          lastMsg.senderId == ChatConstants.jiffyBotId) {
+        return;
+      }
     }
+
+    // Create pending message for prompt
+    final pendingMsg = ChatMessageDisplay.pending(
+      senderId: currentUser.uid,
+      receiverId: otherUserId,
+      message: prompt,
+    );
+    _pendingMessages.add(pendingMsg);
 
     // Show typing indicator for prompt
     _isAiTyping = true;
-    state = state.copyWith(isAiTyping: true);
+    _updateState();
 
     // Send prompt via AI chat API
-    await _sendToAiChat(currentUser.uid, prompt);
+    await _sendToAiChat(currentUser.uid, prompt, pendingMsg);
+  }
+
+  Future<void> retryMessage(ChatMessageDisplay message) async {
+    // Find the message in pending messages including those with errors
+    final index = _pendingMessages.indexWhere((m) => m.id == message.id);
+    if (index == -1) return;
+
+    // Reset error state
+    final pendingMsg = _pendingMessages[index];
+    final retryingMsg = ChatMessageDisplay(
+      id: pendingMsg.id,
+      senderId: pendingMsg.senderId,
+      receiverId: pendingMsg.receiverId,
+      message: pendingMsg.message,
+      timestamp: pendingMsg.timestamp,
+      isRead: pendingMsg.isRead,
+      type: pendingMsg.type,
+      isPending: true,
+      hasError: false, // Reset error
+    );
+
+    _pendingMessages[index] = retryingMsg;
+    _updateState();
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      if (otherUserId == ChatConstants.jiffyBotId) {
+        // Show typing indicator again
+        _isAiTyping = true;
+        _updateState();
+
+        await _sendToAiChat(currentUser.uid, retryingMsg.message, retryingMsg);
+      } else {
+        // Regular chat retry
+        await _repository.sendMessage(otherUserId, retryingMsg.message);
+      }
+    } catch (e) {
+      _handleSendError(retryingMsg);
+    }
   }
 }

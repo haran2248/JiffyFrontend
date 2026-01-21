@@ -30,7 +30,10 @@ class AiChatService {
     required String text,
   }) async {
     try {
-      debugPrint('AiChatService: Sending message to AI for user $userId');
+      final maskedUserId = userId.length > 4
+          ? '${userId.substring(0, 4)}...${userId.hashCode}'
+          : '...${userId.hashCode}';
+      debugPrint('AiChatService: Sending message to AI for user $maskedUserId');
 
       final response = await _dio.post(
         '$_baseUrl/ai/chat',

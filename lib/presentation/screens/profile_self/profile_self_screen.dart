@@ -60,10 +60,37 @@ class ProfileSelfScreen extends ConsumerWidget {
             ),
             tooltip: "Sign Out",
             onPressed: () async {
-              final authViewModel = ref.read(authViewModelProvider.notifier);
-              await authViewModel.signOut();
-              if (context.mounted) {
-                context.go(AppRoutes.login);
+              // Show loading dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              try {
+                final authViewModel = ref.read(authViewModelProvider.notifier);
+                await authViewModel.signOut();
+
+                if (context.mounted) {
+                  // Dismiss loading dialog
+                  Navigator.of(context).pop();
+                  // Navigate to login
+                  context.go(AppRoutes.login);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  // Dismiss loading dialog
+                  Navigator.of(context).pop();
+                  // Show error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error signing out: $e'),
+                      backgroundColor: colorScheme.error,
+                    ),
+                  );
+                }
               }
             },
           ),
