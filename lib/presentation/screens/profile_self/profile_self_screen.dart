@@ -1,5 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:go_router/go_router.dart";
+import "package:jiffy/core/auth/auth_viewmodel.dart";
 import "package:jiffy/core/navigation/app_routes.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
@@ -49,6 +51,23 @@ class ProfileSelfScreen extends ConsumerWidget {
             ),
           ],
         ),
+        actions: [
+          // Sign out button
+          IconButton(
+            icon: Icon(
+              Icons.logout,
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            tooltip: "Sign Out",
+            onPressed: () async {
+              final authViewModel = ref.read(authViewModelProvider.notifier);
+              await authViewModel.signOut();
+              if (context.mounted) {
+                context.go(AppRoutes.login);
+              }
+            },
+          ),
+        ],
       ),
       body: _buildBody(context, state, viewModel),
       bottomNavigationBar: const BottomNavigationBarWidget(

@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/matches/data/matches_repository.dart';
+import 'ai_chat_service.dart';
 import 'home_service.dart';
 import 'permission_service.dart';
 import 'notification_service.dart';
@@ -39,4 +40,10 @@ NotificationService notificationService(Ref ref) {
 @riverpod
 PhotoUploadService photoUploadService(Ref ref) {
   return PhotoUploadService();
+}
+
+@riverpod
+AiChatService aiChatService(Ref ref) {
+  final dio = ref.watch(dioProvider);
+  return AiChatService(dio: dio);
 }

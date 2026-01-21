@@ -4,6 +4,7 @@ import 'package:jiffy/presentation/widgets/chat_bubble.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart';
 import 'viewmodels/chat_viewmodel.dart';
 import 'widgets/chat_action_chip.dart';
+import 'widgets/typing_indicator.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String otherUserId;
@@ -40,16 +41,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         viewModel.checkAndSendPrompt(widget.promptText!);
       }
     });
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.minScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
   }
 
   @override
@@ -99,68 +90,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
-          // Top Actions (Optional/Games removed as per request, keeping one as placeholder if needed or removing completely)
-          // Removing as per user request to ignore games for now.
-
           // Messages List
           Expanded(
-            child: chatState.when(
-              data: (messages) {
-                // Messages are typically newest first in UI lists with reverse: true
-                // But our stream might return them sorted by timestamp ASC or DESC.
-                // Our service returns ASC. ListView(reverse: true) needs DESC (newest at index 0).
-                // Let's reverse the list locally for display
-                final displayMessages = List.of(messages.reversed);
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: displayMessages.length,
-                  itemBuilder: (context, index) {
-                    final msg = displayMessages[index];
-
-                    final isSender = msg.senderId != widget.otherUserId;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: isSender
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
-                        children: [
-                          if (!isSender) ...[
-                            Text(
-                              widget.otherUserName,
-                              style: TextStyle(
-                                color: Colors.purple[200],
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                          ],
-                          ChatBubble(
-                            text: msg.message,
-                            isMe: isSender,
-                            // Customizing colors handled inside ChatBubble or we assume Theme is set correctly.
-                            // The design requested specific gradient for sender.
-                            // ChatBubble supports Theme colors.
-                            // We can wrap ChatBubble in a Theme or just rely on global theme if updated.
-                            // Or simpler: The ChatBubble widget we saw uses Theme.of(context).colorScheme.primary/secondary
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              error: (err, stack) => Center(
-                  child: Text('Error: $err',
-                      style: const TextStyle(color: Colors.white))),
-              loading: () => const Center(child: CircularProgressIndicator()),
-            ),
+            child: _buildMessagesList(chatState),
           ),
 
           // Bottom Suggestions
@@ -183,7 +115,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   label: "Suggest a fun question",
                   icon: Icons.chat_bubble_outline,
                   onTap: () {
-                    // TODO: Generate question
                     ref
                         .read(
                             chatViewModelProvider(widget.otherUserId).notifier)
@@ -205,12 +136,89 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     .read(chatViewModelProvider(widget.otherUserId).notifier)
                     .sendMessage(text);
               },
-              // We might need to style ChatInputField to match the dark theme better
-              // It seems to use Theme.of(context).cardColor etc.
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMessagesList(dynamic chatState) {
+    // ChatState contains messages and isAiTyping
+    final messages = chatState.messages;
+    final isAiTyping = chatState.isAiTyping;
+
+    // Messages are sorted ASC (oldest first)
+    // ListView(reverse: true) needs them in DESC (newest at index 0)
+    final displayMessages = List.of(messages.reversed);
+
+    // Calculate item count: messages + typing indicator if active
+    final itemCount = displayMessages.length + (isAiTyping ? 1 : 0);
+
+    return ListView.builder(
+      controller: _scrollController,
+      reverse: true,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        // If typing indicator is active, show it as the first item (index 0 in reversed list)
+        if (isAiTyping && index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.otherUserName,
+                  style: TextStyle(
+                    color: Colors.purple[200],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const TypingIndicator(),
+              ],
+            ),
+          );
+        }
+
+        // Adjust index if typing indicator is shown
+        final msgIndex = isAiTyping ? index - 1 : index;
+        final msg = displayMessages[msgIndex];
+
+        final isSender = msg.senderId != widget.otherUserId;
+        final isPending = msg.isPending;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment:
+                isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              if (!isSender) ...[
+                Text(
+                  widget.otherUserName,
+                  style: TextStyle(
+                    color: Colors.purple[200],
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+              Opacity(
+                // Slightly fade pending messages to indicate they're not yet confirmed
+                opacity: isPending ? 0.7 : 1.0,
+                child: ChatBubble(
+                  text: msg.message,
+                  isMe: isSender,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

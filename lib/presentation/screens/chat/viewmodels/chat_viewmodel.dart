@@ -1,56 +1,152 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:jiffy/core/services/service_providers.dart';
 import '../chat_constants.dart';
 import '../data/chat_repository.dart';
 import '../models/chat_message.dart';
+import '../models/chat_state.dart';
 
 part 'chat_viewmodel.g.dart';
 
 @riverpod
 class ChatViewModel extends _$ChatViewModel {
   late final ChatRepository _repository;
+  StreamSubscription<List<ChatMessage>>? _messagesSubscription;
+
+  /// Pending messages not yet confirmed by Firestore
+  final List<ChatMessageDisplay> _pendingMessages = [];
+
+  /// Whether AI is currently generating a response
+  bool _isAiTyping = false;
 
   @override
-  Stream<List<ChatMessage>> build(String otherUserId) {
+  ChatState build(String otherUserId) {
     _repository = ref.read(chatRepositoryProvider);
-    return _repository.messagesStream(otherUserId);
+
+    // Listen to Firestore messages stream
+    _messagesSubscription = _repository.messagesStream(otherUserId).listen(
+      (messages) {
+        _onMessagesReceived(messages);
+      },
+      onError: (error) {
+        debugPrint('ChatViewModel: Stream error: $error');
+      },
+    );
+
+    // Cleanup subscription when disposed
+    ref.onDispose(() {
+      _messagesSubscription?.cancel();
+    });
+
+    return const ChatState(messages: [], isAiTyping: false);
+  }
+
+  void _onMessagesReceived(List<ChatMessage> firestoreMessages) {
+    // Convert Firestore messages to display messages
+    final confirmedMessages = firestoreMessages
+        .map((m) => ChatMessageDisplay.fromChatMessage(m))
+        .toList();
+
+    // Remove pending messages that are now confirmed
+    _pendingMessages.removeWhere((pending) {
+      return confirmedMessages.any((confirmed) =>
+          confirmed.message == pending.message &&
+          confirmed.senderId == pending.senderId);
+    });
+
+    // If we received a NEW AI message (i.e. the latest message is from AI), stop typing
+    // We sort by timestamp to find the latest
+    if (_isAiTyping && firestoreMessages.isNotEmpty) {
+      final sortedMessages = List<ChatMessage>.from(firestoreMessages)
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Newest first
+
+      final latestMessage = sortedMessages.first;
+      if (latestMessage.senderId == ChatConstants.jiffyBotId) {
+        // We received the response!
+        _isAiTyping = false;
+      }
+    }
+
+    // Combine confirmed and pending messages
+    final allMessages = [...confirmedMessages, ..._pendingMessages];
+    allMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    state = ChatState(
+      messages: allMessages,
+      isAiTyping: _isAiTyping,
+    );
   }
 
   Future<void> sendMessage(String text) async {
-    await _repository.sendMessage(otherUserId, text);
-
-    // Trigger AI response if chatting with Jiffy Bot
-    if (otherUserId == ChatConstants.jiffyBotId) {
-      _triggerAIResponse();
-    }
-  }
-
-  Future<void> _triggerAIResponse() async {
-    // 1. Wait for a delay
-    await Future.delayed(const Duration(seconds: 2));
-
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    // 2. Select a random response
-    final List<String> aiResponses = [
-      "That's fascinating! Tell me more.",
-      "I see, that's a unique perspective.",
-      "Interesting choice! purely logical, of course.",
-      "I'm processing that... sounds great!",
-    ];
-    final randomResponse = aiResponses[Random().nextInt(aiResponses.length)];
+    // If chatting with Jiffy AI, send via AI chat API
+    if (otherUserId == ChatConstants.jiffyBotId) {
+      // Add optimistic message immediately
+      final pendingMsg = ChatMessageDisplay.pending(
+        senderId: currentUser.uid,
+        receiverId: otherUserId,
+        message: text,
+      );
+      _pendingMessages.add(pendingMsg);
 
-    // 3. Send as system message
-    await _repository.sendSystemMessage(
-      currentUser.uid,
-      randomResponse,
-      ChatConstants.jiffyBotId,
-    );
+      // Show typing indicator
+      _isAiTyping = true;
+
+      // Update state immediately
+      final currentMessages = state.messages;
+      state = ChatState(
+        messages: [...currentMessages, pendingMsg],
+        isAiTyping: true,
+      );
+
+      // Send to AI API
+      await _sendToAiChat(currentUser.uid, text);
+    } else {
+      // Regular user-to-user chat: add optimistic message
+      final pendingMsg = ChatMessageDisplay.pending(
+        senderId: currentUser.uid,
+        receiverId: otherUserId,
+        message: text,
+      );
+      _pendingMessages.add(pendingMsg);
+
+      // Update state immediately
+      final currentMessages = state.messages;
+      state = state.copyWith(
+        messages: [...currentMessages, pendingMsg],
+      );
+
+      // Send to Firestore
+      await _repository.sendMessage(otherUserId, text);
+    }
+  }
+
+  /// Send message to Jiffy AI via backend API.
+  Future<void> _sendToAiChat(String userId, String text) async {
+    try {
+      final aiChatService = ref.read(aiChatServiceProvider);
+      final success = await aiChatService.sendMessageToAI(
+        userId: userId,
+        text: text,
+      );
+
+      if (!success) {
+        debugPrint('ChatViewModel: AI chat API call failed');
+        // Stop typing indicator on failure
+        _isAiTyping = false;
+        state = state.copyWith(isAiTyping: false);
+      }
+      // Response will appear via Firestore stream
+    } catch (e) {
+      debugPrint('ChatViewModel: Error sending to AI: $e');
+      _isAiTyping = false;
+      state = state.copyWith(isAiTyping: false);
+    }
   }
 
   Future<void> markAsRead() async {
@@ -72,8 +168,11 @@ class ChatViewModel extends _$ChatViewModel {
       return;
     }
 
-    // Send as system message
-    await _repository.sendSystemMessage(
-        currentUser.uid, prompt, ChatConstants.jiffyBotId);
+    // Show typing indicator for prompt
+    _isAiTyping = true;
+    state = state.copyWith(isAiTyping: true);
+
+    // Send prompt via AI chat API
+    await _sendToAiChat(currentUser.uid, prompt);
   }
 }
