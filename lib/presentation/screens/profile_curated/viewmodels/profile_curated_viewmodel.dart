@@ -104,6 +104,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         }
       } catch (e) {
         debugPrint("ProfileCuratedViewModel: Error fetching user data: $e");
+        rethrow;
       }
 
       // Try to get existing curated profile first
