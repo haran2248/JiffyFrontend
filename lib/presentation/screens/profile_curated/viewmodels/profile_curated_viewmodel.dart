@@ -153,7 +153,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
     final currentData = state.data;
     if (currentData == null) return;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: () => null);
 
     try {
       final updatedProfile = CuratedProfile(
@@ -183,7 +183,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
     final currentData = state.data;
     if (currentData == null) return;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: () => null);
 
     try {
       final updatedProfile = CuratedProfile(
@@ -213,7 +213,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
     final currentData = state.data;
     if (currentData == null) return;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: () => null);
 
     try {
       final updatedProfile = CuratedProfile(
