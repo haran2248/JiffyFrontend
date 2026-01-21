@@ -198,6 +198,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         personalityTraits: newTraits,
         interests: currentData.interests,
         conversationStyleDescription: currentData.conversationStyleDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _onboardingRepository.updateCuratedProfile(updatedProfile);
@@ -226,6 +227,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         personalityTraits: currentData.personalityTraits,
         interests: newInterests,
         conversationStyleDescription: currentData.conversationStyleDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _onboardingRepository.updateCuratedProfile(updatedProfile);
@@ -254,6 +256,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         personalityTraits: currentData.personalityTraits,
         interests: currentData.interests,
         conversationStyleDescription: newDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _onboardingRepository.updateCuratedProfile(updatedProfile);
