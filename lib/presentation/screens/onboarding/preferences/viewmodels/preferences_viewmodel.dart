@@ -39,8 +39,12 @@ class PreferencesViewModel extends _$PreferencesViewModel {
 
       // First, upload the profile image if one was selected
       if (basicsData.photoUrl != null && basicsData.photoUrl!.isNotEmpty) {
-        // Check if it's a local file path (starts with /)
-        if (basicsData.photoUrl!.startsWith('/')) {
+        // Check if it's a local file path (not http/https)
+        // This handles file://, content://, and path-based locals like /path/to/file
+        final uri = Uri.parse(basicsData.photoUrl!);
+        final isLocalUri = uri.scheme.isEmpty ||
+            (uri.scheme != 'http' && uri.scheme != 'https');
+        if (isLocalUri) {
           await repo.uploadProfileImage(
             basicsData.photoUrl!,
             name: basicsData.firstName,
