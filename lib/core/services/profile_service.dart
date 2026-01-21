@@ -20,18 +20,31 @@ class ProfileService {
   ProfileService({required Dio dio}) : _dio = dio;
 
   /// Check if user has completed onboarding
-  /// 
+  ///
   /// A user is considered onboarded if they have:
   /// - Basic profile details (basicDetails with name, photo, dateOfBirth, gender)
   /// - Profile setup completed (prompts map is not null/empty)
-  /// 
+  ///
   /// [userId] - The user ID to check
-  /// 
+  ///
   /// Returns true if onboarding is complete, false otherwise
   /// On error, returns false (safer to show onboarding than skip it)
   Future<bool> isOnboardingComplete(String userId) async {
+    final step = await getOnboardingStep(userId);
+    return step == null;
+  }
+
+  /// Get the specific onboarding step the user needs to complete.
+  ///
+  /// Returns:
+  /// - 'basics' if user needs to complete basic profile data
+  /// - 'chat' if user needs to complete chat-based onboarding
+  /// - null if user is fully onboarded
+  ///
+  /// On error, returns 'basics' (safer to show onboarding than skip it)
+  Future<String?> getOnboardingStep(String userId) async {
     try {
-      debugPrint('ProfileService: Checking onboarding status for user: $userId');
+      debugPrint('ProfileService: Checking onboarding step for user: $userId');
 
       final response = await _dio.get(
         '/api/users/getUser',
@@ -41,12 +54,8 @@ class ProfileService {
       final data = response.data as Map<String, dynamic>?;
       if (data == null) {
         debugPrint('ProfileService: No user data found');
-        return false;
+        return 'basics';
       }
-
-      // Log the full response structure for debugging
-      debugPrint('ProfileService: User data keys: ${data.keys.toList()}');
-      debugPrint('ProfileService: User data: $data');
 
       // Check if user has name (can be at root level or in basicDetails)
       final rootName = data['name'] as String?;
@@ -58,51 +67,61 @@ class ProfileService {
       // Check if user has basicDetails object (indicates basics screen was completed)
       final hasBasicDetails = basicDetails != null;
 
-      // Check if user has prompts (from profile setup screen)
-      // Prompts can be Map<Integer, String> or Map<String, dynamic> depending on JSON serialization
-      final prompts = data['prompts'];
-      final hasPrompts = prompts != null && 
-          (prompts is Map && prompts.isNotEmpty);
-
-      // Check for other indicators of completed onboarding:
-      // - bio (indicates profile was set up)
-      // - imageIds (indicates photos were uploaded)
-      final hasBio = data['bio'] != null && data['bio'].toString().isNotEmpty;
+      // Check for images (indicates photos were uploaded)
       final imageIds = data['imageIds'] as List?;
       final hasImages = imageIds != null && imageIds.isNotEmpty;
 
-      // User is onboarded if they have:
-      // 1. Name AND (basicDetails OR bio OR images) - indicates they completed basics and have profile data
-      // OR
-      // 2. Prompts - indicates profile setup was completed
-      // This is more lenient to handle cases where prompts might not be saved yet
-      final isOnboarded = hasName && (hasBasicDetails || hasBio || hasImages) || hasPrompts;
-      
-      debugPrint('ProfileService: Onboarding check - rootName=$rootName, basicDetailsName=$basicDetailsName, hasName=$hasName, hasBasicDetails=$hasBasicDetails, hasPrompts=$hasPrompts, hasBio=$hasBio, hasImages=$hasImages, isOnboarded=$isOnboarded');
-      
-      return isOnboarded;
-    } on DioException catch (e) {
-      debugPrint('ProfileService: DioException checking onboarding - ${e.message}');
-      if (e.response != null) {
-        debugPrint('ProfileService: Response status: ${e.response?.statusCode}, data: ${e.response?.data}');
+      // User has completed basics if they have name, basicDetails, and images
+      final hasCompletedBasics = hasName && hasBasicDetails && hasImages;
+
+      debugPrint(
+          'ProfileService: hasName=$hasName, hasBasicDetails=$hasBasicDetails, hasImages=$hasImages, hasCompletedBasics=$hasCompletedBasics');
+
+      if (!hasCompletedBasics) {
+        debugPrint('ProfileService: User needs to complete basics');
+        return 'basics';
       }
-      // On error, assume not onboarded to be safe
-      return false;
+
+      // Check if chat onboarding is complete (from backend onboardingStatus enum)
+      final onboardingStatus = data['onboardingStatus'] as String?;
+      final isChatOnboardingComplete = onboardingStatus == 'COMPLETED';
+
+      debugPrint(
+          'ProfileService: onboardingStatus=$onboardingStatus, isChatOnboardingComplete=$isChatOnboardingComplete');
+
+      if (!isChatOnboardingComplete) {
+        debugPrint('ProfileService: User needs to complete chat onboarding');
+        return 'chat';
+      }
+
+      // User is fully onboarded
+      debugPrint('ProfileService: User is fully onboarded');
+      return null;
+    } on DioException catch (e) {
+      debugPrint(
+          'ProfileService: DioException checking onboarding - ${e.message}');
+      if (e.response != null) {
+        debugPrint(
+            'ProfileService: Response status: ${e.response?.statusCode}, data: ${e.response?.data}');
+      }
+      // On error, return basics to be safe
+      return 'basics';
     } catch (e) {
-      debugPrint('ProfileService: Error checking onboarding status: $e');
-      // On error, assume not onboarded to be safe
-      return false;
+      debugPrint('ProfileService: Error checking onboarding step: $e');
+      // On error, return basics to be safe
+      return 'basics';
     }
   }
+
   /// Fetch conversation starter data (spark ideas) for a user
-  /// 
+  ///
   /// This will call the backend API to get:
   /// - List of spark ideas (location-based, interest-based, AI-generated, etc.)
   /// - User online status
   /// - Maximum message length
-  /// 
+  ///
   /// [userId] - The user ID for whom to fetch conversation starter data
-  /// 
+  ///
   /// Throws [TimeoutException] if the request times out
   /// Throws [FormatException] if the response cannot be parsed
   /// Throws [Exception] for other network or server errors
@@ -112,11 +131,11 @@ class ProfileService {
     try {
       // TODO: Replace with actual API call
       // TODO: Remove or replace debugPrint with proper logging framework before production
-      debugPrint('ProfileService: Fetching conversation starter data for user: $userId');
-      
+      debugPrint(
+          'ProfileService: Fetching conversation starter data for user: $userId');
+
       // Simulate network delay with timeout
-      await Future.delayed(const Duration(milliseconds: 500))
-          .timeout(
+      await Future.delayed(const Duration(milliseconds: 500)).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw TimeoutException(
@@ -125,7 +144,7 @@ class ProfileService {
           );
         },
       );
-      
+
       // Mock data - replace with actual API call
       // Backend should return JSON with structure:
       // {
@@ -149,13 +168,15 @@ class ProfileService {
           SparkIdea(
             id: 'spark-1',
             category: 'Based on Local Spots',
-            message: "I see you love hiking at Mission Peak. What's your favorite trail?",
+            message:
+                "I see you love hiking at Mission Peak. What's your favorite trail?",
             type: SparkIdeaType.location,
           ),
           SparkIdea(
             id: 'spark-2',
             category: 'Based on Interests',
-            message: "We both love craft beer! Have you tried any new breweries lately?",
+            message:
+                "We both love craft beer! Have you tried any new breweries lately?",
             type: SparkIdeaType.interests,
           ),
           SparkIdea(
@@ -178,9 +199,9 @@ class ProfileService {
       rethrow;
     } on Exception catch (e) {
       // TODO: Replace with proper logging framework
-      debugPrint('ProfileService: Error fetching conversation starter data for user $userId - $e');
+      debugPrint(
+          'ProfileService: Error fetching conversation starter data for user $userId - $e');
       rethrow;
     }
   }
 }
-

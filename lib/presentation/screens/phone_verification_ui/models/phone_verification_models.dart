@@ -70,7 +70,7 @@ class VerificationData {
     this.timeout,
     this.transactionId,
     this.flowType,
-    this.otpLength = 6, // Default to 6 digits
+    this.otpLength = 4, // Default to 4 digits
   });
 
   factory VerificationData.fromJson(Map<String, dynamic> json) {
@@ -81,7 +81,7 @@ class VerificationData {
       timeout: json['timeout'] as String?,
       transactionId: json['transactionId'] as String?,
       flowType: json['flowType'] as String?,
-      otpLength: json['otpLength'] as int? ?? 6, // Safe fallback to 6
+      otpLength: json['otpLength'] as int? ?? 4, // Safe fallback to 4
     );
   }
 }
@@ -198,7 +198,7 @@ class PhoneVerificationState {
     this.resendCountdown = 0,
     this.isOtpSent = false,
     this.isVerified = false,
-    this.otpLength = 6, // Default to 6 digits
+    this.otpLength = 4, // Default to 4 digits
   });
 
   bool get canSendOtp => phoneNumber.length >= 10 && !isSendingOtp;

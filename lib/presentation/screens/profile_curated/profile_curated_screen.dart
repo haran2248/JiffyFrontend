@@ -9,6 +9,8 @@ import "package:jiffy/presentation/screens/profile_curated/widgets/curated_trait
 import "package:jiffy/presentation/screens/profile_curated/widgets/curated_interests_section.dart";
 import "package:jiffy/presentation/screens/profile_curated/widgets/curated_conversation_style_section.dart";
 import "package:jiffy/presentation/screens/profile_curated/widgets/finalize_profile_button.dart";
+import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
+import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
 
 /// Profile Curated Screen (Review & Finalize)
 ///
@@ -70,6 +72,60 @@ class ProfileCuratedScreen extends ConsumerWidget {
             )
           : null,
     );
+  }
+
+  Future<void> _showEditTraitsDialog(
+    BuildContext context,
+    ProfileCuratedViewModel viewModel,
+    List<String> currentTraits,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Personality Traits',
+      items: currentTraits,
+      addHintText: 'Add a trait (e.g., Adventurous)',
+      maxItems: 5,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateTraits(result);
+    }
+  }
+
+  Future<void> _showEditInterestsDialog(
+    BuildContext context,
+    ProfileCuratedViewModel viewModel,
+    List<String> currentInterests,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Interests',
+      items: currentInterests,
+      addHintText: 'Add an interest (e.g., Hiking)',
+      maxItems: 8,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateInterests(result);
+    }
+  }
+
+  Future<void> _showEditConversationStyleDialog(
+    BuildContext context,
+    ProfileCuratedViewModel viewModel,
+    String currentDescription,
+  ) async {
+    final result = await EditTextDialog.show(
+      context: context,
+      title: 'Edit Conversation Style',
+      text: currentDescription,
+      hintText: 'Describe your conversation style...',
+      maxLength: 500,
+      minLength: 20,
+    );
+    if (result != null) {
+      await viewModel.updateConversationStyle(result);
+    }
   }
 
   Widget _buildBody(
@@ -169,7 +225,11 @@ class ProfileCuratedScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CuratedTraitsSection(
                   traits: data.personalityTraits,
-                  onEdit: viewModel.onEditTraits,
+                  onEdit: () => _showEditTraitsDialog(
+                    context,
+                    viewModel,
+                    data.personalityTraits,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -178,7 +238,11 @@ class ProfileCuratedScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CuratedInterestsSection(
                   interests: data.interests,
-                  onEdit: viewModel.onEditInterests,
+                  onEdit: () => _showEditInterestsDialog(
+                    context,
+                    viewModel,
+                    data.interests,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -187,7 +251,11 @@ class ProfileCuratedScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: CuratedConversationStyleSection(
                   description: data.conversationStyleDescription,
-                  onEdit: viewModel.onEditConversationStyle,
+                  onEdit: () => _showEditConversationStyleDialog(
+                    context,
+                    viewModel,
+                    data.conversationStyleDescription,
+                  ),
                 ),
               ),
               // Bottom padding for safe area

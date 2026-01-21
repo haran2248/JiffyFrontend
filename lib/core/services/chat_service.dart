@@ -37,8 +37,6 @@ class ChatService {
           .doc(chatroomID)
           .collection("messages")
           .add(newMessage);
-
-      // TODO: Update last message in chat_rooms document for list view optimization if needed
     } catch (e) {
       debugPrint("Error sending message: $e");
       rethrow;

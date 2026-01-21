@@ -1,7 +1,8 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:go_router/go_router.dart";
+import "package:jiffy/core/auth/auth_viewmodel.dart";
 import "package:jiffy/core/navigation/app_routes.dart";
-import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_header_card.dart";
@@ -9,6 +10,8 @@ import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_abo
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
+import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
+import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
 
 /// Profile Self Screen (Editable View)
 ///
@@ -49,29 +52,47 @@ class ProfileSelfScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          // Preview button
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: viewModel.onPreviewProfile,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  "Preview",
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+          // Sign out button
+          IconButton(
+            icon: Icon(
+              Icons.logout,
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
+            tooltip: "Sign Out",
+            onPressed: () async {
+              // Show loading dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              try {
+                final authViewModel = ref.read(authViewModelProvider.notifier);
+                await authViewModel.signOut();
+
+                if (context.mounted) {
+                  // Dismiss loading dialog
+                  Navigator.of(context).pop();
+                  // Navigate to login
+                  context.go(AppRoutes.login);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  // Dismiss loading dialog
+                  Navigator.of(context).pop();
+                  // Show error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error signing out: $e'),
+                      backgroundColor: colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
           ),
         ],
       ),
@@ -80,6 +101,78 @@ class ProfileSelfScreen extends ConsumerWidget {
         currentRoute: AppRoutes.profileSelf,
       ),
     );
+  }
+
+  Future<void> _showEditTraitsDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    List<String> currentTraits,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Personality Traits',
+      items: currentTraits,
+      addHintText: 'Add a trait (e.g., Adventurous)',
+      maxItems: 5,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateTraits(result);
+    }
+  }
+
+  Future<void> _showEditInterestsDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    List<String> currentInterests,
+  ) async {
+    final result = await EditListDialog.show(
+      context: context,
+      title: 'Edit Interests',
+      items: currentInterests,
+      addHintText: 'Add an interest (e.g., Hiking)',
+      maxItems: 8,
+      minItems: 1,
+    );
+    if (result != null) {
+      await viewModel.updateInterests(result);
+    }
+  }
+
+  Future<void> _showEditConversationStyleDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    String currentDescription,
+  ) async {
+    final result = await EditTextDialog.show(
+      context: context,
+      title: 'Edit Conversation Style',
+      text: currentDescription,
+      hintText: 'Describe your conversation style...',
+      maxLength: 500,
+      minLength: 20,
+    );
+    if (result != null) {
+      await viewModel.updateConversationStyle(result);
+    }
+  }
+
+  Future<void> _showEditAboutMeDialog(
+    BuildContext context,
+    ProfileSelfViewModel viewModel,
+    String currentAboutMe,
+  ) async {
+    final result = await EditTextDialog.show(
+      context: context,
+      title: 'Edit About Me',
+      text: currentAboutMe,
+      hintText: 'Tell others about yourself...',
+      maxLength: 500,
+      minLength: 10,
+    );
+    if (result != null) {
+      await viewModel.updateAboutMe(result);
+    }
   }
 
   Widget _buildBody(
@@ -172,12 +265,31 @@ class ProfileSelfScreen extends ConsumerWidget {
                 onEditMainPhoto: null,
               ),
               const SizedBox(height: 24),
+              // Personality Traits section (from curated profile)
+              if (data.personalityTraits.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfInterests(
+                    interests: data.personalityTraits,
+                    onEdit: () => _showEditTraitsDialog(
+                      context,
+                      viewModel,
+                      data.personalityTraits,
+                    ),
+                    title: "Personality Traits",
+                  ),
+                ),
+              if (data.personalityTraits.isNotEmpty) const SizedBox(height: 16),
               // About Me section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfAboutMe(
                   aboutMeText: data.aboutMe,
-                  onEdit: null,
+                  onEdit: () => _showEditAboutMeDialog(
+                    context,
+                    viewModel,
+                    data.aboutMe,
+                  ),
                   onBeginnerEdit: null,
                 ),
               ),
@@ -187,7 +299,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfInterests(
                   interests: data.interests,
-                  onEdit: null,
+                  onEdit: () => _showEditInterestsDialog(
+                    context,
+                    viewModel,
+                    data.interests,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -197,7 +313,11 @@ class ProfileSelfScreen extends ConsumerWidget {
                 child: ProfileSelfConversationStyle(
                   title: data.conversationStyleTitle,
                   description: data.conversationStyleDescription,
-                  onEdit: null,
+                  onEdit: () => _showEditConversationStyleDialog(
+                    context,
+                    viewModel,
+                    data.conversationStyleDescription,
+                  ),
                   onReviewPromptAnswers: null,
                 ),
               ),
