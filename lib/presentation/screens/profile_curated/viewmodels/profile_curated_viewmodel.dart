@@ -160,6 +160,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         personalityTraits: newTraits,
         interests: currentData.interests,
         conversationStyleDescription: currentData.conversationStyleDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _repository.updateCuratedProfile(updatedProfile);
@@ -190,6 +191,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         personalityTraits: currentData.personalityTraits,
         interests: newInterests,
         conversationStyleDescription: currentData.conversationStyleDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _repository.updateCuratedProfile(updatedProfile);
@@ -220,6 +222,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         personalityTraits: currentData.personalityTraits,
         interests: currentData.interests,
         conversationStyleDescription: newDescription,
+        aboutMe: currentData.aboutMe,
       );
 
       await _repository.updateCuratedProfile(updatedProfile);
