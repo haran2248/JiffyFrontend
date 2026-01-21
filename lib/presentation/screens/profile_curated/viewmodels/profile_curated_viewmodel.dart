@@ -239,24 +239,6 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
     }
   }
 
-  /// Navigate to edit personality traits
-  void onEditTraits() {
-    // TODO: Show edit dialog - for now just log
-    debugPrint("ProfileCuratedViewModel: Navigate to edit personality traits");
-  }
-
-  /// Navigate to edit interests
-  void onEditInterests() {
-    // TODO: Show edit dialog - for now just log
-    debugPrint("ProfileCuratedViewModel: Navigate to edit interests");
-  }
-
-  /// Navigate to edit conversation style
-  void onEditConversationStyle() {
-    // TODO: Show edit dialog - for now just log
-    debugPrint("ProfileCuratedViewModel: Navigate to edit conversation style");
-  }
-
   /// Finalize the curated profile and navigate to next step
   void onFinalizeProfile() {
     debugPrint("ProfileCuratedViewModel: Finalizing curated profile...");
