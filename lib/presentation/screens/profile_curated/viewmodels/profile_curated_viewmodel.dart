@@ -128,6 +128,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         interests: curatedProfile.interests,
         conversationStyleDescription:
             curatedProfile.conversationStyleDescription,
+        aboutMe: curatedProfile.aboutMe,
       );
 
       if (!ref.mounted) return;

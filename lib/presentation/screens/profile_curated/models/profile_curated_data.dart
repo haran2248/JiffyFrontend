@@ -10,6 +10,7 @@ class ProfileCuratedData {
   final List<String> personalityTraits;
   final List<String> interests;
   final String conversationStyleDescription;
+  final String? aboutMe;
 
   const ProfileCuratedData({
     required this.name,
@@ -19,6 +20,7 @@ class ProfileCuratedData {
     required this.personalityTraits,
     required this.interests,
     required this.conversationStyleDescription,
+    this.aboutMe,
   });
 
   /// Creates a copy with modified fields.
@@ -36,6 +38,7 @@ class ProfileCuratedData {
     List<String>? personalityTraits,
     List<String>? interests,
     String? conversationStyleDescription,
+    String? aboutMe,
   }) {
     return ProfileCuratedData(
       name: name ?? this.name,
@@ -46,6 +49,7 @@ class ProfileCuratedData {
       interests: interests ?? this.interests,
       conversationStyleDescription:
           conversationStyleDescription ?? this.conversationStyleDescription,
+      aboutMe: aboutMe ?? this.aboutMe,
     );
   }
 }
