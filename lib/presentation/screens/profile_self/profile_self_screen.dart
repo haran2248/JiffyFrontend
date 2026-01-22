@@ -52,47 +52,76 @@ class ProfileSelfScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          // Sign out button
-          IconButton(
+          // Action menu with Logout and Delete Account
+          PopupMenuButton<String>(
             icon: Icon(
-              Icons.logout,
+              Icons.more_vert,
               color: colorScheme.onSurface.withValues(alpha: 0.7),
             ),
-            tooltip: "Sign Out",
-            onPressed: () async {
-              // Show loading dialog
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
+            tooltip: "More options",
+            onSelected: (value) async {
+              // Both options execute logout for now
+              if (value == 'logout' || value == 'delete_account') {
+                // Show loading dialog
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
 
-              try {
-                final authViewModel = ref.read(authViewModelProvider.notifier);
-                await authViewModel.signOut();
+                try {
+                  final authViewModel =
+                      ref.read(authViewModelProvider.notifier);
+                  await authViewModel.signOut();
 
-                if (context.mounted) {
-                  // Dismiss loading dialog
-                  Navigator.of(context).pop();
-                  // Navigate to login
-                  context.go(AppRoutes.login);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  // Dismiss loading dialog
-                  Navigator.of(context).pop();
-                  // Show error
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error signing out: $e'),
-                      backgroundColor: colorScheme.error,
-                    ),
-                  );
+                  if (context.mounted) {
+                    // Dismiss loading dialog
+                    Navigator.of(context).pop();
+                    // Navigate to login
+                    context.go(AppRoutes.login);
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    // Dismiss loading dialog
+                    Navigator.of(context).pop();
+                    // Show error
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error signing out: $e'),
+                        backgroundColor: colorScheme.error,
+                      ),
+                    );
+                  }
                 }
               }
             },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, color: colorScheme.onSurface),
+                    const SizedBox(width: 12),
+                    const Text('Logout'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'delete_account',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_forever, color: colorScheme.error),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Delete Account',
+                      style: TextStyle(color: colorScheme.error),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
