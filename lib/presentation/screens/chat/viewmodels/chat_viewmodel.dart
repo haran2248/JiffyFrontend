@@ -212,20 +212,15 @@ class ChatViewModel extends _$ChatViewModel {
       }
     }
 
-    // Create pending message for prompt
-    final pendingMsg = ChatMessageDisplay.pending(
-      senderId: currentUser.uid,
-      receiverId: otherUserId,
-      message: prompt,
+    // Send the prompt as a message FROM Jiffy AI (not from the user)
+    // This way it appears as Jiffy asking the user the question
+    await _repository.sendSystemMessage(
+      currentUser.uid, // receiverID: the current user receives this prompt
+      prompt,
+      ChatConstants.jiffyBotId, // senderID: Jiffy AI is asking the question
     );
-    _pendingMessages.add(pendingMsg);
-
-    // Show typing indicator for prompt
-    _isAiTyping = true;
-    _updateState();
-
-    // Send prompt via AI chat API
-    await _sendToAiChat(currentUser.uid, prompt, pendingMsg);
+    // The message will appear via the Firestore stream
+    // User can then type their answer, which will trigger a normal AI response
   }
 
   Future<void> retryMessage(ChatMessageDisplay message) async {
