@@ -120,6 +120,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               url:
                   'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$firstImageId',
               isPrimary: true,
+              backendSlot: 1,
             ));
           }
 
@@ -130,6 +131,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               url:
                   'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$secondImageId',
               isPrimary: false,
+              backendSlot: 2,
             ));
           }
 
@@ -140,6 +142,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               url:
                   'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$thirdImageId',
               isPrimary: false,
+              backendSlot: 3,
             ));
           }
 
@@ -150,6 +153,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               url:
                   'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$fourthImageId',
               isPrimary: false,
+              backendSlot: 4,
             ));
           }
 
@@ -400,30 +404,32 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
   }
 
   /// Add a new secondary photo
-  /// Finds the first available slot (2, 3, or 4) or appends to end
+  /// Finds the first available backend slot (1-4)
   void onAddSecondaryPhoto() {
     final currentData = state.data;
     if (currentData == null) return;
 
-    // Current photos include primary + secondary
-    // We want to add to the next available slot.
-    // If we have 1 primary + 0 secondary -> next is 2
-    // If we have 1 primary + 1 secondary -> next is 3
+    // Get all occupied backend slots
+    final occupiedSlots = currentData.photos.map((p) => p.backendSlot).toSet();
 
-    // Calculate next index based on current total photos
-    // Note: This logic assumes photos are filled sequentially.
-    // If we allow holes (e.g. 1 and 3 but no 2), backend/app might need robust handling.
-    // For now, assume sequential filling: count + 1.
-    final nextIndex = currentData.photos.length + 1;
+    // Find first free slot between 1-4
+    int? freeSlot;
+    for (int i = 1; i <= 4; i++) {
+      if (!occupiedSlots.contains(i)) {
+        freeSlot = i;
+        break;
+      }
+    }
 
-    if (nextIndex > 4) {
-      // Max photos reached (1 primary + 3 secondary)
-      // This case should be handled by UI disabling "Add" button, but safe guard here.
-      debugPrint("ProfileSelfViewModel: Max photos reached");
+    if (freeSlot == null) {
+      // Max photos reached (all 4 slots occupied)
+      debugPrint(
+          "ProfileSelfViewModel: Max photos reached - all 4 slots occupied");
       return;
     }
 
-    uploadPhoto(nextIndex);
+    debugPrint("ProfileSelfViewModel: Adding photo to slot $freeSlot");
+    uploadPhoto(freeSlot);
   }
 
   /// Edit a specific secondary photo
@@ -431,14 +437,10 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
     final currentData = state.data;
     if (currentData == null) return;
 
-    // Find index of this photo in the full list
-    // photos[0] is primary (index 1)
-    // photos[1] is secondary 1 (index 2)
-    final listIndex = currentData.photos.indexWhere((p) => p.id == photo.id);
-    if (listIndex == -1) return;
-
-    // API index is listIndex + 1
-    uploadPhoto(listIndex + 1);
+    // Use the backendSlot directly - no need to calculate from index
+    debugPrint(
+        "ProfileSelfViewModel: Editing photo at slot ${photo.backendSlot}");
+    uploadPhoto(photo.backendSlot);
   }
 
   /// Navigate to photo management
