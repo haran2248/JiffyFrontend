@@ -32,7 +32,7 @@ class ProfilePersonalitySection extends StatelessWidget {
               Icon(
                 Icons.person,
                 size: 20,
-                color: colorScheme.onSurface,
+                color: colorScheme.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -57,4 +57,3 @@ class ProfilePersonalitySection extends StatelessWidget {
     );
   }
 }
-

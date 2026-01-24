@@ -56,15 +56,39 @@ class OnboardingRepository {
   }
 
   /// Uploads profile image to the server.
-  /// Endpoint: POST /api/users/uploadImages
+  /// Endpoint: POST /api/users/uploadImages (Index 1)
+  ///           POST /api/users/uploadSecondImage (Index 2)
+  ///           POST /api/users/uploadThirdImage (Index 3)
+  ///           POST /api/users/uploadFourthImage (Index 4)
   /// [imagePath] - Local file path of the image to upload
+  /// [index] - Image index (1-4), defaults to 1
   /// [name] - User's display name (optional)
-  Future<void> uploadProfileImage(String imagePath, {String? name}) async {
+  Future<void> uploadProfileImage(String imagePath,
+      {int index = 1, String? name}) async {
     try {
       final user = _authRepo.currentUser;
       if (user == null) throw Exception("User not authenticated");
 
       final uid = user.uid;
+
+      // Map index to endpoint
+      String endpoint;
+      switch (index) {
+        case 1:
+          endpoint = '/api/users/uploadImages';
+          break;
+        case 2:
+          endpoint = '/api/users/uploadSecondImage';
+          break;
+        case 3:
+          endpoint = '/api/users/uploadThirdImage';
+          break;
+        case 4:
+          endpoint = '/api/users/uploadFourthImage';
+          break;
+        default:
+          throw Exception("Invalid image index: $index. Must be 1-4.");
+      }
 
       final formData = FormData.fromMap({
         'uid': uid,
@@ -76,7 +100,7 @@ class OnboardingRepository {
       });
 
       final response = await _dio.post(
-        '/api/users/uploadImages',
+        endpoint,
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
@@ -87,17 +111,18 @@ class OnboardingRepository {
           response.statusCode! < 200 ||
           response.statusCode! >= 300) {
         throw Exception(
-            "Failed to upload profile image: ${response.statusCode}");
+            "Failed to upload profile image ($index): ${response.statusCode}");
       }
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(
-            "Failed to upload profile image: ${e.response?.statusCode} - ${e.response?.data}");
+            "Failed to upload profile image ($index): ${e.response?.statusCode} - ${e.response?.data}");
       } else {
-        throw Exception("Network error uploading profile image: ${e.message}");
+        throw Exception(
+            "Network error uploading profile image ($index): ${e.message}");
       }
     } catch (e) {
-      throw Exception("Error uploading profile image: $e");
+      throw Exception("Error uploading profile image ($index): $e");
     }
   }
 

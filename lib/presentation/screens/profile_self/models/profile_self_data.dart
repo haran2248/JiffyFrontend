@@ -3,22 +3,27 @@ class ProfileSelfPhoto {
   final String id;
   final String url;
   final bool isPrimary;
+  final int
+      backendSlot; // Backend slot (1=firstImageId, 2=secondImageId, 3=thirdImageId, 4=fourthImageId)
 
   const ProfileSelfPhoto({
     required this.id,
     required this.url,
     this.isPrimary = false,
+    required this.backendSlot,
   });
 
   ProfileSelfPhoto copyWith({
     String? id,
     String? url,
     bool? isPrimary,
+    int? backendSlot,
   }) {
     return ProfileSelfPhoto(
       id: id ?? this.id,
       url: url ?? this.url,
       isPrimary: isPrimary ?? this.isPrimary,
+      backendSlot: backendSlot ?? this.backendSlot,
     );
   }
 }

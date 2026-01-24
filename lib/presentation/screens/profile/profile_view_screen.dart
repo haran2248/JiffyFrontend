@@ -6,7 +6,7 @@ import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_additional_photos.dart"
-    show ProfileAdditionalPhotos, PhotoWithCaption;
+    show PhotoWithCaption;
 import "package:jiffy/presentation/screens/profile/widgets/profile_bio.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_personality_section.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_style.dart";
@@ -18,10 +18,12 @@ import "package:jiffy/presentation/screens/profile/widgets/conversation_starter/
 /// Profile view screen showing full profile details
 class ProfileViewScreen extends ConsumerStatefulWidget {
   final ProfileData profile;
+  final bool isPreview;
 
   const ProfileViewScreen({
     super.key,
     required this.profile,
+    this.isPreview = false,
   });
 
   @override
@@ -101,83 +103,83 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
             SingleChildScrollView(
               child: Column(
                 children: [
+                  const SizedBox(height: 16),
+
                   // Main Profile Photo
                   ProfileMainPhoto(profile: widget.profile),
 
-                  // Content sections - matching Figma layout
+                  const SizedBox(height: 16),
+
+                  // Content sections - Interleaved with photos
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 16),
-
-                        // Relationship Preview
+                        // 1. Relationship Preview
                         ProfileRelationshipPreview(profile: widget.profile),
 
                         const SizedBox(height: 16),
 
-                        // Additional Photos
-                        ProfileAdditionalPhotos(profile: widget.profile),
-                      ],
-                    ),
-                  ),
+                        // 2. Bio
+                        ProfileBio(profile: widget.profile),
 
-                  // Bio section - separate section, no cutting
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: ProfileBio(profile: widget.profile),
-                  ),
-
-                  // Additional Content - matching Figma p-6 space-y-6
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
                         const SizedBox(height: 24),
 
-                        // Interest Photos - using PhotoWithCaption component
-                        if (widget.profile.interests.isNotEmpty)
-                          Column(
-                            children: widget.profile.interests
-                                .asMap()
-                                .entries
-                                .map((entry) {
-                              final index = entry.key;
-                              final interest = entry.value;
-                              // Use profile photos if available, otherwise use placeholder
-                              final photoUrl = widget.profile.photos.length >
-                                      index + 1
-                                  ? widget.profile.photos[index + 1].url
-                                  : "https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400";
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: PhotoWithCaption(
-                                  photoUrl: photoUrl,
-                                  caption: interest,
-                                ),
-                              );
-                            }).toList(),
+                        // 3. Second Photo (if available)
+                        // Photos array: [0] = primary (displayed above), [1] = second, [2] = third, [3] = fourth
+                        if (widget.profile.photos.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: PhotoWithCaption(
+                              photoUrl: widget.profile.photos[1].url,
+                              caption: widget.profile.photos[1].caption,
+                            ),
                           ),
 
-                        const SizedBox(height: 24),
-
-                        // Personality & Values
+                        // 4. Personality & Values
                         ProfilePersonalitySection(profile: widget.profile),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
-                        // Conversation Style
+                        // 5. Third Photo (if available)
+                        if (widget.profile.photos.length > 2)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: PhotoWithCaption(
+                              photoUrl: widget.profile.photos[2].url,
+                              caption: widget.profile.photos[2].caption,
+                            ),
+                          ),
+
+                        // 6. Conversation Style
                         ProfileConversationStyle(profile: widget.profile),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
-                        // Conversation Starter
+                        // 7. Fourth Photo (if available)
+                        if (widget.profile.photos.length > 3)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: PhotoWithCaption(
+                              photoUrl: widget.profile.photos[3].url,
+                              caption: widget.profile.photos[3].caption,
+                            ),
+                          ),
+
+                        // 8. Interests
+                        if (widget.profile.interests.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: _ProfileInterestsSection(
+                                interests: widget.profile.interests),
+                          ),
+
+                        // 9. Conversation Starter
                         ProfileConversationStarter(profile: widget.profile),
 
-                        // Spacer for sticky buttons
-                        const SizedBox(height: 120),
+                        // Spacer for sticky buttons (or safe area)
+                        SizedBox(height: widget.isPreview ? 24 : 120),
                       ],
                     ),
                   ),
@@ -188,18 +190,95 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
             // Close button - top right
             ProfileCloseButton(onClose: _handleClose),
 
-            // Sticky Actions - bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: ProfileStickyActions(
-                onSparkConversation: _handleSparkConversation,
-                onPass: _handlePass,
+            // Sticky Actions - bottom (only if not preview)
+            if (!widget.isPreview)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: ProfileStickyActions(
+                  onSparkConversation: _handleSparkConversation,
+                  onPass: _handlePass,
+                ),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileInterestsSection extends StatelessWidget {
+  final List<String> interests;
+
+  const _ProfileInterestsSection({required this.interests});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withValues(alpha: 0.15),
+            colorScheme.secondary.withValues(alpha: 0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.interests_outlined,
+                size: 20,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Interests",
+                style: textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: interests.map((interest) {
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Text(
+                  interest,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

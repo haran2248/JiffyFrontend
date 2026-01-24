@@ -289,9 +289,10 @@ class ProfileSelfScreen extends ConsumerWidget {
               // Header card with photos
               ProfileSelfHeaderCard(
                 data: data,
-                onPreview: null,
-                onManagePhotos: null,
-                onEditMainPhoto: null,
+                onPreview: () => viewModel.onPreviewProfile(context),
+                onAddPhoto: viewModel.onAddSecondaryPhoto,
+                onEditPhoto: viewModel.onEditSecondaryPhoto,
+                onEditMainPhoto: viewModel.onEditMainPhoto,
               ),
               const SizedBox(height: 24),
               // Personality Traits section (from curated profile)

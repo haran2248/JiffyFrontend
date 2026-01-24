@@ -1,4 +1,4 @@
-import "package:flutter/material.dart" show debugPrint;
+import "package:flutter/material.dart";
 import "package:riverpod_annotation/riverpod_annotation.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_data.dart";
@@ -6,9 +6,22 @@ import "package:jiffy/presentation/screens/onboarding/data/repository/onboarding
 import "package:jiffy/presentation/screens/onboarding/data/models/curated_profile.dart";
 import "package:jiffy/core/auth/auth_repository.dart";
 import "package:dio/dio.dart";
+import "package:jiffy/core/services/photo_upload_service.dart";
+import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/core/network/dio_provider.dart";
+import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
+import "package:jiffy/presentation/screens/profile/profile_view_screen.dart";
 
 part "profile_self_viewmodel.g.dart";
+
+// Preview mode placeholder constants
+const _kPreviewRelationshipText =
+    "This section shows compatibility insights when others view your profile.";
+const _kPreviewComparisonInsights = [
+  ComparisonInsight(
+      label: "Similar conversation style", type: InsightType.common),
+  ComparisonInsight(label: "Shared interest in Art", type: InsightType.common),
+];
 
 /// ViewModel for the Profile Self (Editable View) screen.
 ///
@@ -26,6 +39,9 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       ref.read(onboardingRepositoryProvider);
 
   AuthRepository get _authRepository => ref.read(authRepositoryProvider);
+
+  PhotoUploadService get _photoUploadService =>
+      ref.read(photoUploadServiceProvider);
 
   Dio get _dio => ref.read(dioProvider);
 
@@ -96,18 +112,49 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
           // Get location
           location = basicDetails?['location'] as String?;
 
-          // Get photos from imageIds
-          final imageIds = userData['imageIds'] as List<dynamic>?;
-          if (imageIds != null && imageIds.isNotEmpty) {
-            photos = imageIds.asMap().entries.map((entry) {
-              final imageId = entry.value as String;
-              return ProfileSelfPhoto(
-                id: imageId,
-                url:
-                    'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId',
-                isPrimary: entry.key == 0,
-              );
-            }).toList();
+          // Get photos from specific image ID fields
+          final firstImageId = userData['firstImageId'] as String?;
+          if (firstImageId != null && firstImageId.isNotEmpty) {
+            photos.add(ProfileSelfPhoto(
+              id: firstImageId,
+              url:
+                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$firstImageId',
+              isPrimary: true,
+              backendSlot: 1,
+            ));
+          }
+
+          final secondImageId = userData['secondImageId'] as String?;
+          if (secondImageId != null && secondImageId.isNotEmpty) {
+            photos.add(ProfileSelfPhoto(
+              id: secondImageId,
+              url:
+                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$secondImageId',
+              isPrimary: false,
+              backendSlot: 2,
+            ));
+          }
+
+          final thirdImageId = userData['thirdImageId'] as String?;
+          if (thirdImageId != null && thirdImageId.isNotEmpty) {
+            photos.add(ProfileSelfPhoto(
+              id: thirdImageId,
+              url:
+                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$thirdImageId',
+              isPrimary: false,
+              backendSlot: 3,
+            ));
+          }
+
+          final fourthImageId = userData['fourthImageId'] as String?;
+          if (fourthImageId != null && fourthImageId.isNotEmpty) {
+            photos.add(ProfileSelfPhoto(
+              id: fourthImageId,
+              url:
+                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$fourthImageId',
+              isPrimary: false,
+              backendSlot: 4,
+            ));
           }
 
           debugPrint(
@@ -303,16 +350,147 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
     }
   }
 
+  /// Upload a photo for a specific index
+  Future<void> uploadPhoto(int index) async {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    // Check if we already have a photo at this index (for edit vs add)
+    // Primary index is 1. Secondary starts at 2.
+    // Index 1 = Primary
+    // Index 2 = Secondary 1
+    // Index 3 = Secondary 2
+    // Index 4 = Secondary 3
+
+    try {
+      // Pick and crop image
+      // Use 3:4 ratio for all profile photos as per design usually, but service defaults to square (1.0)
+      // Jiffy design often uses 3:4 for vertical cards. Let's use 3:4 (0.75) for better portrait fit.
+      final file = await _photoUploadService.pickAndCropImage(
+        aspectRatio: 0.75,
+      );
+
+      if (file == null) {
+        // User cancelled
+        return;
+      }
+
+      state = state.copyWith(isLoading: true);
+
+      // Upload image
+      await _onboardingRepository.uploadProfileImage(
+        file.path,
+        index: index,
+        name:
+            currentData.name, // Pass name just in case, though usually optional
+      );
+
+      // Refresh data to show new photo
+      await loadProfileData();
+    } catch (e) {
+      debugPrint(
+          "ProfileSelfViewModel: Error uploading photo (index $index) - $e");
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: () => "Failed to upload photo. Please try again.",
+      );
+    }
+  }
+
+  /// Edit main profile photo (Index 1)
+  void onEditMainPhoto() {
+    uploadPhoto(1);
+  }
+
+  /// Add a new secondary photo
+  /// Finds the first available backend slot (1-4)
+  void onAddSecondaryPhoto() {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    // Get all occupied backend slots
+    final occupiedSlots = currentData.photos.map((p) => p.backendSlot).toSet();
+
+    // Find first free slot between 1-4
+    int? freeSlot;
+    for (int i = 1; i <= 4; i++) {
+      if (!occupiedSlots.contains(i)) {
+        freeSlot = i;
+        break;
+      }
+    }
+
+    if (freeSlot == null) {
+      // Max photos reached (all 4 slots occupied)
+      debugPrint(
+          "ProfileSelfViewModel: Max photos reached - all 4 slots occupied");
+      return;
+    }
+
+    debugPrint("ProfileSelfViewModel: Adding photo to slot $freeSlot");
+    uploadPhoto(freeSlot);
+  }
+
+  /// Edit a specific secondary photo
+  void onEditSecondaryPhoto(ProfileSelfPhoto photo) {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    // Use the backendSlot directly - no need to calculate from index
+    debugPrint(
+        "ProfileSelfViewModel: Editing photo at slot ${photo.backendSlot}");
+    uploadPhoto(photo.backendSlot);
+  }
+
   /// Navigate to photo management
   void onManagePhotos() {
-    // TODO: Navigate to photo management screen
-    debugPrint("ProfileSelfViewModel: Navigate to manage photos");
+    // This is now handled by onAddSecondaryPhoto / onEditSecondaryPhoto
+    // But kept as fallback or if UI calls it directly for general management
+    debugPrint(
+        "ProfileSelfViewModel: Manage photos called - use specific add/edit methods");
   }
 
   /// Navigate to preview profile
-  void onPreviewProfile() {
-    // TODO: Navigate to profile preview screen
-    debugPrint("ProfileSelfViewModel: Navigate to preview profile");
+  void onPreviewProfile(BuildContext context) {
+    final currentData = state.data;
+    if (currentData == null) return;
+
+    // Map ProfileSelfData to ProfileData
+    // We map the user's own data to the generic profile view model
+    // so they can see exactly what other users see.
+    final profileData = ProfileData(
+      id: currentData.id,
+      userId: currentData.id,
+      name: currentData.name,
+      age: currentData.age,
+      location: currentData.location,
+      bio: currentData.aboutMe,
+      // Map photos: ProfileSelfPhoto -> Photo
+      photos: currentData.photos
+          .map((p) => Photo(url: p.url, caption: null))
+          .toList(),
+      interests: currentData.interests,
+      traits: currentData.personalityTraits,
+      // Map conversation style
+      conversationStyle: currentData.conversationStyleDescription,
+      // Show placeholder for relationship preview in self-view so the section appears
+      relationshipPreview: _kPreviewRelationshipText,
+      comparisonInsights: _kPreviewComparisonInsights,
+      conversationStarter: null,
+    );
+
+    // Show profile in full-screen modal
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ProfileViewScreen(
+        profile: profileData,
+        isPreview: true,
+      ),
+    );
   }
 
   /// Navigate to edit about me

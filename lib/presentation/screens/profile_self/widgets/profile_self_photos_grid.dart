@@ -22,18 +22,19 @@ class ProfileSelfPhotosGrid extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Secondary photos (stacked vertically)
-        ...photos.take(1).map(
-              (photo) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _PhotoThumbnail(
-                  photo: photo,
-                  onEdit:
-                      onEditPhoto != null ? () => onEditPhoto!(photo) : null,
-                ),
-              ),
+        ...photos.map(
+          (photo) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _PhotoThumbnail(
+              photo: photo,
+              onEdit: onEditPhoto != null ? () => onEditPhoto!(photo) : null,
             ),
-        // Add photo slot
-        if (onAddPhoto != null) _AddPhotoSlot(onTap: onAddPhoto),
+          ),
+        ),
+        // Add photo slot (only if less than 3 secondary photos)
+        // Max total photos = 4. Primary is separate. So max secondary is 3.
+        if (onAddPhoto != null && photos.length < 3)
+          _AddPhotoSlot(onTap: onAddPhoto),
       ],
     );
   }
