@@ -31,7 +31,7 @@ class ProfileConversationStyle extends StatelessWidget {
               Icon(
                 Icons.chat_bubble_outline,
                 size: 20,
-                color: colorScheme.onSurface,
+                color: colorScheme.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -56,4 +56,3 @@ class ProfileConversationStyle extends StatelessWidget {
     );
   }
 }
-

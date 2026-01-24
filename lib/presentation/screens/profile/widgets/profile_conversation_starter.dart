@@ -41,11 +41,22 @@ class ProfileConversationStarter extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Conversation Starter",
-            style: textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                size: 20,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Conversation Starter",
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(

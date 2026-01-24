@@ -9,14 +9,16 @@ import "profile_self_photos_grid.dart";
 class ProfileSelfHeaderCard extends StatelessWidget {
   final ProfileSelfData data;
   final VoidCallback? onPreview;
-  final VoidCallback? onManagePhotos;
+  final VoidCallback? onAddPhoto;
+  final void Function(ProfileSelfPhoto)? onEditPhoto;
   final VoidCallback? onEditMainPhoto;
 
   const ProfileSelfHeaderCard({
     super.key,
     required this.data,
     this.onPreview,
-    this.onManagePhotos,
+    this.onAddPhoto,
+    this.onEditPhoto,
     this.onEditMainPhoto,
   });
 
@@ -145,8 +147,8 @@ class ProfileSelfHeaderCard extends StatelessWidget {
                     // Secondary photos grid
                     ProfileSelfPhotosGrid(
                       photos: data.secondaryPhotos,
-                      onAddPhoto: onManagePhotos,
-                      onEditPhoto: (_) => onManagePhotos?.call(),
+                      onAddPhoto: onAddPhoto,
+                      onEditPhoto: onEditPhoto,
                     ),
                   ],
                 ),
@@ -154,14 +156,14 @@ class ProfileSelfHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Manage Photos button
-          if (onManagePhotos != null)
+          // Preview Profile button
+          if (onPreview != null)
             SizedBox(
               width: double.infinity,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: onManagePhotos,
+                  onTap: onPreview,
                   borderRadius: BorderRadius.circular(24),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -176,7 +178,7 @@ class ProfileSelfHeaderCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        "Manage Photos",
+                        "Preview Profile",
                         style: textTheme.labelLarge?.copyWith(
                           color: colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
