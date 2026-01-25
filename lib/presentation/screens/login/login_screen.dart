@@ -35,7 +35,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _hasNavigated = false;
 
   /// Handle post-login navigation based on phone verification and onboarding status.
-  Future<void> _handlePostLoginNavigation(
+  /// Returns true if navigation was initiated, false otherwise.
+  Future<bool> _handlePostLoginNavigation(
     BuildContext context,
     WidgetRef ref,
     String? userId,
@@ -43,7 +44,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (userId == null) {
       // No user ID means not authenticated - stay on login screen
       debugPrint('LoginScreen: No userId, cannot proceed with navigation');
-      return;
+      return false;
     }
 
     try {
@@ -51,25 +52,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final profileService = ref.read(profileServiceProvider);
       final step = await profileService.getOnboardingStep(userId);
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       if (step == null) {
         // User is fully onboarded - go directly to home
         debugPrint('LoginScreen: User fully onboarded, going to home');
         context.goToRoute(AppRoutes.home);
-        return;
+        return true;
       }
 
       // User needs to complete some onboarding step - check phone verification first
       final phoneService = ref.read(phoneVerificationServiceProvider);
       final isVerified = await phoneService.isPhoneVerified(uid: userId);
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       if (!isVerified) {
         debugPrint('LoginScreen: Phone not verified, going to verification');
         context.goToRoute(AppRoutes.phoneVerification);
-        return;
+        return true;
       }
 
       // Phone is verified, route to the appropriate onboarding step
@@ -84,12 +85,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');
         context.goToRoute(AppRoutes.onboardingBasics);
       }
+      return true;
     } catch (e) {
       debugPrint('LoginScreen: Error checking user status: $e');
       // On error, go to phone verification to be safe
       if (mounted) {
         context.goToRoute(AppRoutes.phoneVerification);
+        return true;
       }
+      return false;
     }
   }
 
@@ -120,8 +124,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             'LoginScreen: Auth state change detected. Authenticated: ${next.isAuthenticated}, Was loading: $wasLoading');
 
         if (!_hasNavigated) {
+          // Set flag before async call to prevent duplicate attempts,
+          // but reset if navigation fails
           _hasNavigated = true;
-          _handlePostLoginNavigation(context, ref, next.userId);
+          _handlePostLoginNavigation(context, ref, next.userId).then((success) {
+            if (!success && mounted) {
+              _hasNavigated = false;
+            }
+          });
         }
       }
     });
@@ -134,10 +144,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (!_hasNavigated && mounted) {
           debugPrint(
               'LoginScreen: Found existing authenticated session. Navigating...');
+          // Set flag before async call to prevent duplicate attempts,
+          // but reset if navigation fails
           _hasNavigated = true;
-          _handlePostLoginNavigation(context, ref, authState.userId);
+          _handlePostLoginNavigation(context, ref, authState.userId)
+              .then((success) {
+            if (!success && mounted) {
+              _hasNavigated = false;
+            }
+          });
         }
       });
+    }
+
+    // If already authenticated, show loading state instead of login UI
+    // This prevents the login screen from flashing while checking onboarding status
+    if (authState.isAuthenticated || _hasNavigated) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Semantics(
+          label: 'Loading, please wait',
+          child: Center(
+            child: SizedBox(
+              width: 140,
+              height: 140,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Circular loading indicator around the logo
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: colorScheme.primary.withValues(alpha: 0.6),
+                      backgroundColor:
+                          colorScheme.primary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  // Jiffy logo
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(

@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/design_system_page.dart';
 import 'package:jiffy/presentation/screens/home/home_screen.dart';
 import 'package:jiffy/presentation/screens/login/login_screen.dart';
+import 'package:jiffy/presentation/screens/splash/splash_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
@@ -22,6 +23,8 @@ import 'package:jiffy/presentation/screens/matches/matches_screen.dart';
 import 'package:jiffy/presentation/screens/stories/story_viewer_screen.dart';
 import 'package:jiffy/presentation/screens/stories/story_creation_screen.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import '../auth/auth_viewmodel.dart';
+import '../auth/auth_state.dart';
 import 'app_routes.dart';
 
 part 'app_router.g.dart';
@@ -32,14 +35,56 @@ part 'app_router.g.dart';
 /// Use [appRouterProvider] to access the router instance in your widgets.
 @riverpod
 GoRouter appRouter(Ref ref) {
+  // Watch auth state for redirect logic
+  final authState = ref.watch(authViewModelProvider);
+
   return GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
+    // Redirect based on authentication state
+    redirect: (context, state) {
+      final isAuthUnknown = authState.status == AuthStatus.unknown;
+      final isAuthenticated = authState.isAuthenticated;
+      final currentPath = state.uri.path;
+
+      // Define route categories
+      final isOnSplash = currentPath == AppRoutes.splash;
+      final isOnLogin = currentPath == AppRoutes.login;
+
+      // If auth state is unknown (loading), show splash screen
+      if (isAuthUnknown) {
+        return isOnSplash ? null : AppRoutes.splash;
+      }
+
+      // If not authenticated, redirect to login (unless already there)
+      if (!isAuthenticated) {
+        return isOnLogin ? null : AppRoutes.login;
+      }
+
+      // If authenticated and on splash/login, redirect to home
+      // (LoginScreen will handle further navigation based on onboarding status)
+      if (isAuthenticated && isOnSplash) {
+        return AppRoutes.login;
+      }
+
+      // No redirect needed
+      return null;
+    },
     routes: [
       // Root redirect
       GoRoute(
         path: AppRoutes.root,
-        redirect: (context, state) => AppRoutes.login,
+        redirect: (context, state) => AppRoutes.splash,
+      ),
+
+      // Splash screen - shown while checking auth state
+      GoRoute(
+        path: AppRoutes.splash,
+        name: 'splash',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SplashScreen(),
+        ),
       ),
 
       // Login screen

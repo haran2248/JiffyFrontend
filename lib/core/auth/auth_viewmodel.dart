@@ -43,18 +43,10 @@ class AuthViewModel extends _$AuthViewModel {
       _authSubscription?.cancel();
     });
 
-    // Check current auth state
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      return AuthState.authenticated(
-        userId: currentUser.uid,
-        email: currentUser.email,
-        displayName: currentUser.displayName,
-        photoUrl: currentUser.photoURL,
-      );
-    }
-
-    return AuthState.unauthenticated();
+    // Start with unknown state - the authStateChanges listener will
+    // determine the actual auth state once Firebase is ready.
+    // This prevents the login screen from flashing on hot restart.
+    return AuthState.initial();
   }
 
   void _onAuthStateChanged(User? user) {
