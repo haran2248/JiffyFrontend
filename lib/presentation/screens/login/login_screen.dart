@@ -140,6 +140,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     }
 
+    // If already authenticated, show loading state instead of login UI
+    // This prevents the login screen from flashing while checking onboarding status
+    if (authState.isAuthenticated || _hasNavigated) {
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: Center(
+          child: SizedBox(
+            width: 140,
+            height: 140,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Circular loading indicator around the logo
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: colorScheme.primary.withValues(alpha: 0.6),
+                    backgroundColor:
+                        colorScheme.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                // Jiffy logo
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(25),
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
