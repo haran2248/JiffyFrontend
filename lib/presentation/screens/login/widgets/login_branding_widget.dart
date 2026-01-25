@@ -31,14 +31,13 @@ class LoginBranding extends StatelessWidget {
               ),
             ],
           ),
-          child: const Center(
-            child: Text(
-              'J',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 56,
-                fontWeight: FontWeight.bold,
-              ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Image.asset(
+              'assets/images/app_icon.png',
+              width: 120,
+              height: 120,
+              fit: BoxFit.cover,
             ),
           ),
         )
