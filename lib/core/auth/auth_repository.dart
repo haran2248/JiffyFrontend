@@ -104,6 +104,7 @@ class AuthRepository {
       final oauthCredential = OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
         rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
       );
 
       // Sign in to Firebase with the Apple credential
