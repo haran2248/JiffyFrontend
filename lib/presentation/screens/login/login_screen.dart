@@ -79,7 +79,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         context.goToRoute(AppRoutes.onboardingBasics);
       } else if (step == 'chat') {
         debugPrint('LoginScreen: Basics done, needs chat onboarding');
-        context.goToRoute(AppRoutes.onboardingCoPilotIntro);
+        // Check if user has already started chat onboarding (CONTEXT_STORED or ANSWERS_STORED)
+        // If so, skip intro and go directly to profile setup
+        final onboardingStatus = await profileService.getOnboardingStatus(userId);
+        final hasStartedChat = onboardingStatus == 'CONTEXT_STORED' ||
+            onboardingStatus == 'ANSWERS_STORED';
+        
+        if (hasStartedChat) {
+          debugPrint('LoginScreen: User has already started chat onboarding (status: $onboardingStatus), going directly to profile setup');
+          context.goToRoute(AppRoutes.onboardingProfileSetup);
+        } else {
+          debugPrint('LoginScreen: User needs to see co-pilot intro first (status: $onboardingStatus)');
+          context.goToRoute(AppRoutes.onboardingCoPilotIntro);
+        }
       } else {
         // Unknown step, default to basics
         debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');

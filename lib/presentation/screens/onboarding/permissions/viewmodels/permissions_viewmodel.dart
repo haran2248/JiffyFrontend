@@ -70,8 +70,9 @@ class PermissionsViewModel extends _$PermissionsViewModel {
 
   Future<void> requestPhotoLibrary() async {
     final granted = await _permissionService.requestPhotoLibraryPermission();
-    debugPrint('Photo library permission status: ${granted ? 'Granted' : 'Denied'}');
+    debugPrint('Photo library permission status: ${granted ? 'Granted (or Limited)' : 'Denied'}');
     final currentState = state.value ?? const PermissionsState();
+    // Permission service already treats limited as granted
     state = AsyncData(currentState.copyWith(photoLibraryGranted: granted));
   }
 

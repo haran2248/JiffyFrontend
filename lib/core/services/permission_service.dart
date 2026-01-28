@@ -31,11 +31,16 @@ class PermissionService {
       await openAppSettings();
     }
     
-    return status.isGranted;
+    // On iOS, both granted and limited permissions allow image picking
+    // Treat limited as granted for our purposes
+    return status.isGranted || status.isLimited;
   }
 
   Future<bool> checkPhotoLibraryStatus() async {
-    return await Permission.photos.isGranted;
+    final status = await Permission.photos.status;
+    // On iOS, both granted and limited permissions allow image picking
+    // Treat limited as granted for our purposes
+    return status.isGranted || status.isLimited;
   }
 
   Future<bool> requestCameraPermission() async {
