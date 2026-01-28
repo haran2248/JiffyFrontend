@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,7 @@ import '../../../core/auth/auth_viewmodel.dart';
 import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/navigation_service.dart';
+import '../../../core/network/errors/api_error.dart';
 import '../../../core/services/phone_verification_service.dart';
 import '../../../core/services/profile_service.dart';
 import 'widgets/login_branding_widget.dart';
@@ -57,12 +59,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: User verified/created in backend');
       } catch (e) {
         debugPrint('LoginScreen: Backend verification failed: $e');
-        // If backend verification fails, sign out and stay on login screen
-        // This clears the stale Firebase session
-        debugPrint('LoginScreen: Signing out stale session and staying on login');
-        await authRepo.signOut();
-        _hasNavigated = false;
-        return false; // Stay on login screen
+        final apiError = (e is DioException) ? (e.error is ApiError ? e.error as ApiError : null) : null;
+        if (apiError?.isAuthError == true) {
+          // Only sign out on auth errors (invalid/expired session)
+          debugPrint('LoginScreen: Signing out due to invalid session');
+          await authRepo.signOut();
+          _hasNavigated = false;
+          return false; // Stay on login screen
+        }
+
+        // Transient backend/network/server failures: don't log user out.
+        debugPrint('LoginScreen: Transient error, continuing navigation flow');
       }
 
       // Get the onboarding step the user needs to complete
