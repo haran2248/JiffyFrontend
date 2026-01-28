@@ -52,6 +52,14 @@ class ProfileService {
 
       final onboardingStatusRaw = data['onboardingStatus'];
       return onboardingStatusRaw?.toString().toUpperCase();
+    } on DioException catch (e) {
+      // Handle 500 error when user doesn't exist yet (new user)
+      if (e.response?.statusCode == 500 || e.response?.statusCode == 404) {
+        debugPrint('ProfileService: User not found when getting onboarding status - new user');
+        return null;
+      }
+      debugPrint('ProfileService: Error getting onboarding status: $e');
+      return null;
     } catch (e) {
       debugPrint('ProfileService: Error getting onboarding status: $e');
       return null;
@@ -77,7 +85,7 @@ class ProfileService {
 
       final data = response.data as Map<String, dynamic>?;
       if (data == null) {
-        debugPrint('ProfileService: No user data found');
+        debugPrint('ProfileService: No user data found - new user, needs basics');
         return 'basics';
       }
 
@@ -145,6 +153,12 @@ class ProfileService {
       debugPrint('ProfileService: Unknown onboarding status ($onboardingStatus), routing to chat onboarding');
       return 'chat';
     } on DioException catch (e) {
+      // Handle 500 error when user doesn't exist yet (new user)
+      if (e.response?.statusCode == 500 || e.response?.statusCode == 404) {
+        debugPrint('ProfileService: User not found (new user) - needs basics');
+        return 'basics';
+      }
+      
       debugPrint(
           'ProfileService: DioException checking onboarding - ${e.message}');
       if (e.response != null) {
