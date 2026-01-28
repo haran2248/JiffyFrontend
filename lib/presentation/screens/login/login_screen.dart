@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/auth/auth_repository.dart';
 import '../../../core/auth/auth_viewmodel.dart';
 import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
@@ -48,6 +49,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     try {
+      // First, ensure user exists in backend (create if needed)
+      // This handles the case where Firebase Auth has a session but MongoDB doesn't have the user
+      final authRepo = ref.read(authRepositoryProvider);
+      try {
+        await authRepo.verifyTokenWithBackend();
+        debugPrint('LoginScreen: User verified/created in backend');
+      } catch (e) {
+        debugPrint('LoginScreen: Backend verification failed: $e');
+        // If backend verification fails, sign out and stay on login screen
+        // This clears the stale Firebase session
+        debugPrint('LoginScreen: Signing out stale session and staying on login');
+        await authRepo.signOut();
+        _hasNavigated = false;
+        return false; // Stay on login screen
+      }
+
       // Get the onboarding step the user needs to complete
       final profileService = ref.read(profileServiceProvider);
       final step = await profileService.getOnboardingStep(userId);
@@ -61,12 +78,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return true;
       }
 
-      // User needs to complete some onboarding step - check phone verification first
+      // Check phone verification status
       final phoneService = ref.read(phoneVerificationServiceProvider);
       final isVerified = await phoneService.isPhoneVerified(uid: userId);
 
       if (!mounted) return false;
 
+      // User exists but phone not verified
       if (!isVerified) {
         debugPrint('LoginScreen: Phone not verified, going to verification');
         context.goToRoute(AppRoutes.phoneVerification);

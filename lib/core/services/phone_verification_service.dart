@@ -75,7 +75,10 @@ class PhoneVerificationService {
       return isVerified;
     } on DioException catch (e) {
       debugPrint('PhoneVerificationService: Error - ${e.message}');
-      return false;
+      if (e.response != null) {
+        debugPrint('PhoneVerificationService: Response status: ${e.response?.statusCode}, data: ${e.response?.data}');
+      }
+      return false; // On error, assume not verified (safer to re-verify)
     } catch (e) {
       debugPrint('PhoneVerificationService: Error - $e');
       return false;
