@@ -106,11 +106,33 @@ class PermissionsScreen extends ConsumerWidget {
               const SizedBox(height: 40),
               Padding(
                 padding: const EdgeInsets.all(24),
-                child: Button(
-                  text: "Continue",
-                  onTap: () {
-                    // Navigate to curated profile screen after permissions
-                    context.goToRoute(AppRoutes.profileCurated);
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final stateAsync = ref.watch(permissionsViewModelProvider);
+                    final currentState = stateAsync.when(
+                      data: (data) => data,
+                      loading: () => const PermissionsState(),
+                      error: (_, __) => const PermissionsState(),
+                    );
+                    
+                    // Block continue until all required permissions are granted
+                    // Location and notifications are required, photo library and camera are optional
+                    final canContinue = currentState.locationGranted && 
+                                       currentState.notificationsGranted;
+                    
+                    return Opacity(
+                      opacity: canContinue ? 1.0 : 0.5,
+                      child: AbsorbPointer(
+                        absorbing: !canContinue,
+                        child: Button(
+                          text: "Continue",
+                          onTap: () {
+                            // Navigate to curated profile screen after permissions
+                            context.goToRoute(AppRoutes.profileCurated);
+                          },
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),

@@ -34,6 +34,30 @@ class ProfileService {
     return step == null;
   }
 
+  /// Get the raw onboarding status from the backend
+  ///
+  /// Returns the onboarding status string (e.g., 'COMPLETED', 'CONTEXT_STORED', etc.)
+  /// Returns null if user not found or on error
+  Future<String?> getOnboardingStatus(String userId) async {
+    try {
+      final response = await _dio.get(
+        '/api/users/getUser',
+        queryParameters: {'uid': userId},
+      );
+
+      final data = response.data as Map<String, dynamic>?;
+      if (data == null) {
+        return null;
+      }
+
+      final onboardingStatusRaw = data['onboardingStatus'];
+      return onboardingStatusRaw?.toString().toUpperCase();
+    } catch (e) {
+      debugPrint('ProfileService: Error getting onboarding status: $e');
+      return null;
+    }
+  }
+
   /// Get the specific onboarding step the user needs to complete.
   ///
   /// Returns:
@@ -81,23 +105,44 @@ class ProfileService {
       // Check if user has basicDetails object (indicates basics screen was completed)
       final hasBasicDetails = basicDetails != null;
 
-      // Check for images (indicates photos were uploaded)
+      // Check for images - check both imageIds list and individual image ID fields
       final imageIds = data['imageIds'] as List?;
-      final hasImages = imageIds != null && imageIds.isNotEmpty;
+      final firstImageId = data['firstImageId'] as String?;
+      final hasImages = (imageIds != null && imageIds.isNotEmpty) ||
+          (firstImageId != null && firstImageId.isNotEmpty);
 
-      // User has completed basics if they have name, basicDetails, and images
-      final hasCompletedBasics = hasName && hasBasicDetails && hasImages;
+      // If user has started chat onboarding (CONTEXT_STORED or ANSWERS_STORED),
+      // they've already progressed past basics, so images are optional
+      final hasStartedChatOnboarding = onboardingStatus == 'CONTEXT_STORED' ||
+          onboardingStatus == 'ANSWERS_STORED';
+
+      // User has completed basics if they have name and basicDetails
+      // Images are required UNLESS they've already started chat onboarding
+      final hasCompletedBasics = hasName && hasBasicDetails && (hasImages || hasStartedChatOnboarding);
 
       debugPrint(
-          'ProfileService: hasName=$hasName, hasBasicDetails=$hasBasicDetails, hasImages=$hasImages, hasCompletedBasics=$hasCompletedBasics');
+          'ProfileService: hasName=$hasName, hasBasicDetails=$hasBasicDetails, hasImages=$hasImages, hasStartedChatOnboarding=$hasStartedChatOnboarding, hasCompletedBasics=$hasCompletedBasics');
 
       if (!hasCompletedBasics) {
-        debugPrint('ProfileService: User needs to complete basics');
+        debugPrint('ProfileService: User needs to complete basics (missing: ${!hasName ? "name" : ""} ${!hasBasicDetails ? "basicDetails" : ""} ${!hasImages && !hasStartedChatOnboarding ? "images" : ""})');
         return 'basics';
       }
 
-      // Basics are complete but chat onboarding is not - user needs to complete chat onboarding
-      debugPrint('ProfileService: User needs to complete chat onboarding (status: $onboardingStatus)');
+      // Basics are complete - check onboarding status
+      // If status is CONTEXT_STORED or ANSWERS_STORED, user needs to complete chat onboarding
+      // If status is null or NOT_STARTED, user also needs to complete chat onboarding
+      final needsChatOnboarding = onboardingStatus == null ||
+          onboardingStatus == 'NOT_STARTED' ||
+          onboardingStatus == 'CONTEXT_STORED' ||
+          onboardingStatus == 'ANSWERS_STORED';
+
+      if (needsChatOnboarding) {
+        debugPrint('ProfileService: User needs to complete chat onboarding (status: $onboardingStatus)');
+        return 'chat';
+      }
+
+      // Unknown status but basics are complete - assume chat onboarding needed
+      debugPrint('ProfileService: Unknown onboarding status ($onboardingStatus), routing to chat onboarding');
       return 'chat';
     } on DioException catch (e) {
       debugPrint(
