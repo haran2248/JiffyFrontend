@@ -57,7 +57,21 @@ class ProfileService {
         return 'basics';
       }
 
-      // Check if user has name (can be at root level or in basicDetails)
+      // FIRST: Check onboardingStatus - if COMPLETED, user is fully onboarded
+      // This is the most reliable indicator and should be checked first
+      final onboardingStatusRaw = data['onboardingStatus'];
+      final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
+      final isChatOnboardingComplete = onboardingStatus == 'COMPLETED';
+
+      debugPrint(
+          'ProfileService: onboardingStatus=$onboardingStatusRaw (normalized: $onboardingStatus), isChatOnboardingComplete=$isChatOnboardingComplete');
+
+      if (isChatOnboardingComplete) {
+        debugPrint('ProfileService: User has COMPLETED onboarding status - fully onboarded');
+        return null; // User is fully onboarded
+      }
+
+      // SECOND: Check if user has completed basics (name, basicDetails, images)
       final rootName = data['name'] as String?;
       final basicDetails = data['basicDetails'] as Map<String, dynamic>?;
       final basicDetailsName = basicDetails?['name'] as String?;
@@ -82,21 +96,9 @@ class ProfileService {
         return 'basics';
       }
 
-      // Check if chat onboarding is complete (from backend onboardingStatus enum)
-      final onboardingStatus = data['onboardingStatus'] as String?;
-      final isChatOnboardingComplete = onboardingStatus == 'COMPLETED';
-
-      debugPrint(
-          'ProfileService: onboardingStatus=$onboardingStatus, isChatOnboardingComplete=$isChatOnboardingComplete');
-
-      if (!isChatOnboardingComplete) {
-        debugPrint('ProfileService: User needs to complete chat onboarding');
-        return 'chat';
-      }
-
-      // User is fully onboarded
-      debugPrint('ProfileService: User is fully onboarded');
-      return null;
+      // Basics are complete but chat onboarding is not - user needs to complete chat onboarding
+      debugPrint('ProfileService: User needs to complete chat onboarding (status: $onboardingStatus)');
+      return 'chat';
     } on DioException catch (e) {
       debugPrint(
           'ProfileService: DioException checking onboarding - ${e.message}');
