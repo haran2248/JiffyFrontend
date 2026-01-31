@@ -81,6 +81,12 @@ class LocationService {
   /// Fetch current position and send to backend if needed.
   /// Only updates if enough time has passed since last update.
   Future<void> updateLocationIfNeeded() async {
+    // Skip if no authenticated user
+    if (_authRepository.currentUser == null) {
+      debugPrint("[LocationService] Skipping update - no authenticated user");
+      return;
+    }
+
     // Check if enough time has passed
     if (_lastUpdateTime != null) {
       final elapsed = DateTime.now().difference(_lastUpdateTime!);
