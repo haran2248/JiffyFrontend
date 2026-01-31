@@ -16,7 +16,7 @@ class LocationService {
   /// Minimum time between location updates (in minutes)
   static const int _updateIntervalMinutes = 30;
 
-  DateTime? _lastUpdateTime;
+  static DateTime? _lastUpdateTime;
 
   LocationService({
     required Dio dio,
