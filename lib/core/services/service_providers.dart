@@ -10,6 +10,7 @@ import 'permission_service.dart';
 import 'notification_service.dart';
 import 'profile_service.dart';
 import 'photo_upload_service.dart';
+import 'location_service.dart';
 
 part 'service_providers.g.dart';
 
@@ -46,4 +47,11 @@ PhotoUploadService photoUploadService(Ref ref) {
 AiChatService aiChatService(Ref ref) {
   final dio = ref.watch(dioProvider);
   return AiChatService(dio: dio);
+}
+
+@riverpod
+LocationService locationService(Ref ref) {
+  final dio = ref.watch(dioProvider);
+  final authRepository = ref.watch(authRepositoryProvider);
+  return LocationService(dio: dio, authRepository: authRepository);
 }
