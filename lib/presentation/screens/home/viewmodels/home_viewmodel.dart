@@ -47,6 +47,9 @@ class HomeViewModel extends _$HomeViewModel {
     state = state.copyWith(isLoading: true, error: () => null);
 
     try {
+      // Update location periodically (if enough time has passed)
+      _updateLocationInBackground();
+
       final homeService = ref.read(homeServiceProvider);
       final authRepo = ref.read(authRepositoryProvider);
 
@@ -238,5 +241,17 @@ class HomeViewModel extends _$HomeViewModel {
   /// Load more suggestions (pagination)
   Future<void> loadMoreSuggestions() async {
     // TODO: Implement pagination
+  }
+
+  /// Update location in background without blocking home data loading
+  void _updateLocationInBackground() {
+    Future.microtask(() async {
+      try {
+        final locationService = ref.read(locationServiceProvider);
+        await locationService.updateLocationIfNeeded();
+      } catch (e) {
+        debugPrint("HomeViewModel: Error updating location - $e");
+      }
+    });
   }
 }
