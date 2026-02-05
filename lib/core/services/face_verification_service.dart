@@ -56,7 +56,7 @@ class FaceVerificationService {
       final response = await _dio.post(
         FaceVerificationEndpoints.setIsVerified,
         queryParameters: {'uid': uid},
-        data: {'isVerified': isVerified.toString()},
+        data: {'isVerified': isVerified},
       );
 
       return response.statusCode == 200;
