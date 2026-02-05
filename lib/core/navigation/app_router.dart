@@ -16,6 +16,7 @@ import '../../presentation/screens/chat/chat_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/discover/discover_screen.dart';
 import 'package:jiffy/presentation/screens/profile_self/profile_self_screen.dart';
+import 'package:jiffy/presentation/screens/face_verification/face_verification_screen.dart';
 import 'package:jiffy/presentation/screens/profile_curated/profile_curated_screen.dart';
 import 'package:jiffy/presentation/screens/phone_verification_ui/phone_number_screen.dart';
 import 'package:jiffy/presentation/screens/phone_verification_ui/otp_verification_screen.dart';
@@ -191,6 +192,18 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const ProfileSelfScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      // Face Verification - biometric profile verification
+      GoRoute(
+        path: AppRoutes.faceVerification,
+        name: RouteNames.faceVerification,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const FaceVerificationScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
