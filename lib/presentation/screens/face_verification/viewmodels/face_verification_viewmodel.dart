@@ -95,11 +95,15 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
         return;
       }
 
-      // Download reference image from S3 (using separate Dio, not the API one)
+      // Download reference image from S3 (using separate Dio with timeouts, not the API one)
       final imageUrl = '$kS3BucketUrl$firstImageId';
       debugPrint('FaceVerificationViewModel: Loading image from $imageUrl');
 
-      final response = await Dio().get<List<int>>(
+      final s3Dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+      ));
+      final response = await s3Dio.get<List<int>>(
         imageUrl,
         options: Options(responseType: ResponseType.bytes),
       );
