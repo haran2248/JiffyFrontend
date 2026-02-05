@@ -177,7 +177,17 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
 
         if (similarity >= kSimilarityThreshold) {
           // Success - update backend
-          await _updateVerificationStatus(true);
+          final updated = await _updateVerificationStatus(true);
+          if (!updated) {
+            state = state.copyWith(
+              isMatching: false,
+              similarityScore: similarity,
+              result: VerificationResult.error,
+              errorMessage:
+                  'Face matched but failed to update server. Please try again.',
+            );
+            return;
+          }
           state = state.copyWith(
             isMatching: false,
             similarityScore: similarity,
@@ -210,15 +220,17 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
   }
 
   /// Update verification status on backend.
-  Future<void> _updateVerificationStatus(bool isVerified) async {
+  /// Returns true if update succeeded, false otherwise.
+  Future<bool> _updateVerificationStatus(bool isVerified) async {
     final uid = _uid;
-    if (uid == null) return;
+    if (uid == null) return false;
 
     try {
       final service = ref.read(faceVerificationServiceProvider);
-      await service.updateVerificationStatus(uid, isVerified);
+      return await service.updateVerificationStatus(uid, isVerified);
     } catch (e) {
       debugPrint('FaceVerificationViewModel: Error updating status - $e');
+      return false;
     }
   }
 
