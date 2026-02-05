@@ -83,7 +83,10 @@ class FaceVerificationScreen extends ConsumerWidget {
                   title: 'Your Profile Photo',
                   imageBytes: state.referenceImage,
                   screenWidth: screenWidth,
-                  isLoading: state.referenceImage == null,
+                  isLoading: state.isLoading && state.referenceImage == null,
+                  errorMessage: state.referenceImage == null && !state.isLoading
+                      ? state.errorMessage
+                      : null,
                 ),
 
                 const SizedBox(height: 20),
@@ -138,6 +141,7 @@ class FaceVerificationScreen extends ConsumerWidget {
     required double screenWidth,
     bool isLoading = false,
     String? placeholder,
+    String? errorMessage,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -186,48 +190,73 @@ class FaceVerificationScreen extends ConsumerWidget {
                       ],
                     ),
                   )
-                : imageBytes != null
-                    ? Image.memory(
-                        imageBytes,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.error_outline,
-                              color: colorScheme.error,
-                              size: 48,
-                            ),
-                          );
-                        },
-                      )
-                    : Center(
+                : errorMessage != null
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.camera_alt_outlined,
+                              Icons.error_outline,
                               size: 48,
-                              color:
-                                  colorScheme.onSurface.withValues(alpha: 0.3),
+                              color: colorScheme.error,
                             ),
-                            if (placeholder != null) ...[
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  placeholder,
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurface
-                                        .withValues(alpha: 0.5),
-                                  ),
-                                  textAlign: TextAlign.center,
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                errorMessage,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.error,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                      ),
+                      )
+                    : imageBytes != null
+                        ? Image.memory(
+                            imageBytes,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: colorScheme.error,
+                                  size: 48,
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.camera_alt_outlined,
+                                  size: 48,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.3),
+                                ),
+                                if (placeholder != null) ...[
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    child: Text(
+                                      placeholder,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurface
+                                            .withValues(alpha: 0.5),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
           ),
         ),
       ],
