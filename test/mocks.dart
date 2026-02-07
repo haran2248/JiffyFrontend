@@ -26,6 +26,12 @@ class MockPermissionService implements PermissionService {
 
   @override
   Future<bool> checkCameraStatus() async => true;
+
+  @override
+  Future<bool> requestPhotoLibraryPermission() async => true;
+
+  @override
+  Future<bool> checkPhotoLibraryStatus() async => true;
 }
 
 class MockNotificationService implements NotificationService {
