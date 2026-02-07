@@ -26,48 +26,35 @@ class PreferencesViewModel extends _$PreferencesViewModel {
 
   Future<bool> saveGenderPreferences() async {
     if (state.selectedGender == null) {
-      print('[PreferencesViewModel] No gender selected');
       return false;
     }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      print('[PreferencesViewModel] Starting saveGenderPreferences');
       final repo = ref.read(onboardingRepositoryProvider);
 
       // Get basics data from the BasicsViewModel
       final basicsData = ref.read(basicsViewModelProvider);
-      print(
-          '[PreferencesViewModel] Basics data: ${basicsData.firstName}, ${basicsData.gender}, ${basicsData.dateOfBirth}');
 
       // Map UI model to DTO - include all basics data along with preferred gender
       final preferredGender = state.selectedGender!.label;
-      print('[PreferencesViewModel] Preferred gender: $preferredGender');
 
       // First, upload the profile image if one was selected
       if (basicsData.photoUrl != null && basicsData.photoUrl!.isNotEmpty) {
-        print('[PreferencesViewModel] Photo URL found: ${basicsData.photoUrl}');
         // Check if it's a local file path (not http/https)
         // This handles file://, content://, and path-based locals like /path/to/file
         final uri = Uri.parse(basicsData.photoUrl!);
         final isLocalUri = uri.scheme.isEmpty ||
             (uri.scheme != 'http' && uri.scheme != 'https');
         if (isLocalUri) {
-          print('[PreferencesViewModel] Uploading local photo');
           await repo.uploadProfileImage(
             basicsData.photoUrl!,
             name: basicsData.firstName,
           );
-          print('[PreferencesViewModel] Photo upload complete');
-        } else {
-          print('[PreferencesViewModel] Photo is remote URL, skipping upload');
         }
-      } else {
-        print('[PreferencesViewModel] No photo to upload');
       }
 
       // Then save the user information
-      print('[PreferencesViewModel] Saving user information');
       await repo.saveUserInformation(BasicDetails(
         name: basicsData.firstName,
         gender: basicsData.gender,
@@ -75,11 +62,9 @@ class PreferencesViewModel extends _$PreferencesViewModel {
         preferredGender: preferredGender,
       ));
 
-      print('[PreferencesViewModel] Save successful');
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      print('[PreferencesViewModel] Error saving: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
       return false;
     }
