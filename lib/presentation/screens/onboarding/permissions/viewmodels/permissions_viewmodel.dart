@@ -31,6 +31,21 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   Future<void> requestLocation() async {
     final granted = await _permissionService.requestLocationPermission();
     debugPrint('Location permission status: ${granted ? 'Granted' : 'Denied'}');
+
+    // If permission granted, immediately update location on backend
+    if (granted) {
+      try {
+        final locationService = ref.read(locationServiceProvider);
+        debugPrint(
+            '[PermissionsViewModel] Forcing location update after permission grant');
+        await locationService.forceUpdateLocation();
+        debugPrint('[PermissionsViewModel] Location update complete');
+      } catch (e) {
+        debugPrint('[PermissionsViewModel] Error updating location: $e');
+        // Don't fail permission grant if location update fails
+      }
+    }
+
     final currentState = state.value ?? const PermissionsState();
     state = AsyncData(currentState.copyWith(locationGranted: granted));
   }
