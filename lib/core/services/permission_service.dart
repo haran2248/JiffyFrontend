@@ -64,4 +64,8 @@ class PermissionService {
   Future<bool> checkCameraStatus() async {
     return await Permission.camera.isGranted;
   }
+
+  Future<bool> checkCameraStatus() async {
+    return await Permission.camera.isGranted;
+  }
 }
