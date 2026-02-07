@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/navigation_service.dart';
@@ -53,7 +54,13 @@ class PhoneNumberScreen extends ConsumerWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        onPressed: () => context.popRoute(),
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(AppRoutes.login);
+                          }
+                        },
                         icon: Icon(
                           Icons.arrow_back,
                           color: colorScheme.onSurface,
@@ -140,7 +147,13 @@ class PhoneNumberScreen extends ConsumerWidget {
                 onTap: () async {
                   final success = await viewModel.sendVerificationCode();
                   if (success && context.mounted) {
-                    context.pushRoute(AppRoutes.otpVerification);
+                    final currentState =
+                        ref.read(phoneVerificationViewModelProvider);
+                    if (currentState.shouldSkipOtp) {
+                      context.pushRoute(AppRoutes.onboardingBasics);
+                    } else {
+                      context.pushRoute(AppRoutes.otpVerification);
+                    }
                   }
                 },
               ),

@@ -72,6 +72,38 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
 
     try {
       final service = ref.read(phoneVerificationServiceProvider);
+
+      final isPhoneAuthEnabled = await service.checkPhoneAuthEnabled();
+
+      if (!isPhoneAuthEnabled) {
+        debugPrint(
+            'PhoneVerificationViewModel: Phone auth disabled, skipping OTP');
+
+        // Call API to update phone number (fire and forget or await?)
+        // We await to ensure the number is saved, but we don't care about the verification ID
+        try {
+          await service.sendVerificationCode(
+            phoneNumber: state.phoneNumber,
+            uid: uid,
+          );
+        } catch (e) {
+          // Ignore error since we are bypassing
+          debugPrint(
+              'PhoneVerificationViewModel: Ignored error updating phone number in bypass mode - $e');
+        }
+
+        // Mark as verified/completed
+        state = state.copyWith(
+          isSendingOtp: false,
+          isOtpSent: true,
+          verificationId: 'bypass_${DateTime.now().millisecondsSinceEpoch}',
+          shouldSkipOtp: true,
+          isVerified: true, // Mark as verified since we are skipping
+        );
+        PhoneVerificationService.markAsVerified(uid); // Update local cache
+        return true;
+      }
+
       final response = await service.sendVerificationCode(
         phoneNumber: state.phoneNumber,
         uid: uid,
@@ -85,6 +117,7 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
           isOtpSent: true,
           verificationId: response.data!.verificationId,
           otpLength: otpLength,
+          shouldSkipOtp: false,
         );
         _startResendTimer();
         return true;

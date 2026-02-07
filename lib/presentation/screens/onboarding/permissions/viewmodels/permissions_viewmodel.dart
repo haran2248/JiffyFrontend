@@ -19,13 +19,11 @@ class PermissionsViewModel extends _$PermissionsViewModel {
     final locationStatus = await _permissionService.checkLocationStatus();
     final notificationStatus =
         await _permissionService.checkNotificationStatus();
-    final photoLibraryStatus =
-        await _permissionService.checkPhotoLibraryStatus();
+
     final cameraStatus = await _permissionService.checkCameraStatus();
     return PermissionsState(
       locationGranted: locationStatus,
       notificationsGranted: notificationStatus,
-      photoLibraryGranted: photoLibraryStatus,
       cameraGranted: cameraStatus,
     );
   }
@@ -70,7 +68,8 @@ class PermissionsViewModel extends _$PermissionsViewModel {
 
   Future<void> requestPhotoLibrary() async {
     final granted = await _permissionService.requestPhotoLibraryPermission();
-    debugPrint('Photo library permission status: ${granted ? 'Granted (or Limited)' : 'Denied'}');
+    debugPrint(
+        'Photo library permission status: ${granted ? 'Granted (or Limited)' : 'Denied'}');
     final currentState = state.value ?? const PermissionsState();
     // Permission service already treats limited as granted
     state = AsyncData(currentState.copyWith(photoLibraryGranted: granted));

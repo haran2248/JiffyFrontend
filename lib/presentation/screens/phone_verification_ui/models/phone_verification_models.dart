@@ -186,6 +186,7 @@ class PhoneVerificationState {
   final bool isOtpSent;
   final bool isVerified;
   final int otpLength;
+  final bool shouldSkipOtp;
 
   const PhoneVerificationState({
     this.phoneNumber = '',
@@ -199,6 +200,7 @@ class PhoneVerificationState {
     this.isOtpSent = false,
     this.isVerified = false,
     this.otpLength = 4, // Default to 4 digits
+    this.shouldSkipOtp = false,
   });
 
   bool get canSendOtp => phoneNumber.length >= 10 && !isSendingOtp;
@@ -217,6 +219,7 @@ class PhoneVerificationState {
     bool? isOtpSent,
     bool? isVerified,
     int? otpLength,
+    bool? shouldSkipOtp,
   }) {
     return PhoneVerificationState(
       phoneNumber: phoneNumber ?? this.phoneNumber,
@@ -230,6 +233,7 @@ class PhoneVerificationState {
       isOtpSent: isOtpSent ?? this.isOtpSent,
       isVerified: isVerified ?? this.isVerified,
       otpLength: otpLength ?? this.otpLength,
+      shouldSkipOtp: shouldSkipOtp ?? this.shouldSkipOtp,
     );
   }
 }

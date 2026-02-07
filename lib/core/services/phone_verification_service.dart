@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -207,6 +208,24 @@ class PhoneVerificationService {
     } catch (e) {
       debugPrint('PhoneVerificationService: Error - $e');
       return OtpVerificationResult.error('An unexpected error occurred');
+    }
+  }
+
+  Future<bool> checkPhoneAuthEnabled() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('config')
+          .doc('phoneAuth')
+          .get();
+
+      if (snapshot.exists && snapshot.data() != null) {
+        return snapshot.data()!['isPhoneAuthEnabled'] as bool? ?? true;
+      }
+      return true; // Default to true if config doesn't exist
+    } catch (e) {
+      debugPrint(
+          'PhoneVerificationService: Error checking phone auth config - $e');
+      return true; // Default to true on error
     }
   }
 }
