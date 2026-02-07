@@ -84,15 +84,6 @@ class PermissionsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     PermissionCard(
-                      icon: Icons.photo_library_outlined,
-                      title: "Photo Library",
-                      description:
-                          "Upload photos from your gallery for your profile and stories",
-                      isGranted: state.photoLibraryGranted,
-                      onTap: viewModel.requestPhotoLibrary,
-                    ),
-                    const SizedBox(height: 16),
-                    PermissionCard(
                       icon: Icons.camera_alt_outlined,
                       title: "Camera",
                       description:
@@ -114,12 +105,11 @@ class PermissionsScreen extends ConsumerWidget {
                       loading: () => const PermissionsState(),
                       error: (_, __) => const PermissionsState(),
                     );
-                    
-                    // Block continue until all required permissions are granted
-                    // Location and notifications are required, photo library and camera are optional
-                    final canContinue = currentState.locationGranted && 
-                                       currentState.notificationsGranted;
-                    
+
+                    // Only location permission is required
+                    // Notifications and camera are optional
+                    final canContinue = currentState.locationGranted;
+
                     return Opacity(
                       opacity: canContinue ? 1.0 : 0.5,
                       child: AbsorbPointer(

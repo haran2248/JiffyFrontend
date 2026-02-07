@@ -61,7 +61,14 @@ class LocationService {
     }
 
     try {
-      await _dio.post(
+      debugPrint("[LocationService] Sending location update...");
+      debugPrint("[LocationService] UID: ${user.uid}");
+      debugPrint("[LocationService] Coordinates: $latitude, $longitude");
+      debugPrint("[LocationService] Base URL: ${_dio.options.baseUrl}");
+      debugPrint(
+          "[LocationService] Full endpoint: ${_dio.options.baseUrl}/api/users/updateLocation");
+
+      final response = await _dio.post(
         "/api/users/updateLocation",
         queryParameters: {
           "uid": user.uid,
@@ -69,11 +76,23 @@ class LocationService {
           "longitude": longitude,
         },
       );
+
+      debugPrint("[LocationService] Response status: ${response.statusCode}");
+      debugPrint("[LocationService] Response data: ${response.data}");
       debugPrint("[LocationService] Location updated successfully");
       _lastUpdateTime = DateTime.now();
       return true;
-    } catch (e) {
-      debugPrint("[LocationService] Error updating location: $e");
+    } on DioException catch (e) {
+      debugPrint("[LocationService] DioException updating location:");
+      debugPrint("[LocationService]   Type: ${e.type}");
+      debugPrint("[LocationService]   Message: ${e.message}");
+      debugPrint(
+          "[LocationService]   Response: ${e.response?.statusCode} - ${e.response?.data}");
+      debugPrint("[LocationService]   Error: ${e.error}");
+      return false;
+    } catch (e, stackTrace) {
+      debugPrint("[LocationService] Unexpected error updating location: $e");
+      debugPrint("[LocationService] Stack trace: $stackTrace");
       return false;
     }
   }

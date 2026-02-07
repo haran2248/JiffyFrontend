@@ -23,14 +23,16 @@ class PermissionService {
   Future<bool> requestPhotoLibraryPermission() async {
     // Just request - let the system show the dialog. Only open settings if permanently denied.
     final status = await Permission.photos.request();
-    debugPrint('[PermissionService] Photo library permission status: ${status.toString()}');
-    
+    debugPrint(
+        '[PermissionService] Photo library permission status: ${status.toString()}');
+
     // Only open settings if permanently denied
     if (status.isPermanentlyDenied) {
-      debugPrint('[PermissionService] Photo library permanently denied, opening settings');
+      debugPrint(
+          '[PermissionService] Photo library permanently denied, opening settings');
       await openAppSettings();
     }
-    
+
     // On iOS, both granted and limited permissions allow image picking
     // Treat limited as granted for our purposes
     return status.isGranted || status.isLimited;
@@ -46,14 +48,16 @@ class PermissionService {
   Future<bool> requestCameraPermission() async {
     // Just request - let the system show the dialog. Only open settings if permanently denied.
     final status = await Permission.camera.request();
-    debugPrint('[PermissionService] Camera permission status: ${status.toString()}');
-    
+    debugPrint(
+        '[PermissionService] Camera permission status: ${status.toString()}');
+
     // Only open settings if permanently denied
     if (status.isPermanentlyDenied) {
-      debugPrint('[PermissionService] Camera permanently denied, opening settings');
+      debugPrint(
+          '[PermissionService] Camera permanently denied, opening settings');
       await openAppSettings();
     }
-    
+
     return status.isGranted;
   }
 

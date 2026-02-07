@@ -3,7 +3,9 @@ import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:image_picker/image_picker.dart";
 import "package:image_cropper/image_cropper.dart";
-import "package:permission_handler/permission_handler.dart";
+import "package:path_provider/path_provider.dart";
+import "package:path/path.dart" as path;
+
 import "../config/image_size_config.dart";
 
 /// Central service for handling photo uploads, image picking, cropping, and processing
@@ -34,14 +36,7 @@ class PhotoUploadService {
         "[PhotoUploadService] Target size: ${width ?? ImageSizeConfig.profilePhotoSize}x${height ?? ImageSizeConfig.profilePhotoSize}");
 
     try {
-      // Step 1: Check and request permissions
-      final hasPermission = await _requestPhotoLibraryPermission();
-      if (!hasPermission) {
-        debugPrint("[PhotoUploadService] Permission denied by user");
-        return null;
-      }
-
-      // Step 2: Pick image from gallery
+      // Step 1: Pick image from gallery
       debugPrint("[PhotoUploadService] Opening gallery picker");
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -57,7 +52,7 @@ class PhotoUploadService {
       debugPrint(
           "[PhotoUploadService] Image size: ${await File(pickedFile.path).length()} bytes");
 
-      // Step 3: Crop the image
+      // Step 2: Crop the image
       final croppedFile = await _cropImage(
         File(pickedFile.path),
         aspectRatio: aspectRatio,
@@ -75,7 +70,18 @@ class PhotoUploadService {
       debugPrint(
           "[PhotoUploadService] Cropped image size: ${await croppedFile.length()} bytes");
 
-      return croppedFile;
+      // Step 3: Copy to permanent storage to prevent Android/iOS cache cleanup
+      final permanentFile = await _copyToPermanentStorage(croppedFile);
+
+      if (permanentFile == null) {
+        debugPrint(
+            "[PhotoUploadService] Failed to copy to permanent storage, using original cropped file");
+        return croppedFile;
+      }
+
+      debugPrint(
+          "[PhotoUploadService] Image saved to permanent storage: ${permanentFile.path}");
+      return permanentFile;
     } catch (e, stackTrace) {
       debugPrint("[PhotoUploadService] Error during image pick/crop: $e");
       debugPrint("[PhotoUploadService] Stack trace: $stackTrace");
@@ -90,12 +96,6 @@ class PhotoUploadService {
     debugPrint("[PhotoUploadService] Starting gallery image pick (no crop)");
 
     try {
-      final hasPermission = await _requestPhotoLibraryPermission();
-      if (!hasPermission) {
-        debugPrint("[PhotoUploadService] Permission denied by user");
-        return null;
-      }
-
       debugPrint("[PhotoUploadService] Opening gallery picker");
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -158,7 +158,7 @@ class PhotoUploadService {
       // Apply default width/height if not provided
       final targetWidth = width ?? ImageSizeConfig.profilePhotoSize;
       final targetHeight = height ?? ImageSizeConfig.profilePhotoSize;
-      
+
       // Convert aspect ratio to ratioX:ratioY format
       // For 1.0 (square): 1:1
       // For 0.75 (3:4): 3:4
@@ -212,75 +212,6 @@ class PhotoUploadService {
     }
   }
 
-  /// Requests photo library permission
-  ///
-  /// Returns true if permission is granted, false otherwise
-  /// If permission is permanently denied, opens app settings
-  Future<bool> _requestPhotoLibraryPermission() async {
-    debugPrint("[PhotoUploadService] Checking photo library permission");
-
-    if (Platform.isAndroid) {
-      // Android 13+ uses photos permission
-      final currentStatus = await Permission.photos.status;
-      debugPrint(
-          "[PhotoUploadService] Current Android photos permission: ${currentStatus.toString()}");
-
-      if (currentStatus.isGranted) {
-        return true;
-      }
-
-      if (currentStatus.isPermanentlyDenied) {
-        debugPrint(
-            "[PhotoUploadService] Permission permanently denied, opening app settings");
-        await openAppSettings();
-        return false;
-      }
-
-      final status = await Permission.photos.request();
-      debugPrint(
-          "[PhotoUploadService] Android photos permission after request: ${status.toString()}");
-      return status.isGranted;
-    } else if (Platform.isIOS) {
-      final currentStatus = await Permission.photos.status;
-      debugPrint(
-          "[PhotoUploadService] Current iOS photos permission: ${currentStatus.toString()}");
-
-      // On iOS, both granted and limited permissions allow image picking
-      if (currentStatus.isGranted || currentStatus.isLimited) {
-        return true;
-      }
-
-      if (currentStatus.isPermanentlyDenied) {
-        debugPrint(
-            "[PhotoUploadService] Permission permanently denied, opening app settings");
-        await openAppSettings();
-        return false;
-      }
-
-      final status = await Permission.photos.request();
-      debugPrint(
-          "[PhotoUploadService] iOS photos permission after request: ${status.toString()}");
-      // On iOS, both granted and limited permissions allow image picking
-      return status.isGranted || status.isLimited;
-    }
-
-    debugPrint("[PhotoUploadService] Platform not supported for photo library");
-    return false;
-  }
-
-  /// Checks if photo library permission is granted
-  Future<bool> hasPhotoLibraryPermission() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.photos.status;
-      return status.isGranted;
-    } else if (Platform.isIOS) {
-      final status = await Permission.photos.status;
-      // On iOS, both granted and limited permissions allow image picking
-      return status.isGranted || status.isLimited;
-    }
-    return false;
-  }
-
   /// Converts a decimal aspect ratio to ratioX:ratioY format
   ///
   /// Examples:
@@ -319,6 +250,32 @@ class PhotoUploadService {
       return (1, (1 / aspectRatio).round());
     } else {
       return (aspectRatio.round(), 1);
+    }
+  }
+
+  Future<File?> _copyToPermanentStorage(File tempFile) async {
+    try {
+      debugPrint("[PhotoUploadService] Copying file to permanent storage");
+      debugPrint("[PhotoUploadService] Source: ${tempFile.path}");
+
+      final directory = await getApplicationDocumentsDirectory();
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = path.extension(tempFile.path);
+      final fileName = 'profile_photo_$timestamp$extension';
+      final permanentPath = path.join(directory.path, fileName);
+
+      debugPrint("[PhotoUploadService] Destination: $permanentPath");
+
+      final permanentFile = await tempFile.copy(permanentPath);
+
+      debugPrint("[PhotoUploadService] File copied successfully");
+      return permanentFile;
+    } catch (e, stackTrace) {
+      debugPrint(
+          "[PhotoUploadService] Error copying file to permanent storage: $e");
+      debugPrint("[PhotoUploadService] Stack trace: $stackTrace");
+      return null;
     }
   }
 }
