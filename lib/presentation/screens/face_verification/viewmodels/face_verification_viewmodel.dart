@@ -30,10 +30,12 @@ const String kS3BucketUrl =
 @riverpod
 class FaceVerificationViewModel extends _$FaceVerificationViewModel {
   late final FaceSDK _faceSDK;
+  bool _disposed = false;
 
   @override
   FaceVerificationState build() {
     _faceSDK = FaceSDK.instance;
+    ref.onDispose(() => _disposed = true);
     _initialize();
     return const FaceVerificationState(isLoading: true);
   }
@@ -48,15 +50,15 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
   Future<void> _initialize() async {
     try {
       await _faceSDK.initialize();
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
       state = state.copyWith(isSdkInitialized: true);
 
       await _loadReferenceImage();
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
       state = state.copyWith(isLoading: false);
     } catch (e) {
       debugPrint('FaceVerificationViewModel: Initialization error - $e');
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Failed to initialize face verification',
@@ -68,7 +70,7 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
   Future<void> _loadReferenceImage() async {
     final uid = _uid;
     if (uid == null) {
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
       state = state.copyWith(errorMessage: 'User not authenticated');
       return;
     }
@@ -80,7 +82,7 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
         '/api/users/getUser',
         queryParameters: {'uid': uid},
       );
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
 
       final userData = userResponse.data as Map<String, dynamic>?;
       if (userData == null) {
@@ -107,7 +109,7 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
         imageUrl,
         options: Options(responseType: ResponseType.bytes),
       );
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
 
       if (response.statusCode == 200 && response.data != null) {
         state = state.copyWith(
@@ -121,7 +123,7 @@ class FaceVerificationViewModel extends _$FaceVerificationViewModel {
     } catch (e) {
       debugPrint(
           'FaceVerificationViewModel: Error loading reference image - $e');
-      if (!ref.exists(faceVerificationViewModelProvider)) return;
+      if (_disposed) return;
       state = state.copyWith(errorMessage: 'Failed to load profile photo: $e');
     }
   }
