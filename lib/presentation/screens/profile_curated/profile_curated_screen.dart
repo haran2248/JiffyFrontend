@@ -64,11 +64,14 @@ class ProfileCuratedScreen extends ConsumerWidget {
       bottomNavigationBar: state.hasData
           ? FinalizeProfileButton(
               onTap: () {
-                viewModel.onFinalizeProfile();
-                // Navigate to home screen after finalizing profile
+                if (!state.isIncomplete) {
+                  viewModel.onFinalizeProfile();
+                }
+                // Navigate to home screen
                 context.goToRoute(AppRoutes.home);
               },
               isLoading: state.isLoading,
+              label: state.isIncomplete ? "Continue to Home" : null,
             )
           : null,
     );
@@ -200,6 +203,58 @@ class ProfileCuratedScreen extends ConsumerWidget {
     final data = state.data;
     if (data == null) {
       return const SizedBox.shrink();
+    }
+
+    // Incomplete state — user skipped chat onboarding
+    if (state.isIncomplete) {
+      return SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Profile Header
+              CuratedProfileHeader(
+                name: data.name,
+                age: data.age,
+                subtitle: data.subtitle,
+                avatarUrl: data.avatarUrl,
+              ),
+              const SizedBox(height: 48),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 56,
+                      color: colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Your curated profile isn't ready yet",
+                      textAlign: TextAlign.center,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Complete the chat-based onboarding to let our AI build your personalized profile with traits, interests, and conversation style.",
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      );
     }
 
     return RefreshIndicator(
