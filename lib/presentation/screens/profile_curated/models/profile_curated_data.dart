@@ -23,6 +23,24 @@ class ProfileCuratedData {
     this.aboutMe,
   });
 
+  /// Creates a placeholder [ProfileCuratedData] for when the user has
+  /// skipped onboarding and no real curated profile data exists.
+  factory ProfileCuratedData.empty({
+    required String name,
+    required int age,
+    String? avatarUrl,
+  }) {
+    return ProfileCuratedData(
+      name: name,
+      age: age,
+      subtitle: "Complete the chat to see your curated profile.",
+      avatarUrl: avatarUrl,
+      personalityTraits: const [],
+      interests: const [],
+      conversationStyleDescription: "",
+    );
+  }
+
   /// Creates a copy with modified fields.
   ///
   /// For [avatarUrl], use a function to distinguish between "not provided"
