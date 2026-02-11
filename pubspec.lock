@@ -414,6 +414,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.2"
+  flutter_face_api:
+    dependency: "direct main"
+    description:
+      name: flutter_face_api
+      sha256: "9e2739efa07385edd6dacaeab7050074874f4f2b7e2cd752fb427d12eb9dfd80"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.4.875"
+  flutter_face_core_basic:
+    dependency: "direct main"
+    description:
+      name: flutter_face_core_basic
+      sha256: ed75e0907b02aa6c062f8f9c798a5e3ed36f4bf78cfbb10e5d03872755ec49f1
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.4.242"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -500,6 +516,10 @@ packages:
     dependency: "direct main"
     description:
       name: geolocator
+      sha256: f62bcd90459e63210bbf9c35deb6a51c521f992a78de19a1fe5c11704f9530e2
+      url: "https://pub.dev"
+    source: hosted
+    version: "13.0.4"
       sha256: "79939537046c9025be47ec645f35c8090ecadb6fe98eba146a0d25e8c1357516"
       url: "https://pub.dev"
     source: hosted
@@ -508,6 +528,10 @@ packages:
     dependency: transitive
     description:
       name: geolocator_android
+      sha256: fcb1760a50d7500deca37c9a666785c047139b5f9ee15aa5469fae7dbbe3170d
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.6.2"
       sha256: "179c3cb66dfa674fc9ccbf2be872a02658724d1c067634e2c427cf6df7df901a"
       url: "https://pub.dev"
     source: hosted

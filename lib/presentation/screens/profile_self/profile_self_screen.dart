@@ -9,6 +9,7 @@ import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_hea
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_about_me.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_verification_badge.dart";
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
 import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
 import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
@@ -33,22 +34,28 @@ class ProfileSelfScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false, // Remove default back button
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text(
-              "My Profile",
-              style: textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "My Profile",
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  "(Editable View)",
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ),
-            Text(
-              "(Editable View)",
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
+            const SizedBox(width: 8),
+            ProfileVerificationBadge(isVerified: state.isVerified),
           ],
         ),
         actions: [
@@ -204,6 +211,58 @@ class ProfileSelfScreen extends ConsumerWidget {
     }
   }
 
+  Widget _buildVerifyProfileButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.faceVerification),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.primary,
+                colorScheme.secondary,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.verified_user_outlined,
+                color: Colors.white,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                "Verify Your Profile",
+                style: textTheme.titleSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBody(
     BuildContext context,
     ProfileSelfState state,
@@ -294,6 +353,13 @@ class ProfileSelfScreen extends ConsumerWidget {
                 onEditPhoto: viewModel.onEditSecondaryPhoto,
                 onEditMainPhoto: viewModel.onEditMainPhoto,
               ),
+              const SizedBox(height: 16),
+              // Verify Profile button (if not verified)
+              if (!state.isVerified)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildVerifyProfileButton(context),
+                ),
               const SizedBox(height: 24),
               // Personality Traits section (from curated profile)
               if (data.personalityTraits.isNotEmpty)
