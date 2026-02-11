@@ -19,13 +19,11 @@ class PermissionsViewModel extends _$PermissionsViewModel {
     final locationStatus = await _permissionService.checkLocationStatus();
     final notificationStatus =
         await _permissionService.checkNotificationStatus();
-    final photoLibraryStatus =
-        await _permissionService.checkPhotoLibraryStatus();
+
     final cameraStatus = await _permissionService.checkCameraStatus();
     return PermissionsState(
       locationGranted: locationStatus,
       notificationsGranted: notificationStatus,
-      photoLibraryGranted: photoLibraryStatus,
       cameraGranted: cameraStatus,
     );
   }
@@ -33,6 +31,21 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   Future<void> requestLocation() async {
     final granted = await _permissionService.requestLocationPermission();
     debugPrint('Location permission status: ${granted ? 'Granted' : 'Denied'}');
+
+    // If permission granted, immediately update location on backend
+    if (granted) {
+      try {
+        final locationService = ref.read(locationServiceProvider);
+        debugPrint(
+            '[PermissionsViewModel] Forcing location update after permission grant');
+        await locationService.forceUpdateLocation();
+        debugPrint('[PermissionsViewModel] Location update complete');
+      } catch (e) {
+        debugPrint('[PermissionsViewModel] Error updating location: $e');
+        // Don't fail permission grant if location update fails
+      }
+    }
+
     final currentState = state.value ?? const PermissionsState();
     state = AsyncData(currentState.copyWith(locationGranted: granted));
   }
@@ -70,7 +83,8 @@ class PermissionsViewModel extends _$PermissionsViewModel {
 
   Future<void> requestPhotoLibrary() async {
     final granted = await _permissionService.requestPhotoLibraryPermission();
-    debugPrint('Photo library permission status: ${granted ? 'Granted (or Limited)' : 'Denied'}');
+    debugPrint(
+        'Photo library permission status: ${granted ? 'Granted (or Limited)' : 'Denied'}');
     final currentState = state.value ?? const PermissionsState();
     // Permission service already treats limited as granted
     state = AsyncData(currentState.copyWith(photoLibraryGranted: granted));

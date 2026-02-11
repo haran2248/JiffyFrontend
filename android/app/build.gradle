@@ -7,10 +7,11 @@ plugins {
 
 android {
     namespace = "com.jiffydating.app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "28.0.13004108"
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -22,19 +23,48 @@ android {
     defaultConfig {
         applicationId = "com.jiffydating.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        targetSdk = 35
+        versionCode = 41
+        versionName = "1.0.41"
+        multiDexEnabled true
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+
+    signingConfigs {
+        release {
+            def keyProperties = new Properties()
+            def keyFile = file('D:/Everything swish/SwishFrontend/SwishFrontend/key.properties')
+            if (keyFile.exists()) {
+                keyProperties.load(new FileInputStream(keyFile))
+                storeFile file(keyProperties['storeFile'])
+                storePassword keyProperties['storePassword']
+                keyAlias keyProperties['keyAlias']
+                keyPassword keyProperties['keyPassword']
+            } else {
+                throw new RuntimeException("No key properties file provided!")
+            }
+        }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
 

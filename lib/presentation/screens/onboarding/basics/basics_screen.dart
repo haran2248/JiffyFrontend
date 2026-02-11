@@ -66,31 +66,13 @@ class BasicsScreen extends ConsumerWidget {
                                 ),
                               );
                             } else if (imageFile == null && context.mounted) {
-                              // Check if this was a permission issue or user cancellation
-                              final permissionService =
-                                  ref.read(permissionServiceProvider);
-                              final hasPermission =
-                                  await permissionService
-                                      .checkPhotoLibraryStatus();
-                              
-                              if (!hasPermission) {
-                                // Permission denied - show guidance
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Photo access is required. Please enable it in Settings if needed.'),
-                                    duration: Duration(seconds: 4),
-                                  ),
-                                );
-                              } else {
-                                // User cancelled - show neutral message
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No photo selected'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
+                              // User cancelled
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No photo selected'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             }
                           } catch (e) {
                             if (context.mounted) {

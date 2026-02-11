@@ -8,7 +8,6 @@ import 'ai_chat_service.dart';
 import 'home_service.dart';
 import 'permission_service.dart';
 import 'notification_service.dart';
-import 'profile_service.dart';
 import 'photo_upload_service.dart';
 import 'location_service.dart';
 
