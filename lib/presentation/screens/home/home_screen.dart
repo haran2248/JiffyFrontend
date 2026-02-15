@@ -516,7 +516,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Check back in 48 hours for new profiles',
+                      'Check back in 48 hours for new profiles, Keep talking to Jiffy AI, to give you better matches',
                       style: textTheme.bodySmall?.copyWith(
                         color:
                             colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
