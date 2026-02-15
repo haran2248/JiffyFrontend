@@ -87,7 +87,6 @@ class PhoneVerificationViewModel extends _$PhoneVerificationViewModel {
             uid: uid,
           );
         } catch (e) {
-          // Ignore error since we are bypassing
           debugPrint(
               'PhoneVerificationViewModel: Ignored error updating phone number in bypass mode - $e');
         }

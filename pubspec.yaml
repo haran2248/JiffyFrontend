@@ -34,6 +34,8 @@ dependencies:
   shared_preferences: ^2.5.4
   json_annotation: ^4.9.0
   geolocator: ^13.0.2
+  flutter_face_api: ^6.4.875
+  flutter_face_core_basic: ^6.1.0
 
 dev_dependencies:
   flutter_test:

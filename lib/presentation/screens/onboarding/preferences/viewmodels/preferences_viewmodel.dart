@@ -25,7 +25,9 @@ class PreferencesViewModel extends _$PreferencesViewModel {
   }
 
   Future<bool> saveGenderPreferences() async {
-    if (state.selectedGender == null) return false;
+    if (state.selectedGender == null) {
+      return false;
+    }
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {

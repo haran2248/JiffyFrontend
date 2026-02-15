@@ -105,12 +105,11 @@ class PermissionsScreen extends ConsumerWidget {
                       loading: () => const PermissionsState(),
                       error: (_, __) => const PermissionsState(),
                     );
-                    
-                    // Block continue until all required permissions are granted
-                    // Location and notifications are required, photo library and camera are optional
-                    final canContinue = currentState.locationGranted && 
-                                       currentState.notificationsGranted;
-                    
+
+                    // Only location permission is required
+                    // Notifications and camera are optional
+                    final canContinue = currentState.locationGranted;
+
                     return Opacity(
                       opacity: canContinue ? 1.0 : 0.5,
                       child: AbsorbPointer(

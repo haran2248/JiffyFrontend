@@ -8,6 +8,7 @@ import "package:jiffy/core/auth/auth_repository.dart";
 import "package:dio/dio.dart";
 import "package:jiffy/core/services/photo_upload_service.dart";
 import "package:jiffy/core/services/service_providers.dart";
+import "package:jiffy/core/services/face_verification_service.dart";
 import "package:jiffy/core/network/dio_provider.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/profile_view_screen.dart";
@@ -44,6 +45,9 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       ref.read(photoUploadServiceProvider);
 
   Dio get _dio => ref.read(dioProvider);
+
+  FaceVerificationService get _faceVerificationService =>
+      ref.read(faceVerificationServiceProvider);
 
   /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
   int _calculateAge(String? dobString) {
@@ -216,8 +220,22 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         personalityTraits: curatedProfile?.personalityTraits ?? [],
       );
 
+      // Check verification status
+      bool isVerified = false;
+      try {
+        isVerified = await _faceVerificationService.isUserVerified(uid);
+        debugPrint("ProfileSelfViewModel: Verification status: $isVerified");
+      } catch (e) {
+        debugPrint(
+            "ProfileSelfViewModel: Error checking verification status: $e");
+      }
+
       if (!ref.mounted) return;
-      state = state.copyWith(data: profileData, isLoading: false);
+      state = state.copyWith(
+        data: profileData,
+        isLoading: false,
+        isVerified: isVerified,
+      );
     } catch (e) {
       debugPrint("ProfileSelfViewModel: Error loading profile - $e");
       if (!ref.mounted) return;

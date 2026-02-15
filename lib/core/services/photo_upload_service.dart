@@ -3,6 +3,8 @@ import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:image_picker/image_picker.dart";
 import "package:image_cropper/image_cropper.dart";
+import "package:path_provider/path_provider.dart";
+import "package:path/path.dart" as path;
 
 import "../config/image_size_config.dart";
 
@@ -50,7 +52,7 @@ class PhotoUploadService {
       debugPrint(
           "[PhotoUploadService] Image size: ${await File(pickedFile.path).length()} bytes");
 
-      // Step 3: Crop the image
+      // Step 2: Crop the image
       final croppedFile = await _cropImage(
         File(pickedFile.path),
         aspectRatio: aspectRatio,
@@ -68,7 +70,18 @@ class PhotoUploadService {
       debugPrint(
           "[PhotoUploadService] Cropped image size: ${await croppedFile.length()} bytes");
 
-      return croppedFile;
+      // Step 3: Copy to permanent storage to prevent Android/iOS cache cleanup
+      final permanentFile = await _copyToPermanentStorage(croppedFile);
+
+      if (permanentFile == null) {
+        debugPrint(
+            "[PhotoUploadService] Failed to copy to permanent storage, using original cropped file");
+        return croppedFile;
+      }
+
+      debugPrint(
+          "[PhotoUploadService] Image saved to permanent storage: ${permanentFile.path}");
+      return permanentFile;
     } catch (e, stackTrace) {
       debugPrint("[PhotoUploadService] Error during image pick/crop: $e");
       debugPrint("[PhotoUploadService] Stack trace: $stackTrace");
@@ -237,6 +250,32 @@ class PhotoUploadService {
       return (1, (1 / aspectRatio).round());
     } else {
       return (aspectRatio.round(), 1);
+    }
+  }
+
+  Future<File?> _copyToPermanentStorage(File tempFile) async {
+    try {
+      debugPrint("[PhotoUploadService] Copying file to permanent storage");
+      debugPrint("[PhotoUploadService] Source: ${tempFile.path}");
+
+      final directory = await getApplicationDocumentsDirectory();
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = path.extension(tempFile.path);
+      final fileName = 'profile_photo_$timestamp$extension';
+      final permanentPath = path.join(directory.path, fileName);
+
+      debugPrint("[PhotoUploadService] Destination: $permanentPath");
+
+      final permanentFile = await tempFile.copy(permanentPath);
+
+      debugPrint("[PhotoUploadService] File copied successfully");
+      return permanentFile;
+    } catch (e, stackTrace) {
+      debugPrint(
+          "[PhotoUploadService] Error copying file to permanent storage: $e");
+      debugPrint("[PhotoUploadService] Stack trace: $stackTrace");
+      return null;
     }
   }
 }
