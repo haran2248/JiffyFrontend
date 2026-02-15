@@ -60,12 +60,10 @@ class HomeScreen extends ConsumerWidget {
 
                         const SizedBox(height: 24),
 
-                        // Suggestions for the Day Section
-                        if (state.data!.suggestions.isNotEmpty)
-                          _buildSuggestionsSection(
-                            context,
-                            state.data!.suggestions,
-                          ),
+                        _buildSuggestionsSection(
+                          context,
+                          state.data!.suggestions,
+                        ),
 
                         const SizedBox(height: 24),
 
@@ -495,30 +493,66 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 340,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: suggestions.length,
-              itemBuilder: (context, index) {
-                return SuggestionCardWidget(
-                  suggestion: suggestions[index],
-                  onTap: () {
-                    final profile = ProfileHelpers.suggestionCardToProfileData(
-                      suggestions[index],
-                    );
-                    context.navigation.pushNamed(
-                      RouteNames.profileView,
-                      pathParameters: {
-                        RouteParams.userId: suggestions[index].userId,
-                      },
-                      extra: profile,
-                    );
-                  },
-                );
-              },
+          if (suggestions.isEmpty)
+            // Empty state
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.explore_outlined,
+                      size: 48,
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No suggestions available right now',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Check back in 48 hours for new profiles',
+                      style: textTheme.bodySmall?.copyWith(
+                        color:
+                            colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // Show suggestions list
+            SizedBox(
+              height: 340,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: suggestions.length,
+                itemBuilder: (context, index) {
+                  return SuggestionCardWidget(
+                    suggestion: suggestions[index],
+                    onTap: () {
+                      final profile =
+                          ProfileHelpers.suggestionCardToProfileData(
+                        suggestions[index],
+                      );
+                      context.navigation.pushNamed(
+                        RouteNames.profileView,
+                        pathParameters: {
+                          RouteParams.userId: suggestions[index].userId,
+                        },
+                        extra: profile,
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
