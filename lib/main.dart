@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
+import 'core/services/notification_service.dart';
 
 bool isFirebaseInitialized = false;
 
@@ -19,6 +21,11 @@ void main() async {
     );
     // We continue so the app still runs, but Firebase features will be disabled
     isFirebaseInitialized = false;
+  }
+
+  // Register FCM background message handler BEFORE runApp
+  if (isFirebaseInitialized) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   }
 
   runApp(const ProviderScope(child: JiffyApp()));
