@@ -148,7 +148,6 @@ class NotificationService {
           'fcmToken': token,
         },
       );
-
       // Save local state only after successful upload
       await prefs.setString(key, token);
       debugPrint('[FCM] Token uploaded and cached for uid=${user.uid}');
