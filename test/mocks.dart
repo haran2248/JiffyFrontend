@@ -36,11 +36,16 @@ class MockPermissionService implements PermissionService {
 
 class MockNotificationService implements NotificationService {
   @override
+  void Function(Map<String, dynamic> data)? onNotificationTap;
+
+  @override
   Future<void> initialize() async {}
   @override
   Future<String?> getToken() async => "mock-token";
   @override
-  Future<void> requestPermissions() async {}
+  Future<bool> requestPermissions() async => true;
   @override
   Future<void> uploadToken(String token) async {}
+  @override
+  Future<void> registerForPushNotifications() async {}
 }
