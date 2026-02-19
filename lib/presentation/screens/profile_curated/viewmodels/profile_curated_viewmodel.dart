@@ -71,6 +71,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
       String name = "You";
       int age = 0;
       String? avatarUrl;
+      String onboardingStatus = '';
 
       try {
         final userResponse = await _dio.get(
@@ -99,12 +100,35 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
                 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$firstImageId';
           }
 
+          // Read onboarding status
+          final onboardingStatusRaw = userData['onboardingStatus'];
+          onboardingStatus =
+              onboardingStatusRaw?.toString().toUpperCase() ?? '';
+
           debugPrint(
-              "ProfileCuratedViewModel: Loaded user - name: $name, age: $age, hasPhoto: ${avatarUrl != null}");
+              "ProfileCuratedViewModel: Loaded user - name: $name, age: $age, hasPhoto: ${avatarUrl != null}, onboardingStatus: $onboardingStatus");
         }
       } catch (e) {
         debugPrint("ProfileCuratedViewModel: Error fetching user data: $e");
         rethrow;
+      }
+
+      // If onboarding chat was not completed, show placeholder instead of
+      // generating from insufficient data.
+      if (onboardingStatus != 'COMPLETED') {
+        debugPrint(
+            "ProfileCuratedViewModel: Onboarding not completed (status: $onboardingStatus), showing placeholder");
+        if (!ref.mounted) return;
+        state = state.copyWith(
+          data: ProfileCuratedData.empty(
+            name: name,
+            age: age,
+            avatarUrl: avatarUrl,
+          ),
+          isLoading: false,
+          isIncomplete: true,
+        );
+        return;
       }
 
       // Try to get existing curated profile first

@@ -8,11 +8,13 @@ import "package:jiffy/presentation/widgets/button.dart";
 class FinalizeProfileButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isLoading;
+  final String? label;
 
   const FinalizeProfileButton({
     super.key,
     required this.onTap,
     this.isLoading = false,
+    this.label,
   });
 
   @override
@@ -32,7 +34,7 @@ class FinalizeProfileButton extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Button(
-          text: "Looks Good, Finalize Profile",
+          text: label ?? "Looks Good, Finalize Profile",
           onTap: onTap,
           type: ButtonType.primary,
           isLoading: isLoading,
