@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:jiffy/core/services/service_providers.dart';
 import 'package:jiffy/presentation/widgets/chat_bubble.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart';
 import 'viewmodels/chat_viewmodel.dart';
@@ -31,11 +33,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Mark messages as read when entering
+    // Mark messages as read and ping last-active when entering the chat.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel =
           ref.read(chatViewModelProvider(widget.otherUserId).notifier);
       viewModel.markAsRead();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        ref.read(homeServiceProvider).updateLastActive(uid);
+      }
 
       // If there is a prompt text, try to send it as a system message
       if (widget.promptText != null && widget.promptText!.isNotEmpty) {

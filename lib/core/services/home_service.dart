@@ -14,6 +14,10 @@ class HomeService {
   final AuthRepository _authRepository;
   final Dio _dio;
 
+  /// Minimum gap between successive [updateLastActive] calls.
+  static const _lastActiveDebounceDuration = Duration(minutes: 5);
+  DateTime? _lastActiveCalledAt;
+
   HomeService({
     required StoriesRepository storiesRepository,
     required MatchesRepository matchesRepository,
@@ -230,5 +234,28 @@ class HomeService {
 
   Future<HomeData> refreshHomeData() async {
     return fetchHomeData();
+  }
+
+  Future<void> updateLastActive(String uid) async {
+    if (uid.isEmpty) return;
+
+    final now = DateTime.now();
+    if (_lastActiveCalledAt != null &&
+        now.difference(_lastActiveCalledAt!) < _lastActiveDebounceDuration) {
+      debugPrint('HomeService: updateLastActive debounced for $uid');
+      return;
+    }
+
+    _lastActiveCalledAt = now;
+
+    try {
+      await _dio.post(
+        '/api/users/updateLastActive',
+        queryParameters: {'uid': uid},
+      );
+      debugPrint('HomeService: updateLastActive succeeded for $uid');
+    } catch (e) {
+      debugPrint('HomeService: updateLastActive failed silently: $e');
+    }
   }
 }
