@@ -8,10 +8,15 @@ class ProfileCuratedState {
   final bool isLoading;
   final String? error;
 
+  /// Whether the curated profile is incomplete because the user
+  /// skipped the chat-based onboarding.
+  final bool isIncomplete;
+
   const ProfileCuratedState({
     this.data,
     this.isLoading = false,
     this.error,
+    this.isIncomplete = false,
   });
 
   /// Creates a copy with modified fields.
@@ -21,11 +26,13 @@ class ProfileCuratedState {
     ProfileCuratedData? data,
     bool? isLoading,
     String? Function()? error,
+    bool? isIncomplete,
   }) {
     return ProfileCuratedState(
       data: data ?? this.data,
       isLoading: isLoading ?? this.isLoading,
       error: error != null ? error() : this.error,
+      isIncomplete: isIncomplete ?? this.isIncomplete,
     );
   }
 

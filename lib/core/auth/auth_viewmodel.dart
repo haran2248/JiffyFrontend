@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'auth_repository.dart'
     show AuthException, AuthRepository, authRepositoryProvider;
 import 'auth_state.dart';
+import '../services/service_providers.dart';
 
 part 'auth_viewmodel.g.dart';
 
@@ -82,6 +83,9 @@ class AuthViewModel extends _$AuthViewModel {
       // Verify token with backend
       await _verifyWithBackend(repository);
 
+      // Mark session start — fire-and-forget
+      _pingLastActive(user.uid);
+
       // Reset loading state - auth state listener will update status
       state = state.copyWith(isGoogleLoading: false);
 
@@ -116,6 +120,9 @@ class AuthViewModel extends _$AuthViewModel {
       // Verify token with backend
       await _verifyWithBackend(repository);
 
+      // Mark session start — fire-and-forget
+      _pingLastActive(user.uid);
+
       // Reset loading state - auth state listener will update status
       state = state.copyWith(isAppleLoading: false);
 
@@ -139,6 +146,11 @@ class AuthViewModel extends _$AuthViewModel {
       // Backend verification can be retried later
       debugPrint('Backend verification failed: $e');
     }
+  }
+
+  /// Fire-and-forget ping to update last active timestamp after login.
+  void _pingLastActive(String uid) {
+    ref.read(homeServiceProvider).updateLastActive(uid);
   }
 
   /// Sign out the current user.
