@@ -35,6 +35,8 @@ class HomeState {
 /// ViewModel for home screen
 @riverpod
 class HomeViewModel extends _$HomeViewModel {
+  bool _notificationsInitialized = false;
+
   @override
   HomeState build() {
     // Load data on initialization after build completes
@@ -260,6 +262,8 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// Setup notifications in the background
   void _setupNotifications() {
+    if (_notificationsInitialized) return;
+
     Future.microtask(() async {
       try {
         final authRepo = ref.read(authRepositoryProvider);
@@ -267,6 +271,7 @@ class HomeViewModel extends _$HomeViewModel {
           final notificationService = ref.read(notificationServiceProvider);
           await notificationService.initialize();
           await notificationService.registerForPushNotifications();
+          _notificationsInitialized = true;
         }
       } catch (e) {
         debugPrint("HomeViewModel: Error setting up notifications - $e");
