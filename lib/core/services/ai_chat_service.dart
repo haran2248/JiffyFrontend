@@ -13,7 +13,8 @@ class AiChatService {
   final Dio _dio;
 
   /// Base URL for the AI chat API
-  static const String _baseUrl = 'http://localhost:5003';
+  static const String _baseUrl =
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   AiChatService({required Dio dio}) : _dio = dio;
 
