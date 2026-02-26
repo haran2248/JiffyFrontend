@@ -271,7 +271,6 @@ class HomeViewModel extends _$HomeViewModel {
           final notificationService = ref.read(notificationServiceProvider);
           await notificationService.initialize();
           await notificationService.registerForPushNotifications();
-<<<<<<< HEAD
           _notificationsInitialized = true;
         }
       } catch (e) {
