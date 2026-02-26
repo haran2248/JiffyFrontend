@@ -50,6 +50,9 @@ class HomeViewModel extends _$HomeViewModel {
       // Update location periodically (if enough time has passed)
       _updateLocationInBackground();
 
+      // Setup notifications (sync token if needed)
+      _setupNotifications();
+
       final homeService = ref.read(homeServiceProvider);
       final authRepo = ref.read(authRepositoryProvider);
 
@@ -251,6 +254,22 @@ class HomeViewModel extends _$HomeViewModel {
         await locationService.updateLocationIfNeeded();
       } catch (e) {
         debugPrint("HomeViewModel: Error updating location - $e");
+      }
+    });
+  }
+
+  /// Setup notifications in the background
+  void _setupNotifications() {
+    Future.microtask(() async {
+      try {
+        final authRepo = ref.read(authRepositoryProvider);
+        if (authRepo.currentUser != null) {
+          final notificationService = ref.read(notificationServiceProvider);
+          await notificationService.initialize();
+          await notificationService.registerForPushNotifications();
+        }
+      } catch (e) {
+        debugPrint("HomeViewModel: Error setting up notifications - $e");
       }
     });
   }

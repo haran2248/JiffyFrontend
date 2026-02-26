@@ -151,6 +151,20 @@ class AuthViewModel extends _$AuthViewModel {
   /// Fire-and-forget ping to update last active timestamp after login.
   void _pingLastActive(String uid) {
     ref.read(homeServiceProvider).updateLastActive(uid);
+    _setupNotifications();
+  }
+
+  /// Setup notifications for the newly logged-in user
+  void _setupNotifications() {
+    Future.microtask(() async {
+      try {
+        final notificationService = ref.read(notificationServiceProvider);
+        await notificationService.initialize();
+        await notificationService.registerForPushNotifications();
+      } catch (e) {
+        debugPrint("AuthViewModel: Notification setup failed - $e");
+      }
+    });
   }
 
   /// Sign out the current user.

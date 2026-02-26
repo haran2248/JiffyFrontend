@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service for managing FCM push notifications.
 ///
@@ -129,6 +130,17 @@ class NotificationService {
         return;
       }
 
+      // OPTIMIZATION: Check if this token was already uploaded for this user
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'last_uploaded_fcm_token_${user.uid}';
+      final lastToken = prefs.getString(key);
+
+      if (lastToken == token) {
+        debugPrint('[FCM] Token already uploaded for user — skipping');
+        return;
+      }
+
+      debugPrint('[FCM] Uploading token to backend...');
       await _dio.post(
         '/api/user/device-token',
         queryParameters: {
@@ -136,7 +148,10 @@ class NotificationService {
           'fcmToken': token,
         },
       );
-      debugPrint('[FCM] Token uploaded for uid=${user.uid}');
+
+      // Save local state only after successful upload
+      await prefs.setString(key, token);
+      debugPrint('[FCM] Token uploaded and cached for uid=${user.uid}');
     } catch (e) {
       debugPrint('[FCM] Error uploading token: $e');
       // Don't rethrow — token upload failure shouldn't crash the app
