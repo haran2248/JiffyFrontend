@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
+import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'matches_repository.g.dart';
@@ -39,10 +39,52 @@ class MatchesRepository {
         final List<dynamic> data = response.data;
         return data.cast<Map<String, dynamic>>();
       } else {
-        throw Exception("Failed to fetch matches: ${response.statusCode}");
+        throw ApiError(
+          type: ApiErrorType.server,
+          message: "Failed to fetch matches: ${response.statusCode}",
+        );
       }
+    } on DioException catch (e) {
+      throw ApiError.fromDioException(e);
     } catch (e) {
-      throw Exception("Error fetching matches: $e");
+      throw ApiError(
+        type: ApiErrorType.unknown,
+        message: "Error fetching matches: $e",
+      );
+    }
+  }
+
+  Future<void> addMatch(String matchUid, {String? eventName}) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
+
+      final uid = user.uid;
+
+      final response = await _dio.post(
+        '/api/v1/match/addMatch',
+        queryParameters: {
+          'uid': uid,
+          'matchUid': matchUid,
+          if (eventName != null) 'eventName': eventName,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiError(
+          type: ApiErrorType.server,
+          message: "Failed to add match: ${response.statusCode}",
+        );
+      }
+    } on DioException catch (e) {
+      throw ApiError.fromDioException(e);
+    } catch (e) {
+      throw ApiError(
+        type: ApiErrorType.unknown,
+        message: "Error adding match: $e",
+      );
     }
   }
 }

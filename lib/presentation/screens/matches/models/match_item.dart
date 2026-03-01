@@ -37,6 +37,9 @@ class MatchItem {
   /// Whether there are unread messages
   final bool hasUnread;
 
+  /// Whether the current user has sent a message in this conversation
+  final bool currentUserHasSentMessage;
+
   /// Short bio or description
   final String? bio;
 
@@ -52,6 +55,7 @@ class MatchItem {
     this.compatibilityScore,
     this.matchedAt,
     this.hasUnread = false,
+    this.currentUserHasSentMessage = false,
     this.bio,
   });
 
@@ -68,6 +72,7 @@ class MatchItem {
     double? Function()? compatibilityScore,
     DateTime? Function()? matchedAt,
     bool? hasUnread,
+    bool? currentUserHasSentMessage,
     String? Function()? bio,
   }) {
     return MatchItem(
@@ -85,6 +90,8 @@ class MatchItem {
           : this.compatibilityScore,
       matchedAt: matchedAt != null ? matchedAt() : this.matchedAt,
       hasUnread: hasUnread ?? this.hasUnread,
+      currentUserHasSentMessage:
+          currentUserHasSentMessage ?? this.currentUserHasSentMessage,
       bio: bio != null ? bio() : this.bio,
     );
   }

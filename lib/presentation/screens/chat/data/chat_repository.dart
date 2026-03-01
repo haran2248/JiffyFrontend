@@ -37,6 +37,12 @@ class ChatRepository {
     return null;
   }
 
+  Future<bool> hasUserSentMessage(String otherUserId) async {
+    final currentUserId = _chatService.currentUserId;
+    if (currentUserId == null) return false;
+    return _chatService.hasUserSentMessage(currentUserId, otherUserId);
+  }
+
   Future<void> markAsRead(String otherUserId) async {
     return _chatService.markMessagesAsRead(otherUserId);
   }
