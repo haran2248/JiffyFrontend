@@ -13,11 +13,27 @@ import 'widgets/match_card_widget.dart';
 /// - Current Chats: Existing conversations
 /// - Matches: All matched users
 /// - Most Compatible: Sorted by compatibility score
-class MatchesScreen extends ConsumerWidget {
+class MatchesScreen extends ConsumerStatefulWidget {
   const MatchesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MatchesScreen> createState() => _MatchesScreenState();
+}
+
+class _MatchesScreenState extends ConsumerState<MatchesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(matchesViewModelProvider);
+      if (state.matches.isEmpty) {
+        ref.read(matchesViewModelProvider.notifier).loadMatches();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(matchesViewModelProvider);
     final viewModel = ref.read(matchesViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
