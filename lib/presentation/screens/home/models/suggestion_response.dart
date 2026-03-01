@@ -5,17 +5,17 @@ part 'suggestion_response.g.dart';
 
 @JsonSerializable()
 class SuggestionResponse {
-  final String id;
+  final String? id;
   final String userId;
-  final DateTime generatedAt;
-  final DateTime expiresAt;
+  final DateTime? generatedAt;
+  final DateTime? expiresAt;
   final List<SuggestionCandidate> candidates;
 
   SuggestionResponse({
-    required this.id,
+    this.id,
     required this.userId,
-    required this.generatedAt,
-    required this.expiresAt,
+    this.generatedAt,
+    this.expiresAt,
     required this.candidates,
   });
 
