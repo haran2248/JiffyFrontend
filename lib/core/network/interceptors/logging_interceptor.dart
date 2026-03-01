@@ -128,10 +128,6 @@ class LoggingInterceptor extends Interceptor {
   }
 
   void _logError(DioException err) {
-    if (_isIgnorableError(err)) {
-      return;
-    }
-
     final buffer = StringBuffer();
     buffer
         .writeln('┌─────────────────────────────────────────────────────────');
@@ -154,23 +150,6 @@ class LoggingInterceptor extends Interceptor {
     buffer
         .writeln('└─────────────────────────────────────────────────────────');
     debugPrint(buffer.toString());
-  }
-
-  /// Determines if an error should be ignored to prevent log spam for expected failures
-  bool _isIgnorableError(DioException err) {
-    // Ignore expected 400 error when sending a notification to a user without an FCM token
-    final path = err.requestOptions.path;
-    final statusCode = err.response?.statusCode;
-
-    if (statusCode == 400 && path.contains('/api/notification/send')) {
-      final data = err.response?.data;
-      if (data is Map &&
-          data['error']?.toString().contains('No FCM token') == true) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /// Redacts sensitive headers for security.

@@ -2,9 +2,6 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/core/services/profile_service.dart";
-import "package:jiffy/presentation/screens/chat/data/chat_repository.dart";
-import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
-import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
@@ -72,29 +69,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
 
       // If user sent a message, proceed with like
       if (result != null && result.isNotEmpty) {
-        try {
-          final matchesRepository = ref.read(matchesRepositoryProvider);
-          final chatRepository = ref.read(chatRepositoryProvider);
-
-          // First, register the match on the backend so it creates the EventChat
-          await matchesRepository.addMatch(widget.profile.userId);
-
-          // Then, send the actual message to Firestore
-          await chatRepository.sendMessage(widget.profile.userId, result);
-
-          ref.invalidate(matchesViewModelProvider);
-          _handleLike();
-        } catch (e) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  const Text('Failed to send spark message. Please try again.'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
+        // TODO: Send the spark message to backend
+        _handleLike();
       }
     } catch (e) {
       // Check if widget is still mounted before using context

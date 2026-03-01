@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import '../models/match_item.dart';
 import '../models/matches_filter.dart';
 
-import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
 import 'package:jiffy/presentation/screens/chat/models/chat_message.dart'; // Import ChatMessage
 import '../data/matches_repository.dart';
@@ -49,11 +47,11 @@ class MatchesState {
       // Apply filter
       switch (currentFilter) {
         case MatchesFilter.currentChats:
-          // Only matches with existing conversations WHERE the user has replied/started, plus Jiffy AI
-          return match.currentUserHasSentMessage || match.isJiffyAi;
+          // Only matches with existing conversations, plus Jiffy AI
+          return match.hasConversation || match.isJiffyAi;
         case MatchesFilter.waitingForYou:
-          // Matches WHERE current user hasn't sent a message (excluding Jiffy AI as it's a "chat")
-          return !match.currentUserHasSentMessage && !match.isJiffyAi;
+          // Matches WITHOUT conversations (excluding Jiffy AI as it's a "chat")
+          return !match.hasConversation && !match.isJiffyAi;
       }
     }).toList();
 
@@ -141,29 +139,17 @@ class MatchesViewModel extends _$MatchesViewModel {
         final String name = matchData['name'] ?? 'User';
         final String? imageUrl = _getImageUrl(matchData);
 
-        // Fetch last message and check if user has sent any message
+        // Fetch last message
         String? lastMessage;
         DateTime? lastMessageTime;
-        bool hasSentMessage = false;
 
         try {
-          final msgFuture = chatRepo.getLastMessage(uid);
-          final sentFuture = chatRepo.hasUserSentMessage(uid);
-
-          final results = await Future.wait([msgFuture, sentFuture]);
-          final ChatMessage? msg = results[0] as ChatMessage?;
-          hasSentMessage = results[1] as bool;
-
-          debugPrint(
-              'MatchesViewModel: getLastMessage for uid $uid returned: ${msg?.message}, hasSentMessage: $hasSentMessage');
+          final ChatMessage? msg = await chatRepo.getLastMessage(uid);
           if (msg != null) {
             lastMessage = msg.message;
             lastMessageTime = msg.timestamp;
           }
-        } catch (e) {
-          debugPrint('MatchesViewModel: Error fetching data for $uid: $e');
-          lastMessage = 'Dev Error: $e';
-        }
+        } catch (_) {}
 
         return MatchItem(
           id: uid,
@@ -175,7 +161,6 @@ class MatchesViewModel extends _$MatchesViewModel {
           compatibilityScore: 0.0,
           matchedAt: DateTime.now(), // Not available in basic endpoint
           hasUnread: false,
-          currentUserHasSentMessage: hasSentMessage,
         );
       });
 
@@ -209,7 +194,6 @@ class MatchesViewModel extends _$MatchesViewModel {
             compatibilityScore: 1.0,
             matchedAt: now.subtract(const Duration(days: 30)),
             hasUnread: false,
-            currentUserHasSentMessage: true,
             tags: [],
           ));
 
@@ -217,11 +201,6 @@ class MatchesViewModel extends _$MatchesViewModel {
         matches: matchItems,
         isLoading: false,
         error: () => null,
-      );
-    } on ApiError catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: () => e.message,
       );
     } catch (e) {
       state = state.copyWith(
