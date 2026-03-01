@@ -17,8 +17,11 @@ class SuggestionCandidate {
   final String? name;
   final dynamic age; // Could be String or int from backend
   final String? imageId;
+  @JsonKey(name: 'secondImageId')
   final String? imageId2;
+  @JsonKey(name: 'thirdImageId')
   final String? imageId3;
+  @JsonKey(name: 'fourthImageId')
   final String? imageId4;
 
   /// Presigned URL for the primary image.
@@ -27,16 +30,18 @@ class SuggestionCandidate {
   final List<String>? imageUrl;
 
   final double? distanceKm;
-  final int compatibilityScore;
-  final int distanceScore;
-  final int attractivenessScore;
-  final int finalScore;
+  final String? location;
+
+  final int? compatibilityScore;
+  final int? distanceScore;
+  final int? attractivenessScore;
+  final int? finalScore;
 
   @JsonKey(unknownEnumValue: BucketType.potential)
-  final BucketType bucket;
+  final BucketType? bucket;
 
-  final String matchReason;
-  final Map<String, dynamic> scoreBreakdown;
+  final String? matchReason;
+  final Map<String, dynamic>? scoreBreakdown;
 
   SuggestionCandidate({
     required this.candidateUserId,
@@ -48,13 +53,14 @@ class SuggestionCandidate {
     this.imageId4,
     this.imageUrl,
     this.distanceKm,
-    required this.compatibilityScore,
-    required this.distanceScore,
-    required this.attractivenessScore,
-    required this.finalScore,
-    required this.bucket,
-    required this.matchReason,
-    required this.scoreBreakdown,
+    this.location,
+    this.compatibilityScore,
+    this.distanceScore,
+    this.attractivenessScore,
+    this.finalScore,
+    this.bucket,
+    this.matchReason,
+    this.scoreBreakdown,
   });
 
   factory SuggestionCandidate.fromJson(Map<String, dynamic> json) =>
