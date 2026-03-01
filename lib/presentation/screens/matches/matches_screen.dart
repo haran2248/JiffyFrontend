@@ -13,11 +13,16 @@ import 'widgets/match_card_widget.dart';
 /// - Current Chats: Existing conversations
 /// - Matches: All matched users
 /// - Most Compatible: Sorted by compatibility score
-class MatchesScreen extends ConsumerWidget {
+class MatchesScreen extends ConsumerStatefulWidget {
   const MatchesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MatchesScreen> createState() => _MatchesScreenState();
+}
+
+class _MatchesScreenState extends ConsumerState<MatchesScreen> {
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(matchesViewModelProvider);
     final viewModel = ref.read(matchesViewModelProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
@@ -36,10 +41,7 @@ class MatchesScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.search,
-              color: colorScheme.onSurface,
-            ),
+            icon: Icon(Icons.search, color: colorScheme.onSurface),
             onPressed: () {
               // TODO: Implement search functionality
               _showSearchDialog(context, viewModel);
@@ -55,13 +57,12 @@ class MatchesScreen extends ConsumerWidget {
             onFilterChanged: viewModel.setFilter,
           ),
           // Matches list
-          Expanded(
-            child: _buildContent(context, state, viewModel),
-          ),
+          Expanded(child: _buildContent(context, state, viewModel)),
         ],
       ),
-      bottomNavigationBar:
-          const BottomNavigationBarWidget(currentRoute: AppRoutes.matches),
+      bottomNavigationBar: const BottomNavigationBarWidget(
+        currentRoute: AppRoutes.matches,
+      ),
     );
   }
 
@@ -74,9 +75,7 @@ class MatchesScreen extends ConsumerWidget {
 
     if (state.isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
-        ),
+        child: CircularProgressIndicator(color: colorScheme.primary),
       );
     }
 
@@ -85,11 +84,7 @@ class MatchesScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
               state.error!,
@@ -152,10 +147,7 @@ class MatchesScreen extends ConsumerWidget {
               context.pushNamed(
                 RouteNames.chat,
                 pathParameters: {'userId': match.id},
-                extra: {
-                  'name': match.name,
-                  'image': match.imageUrl,
-                },
+                extra: {'name': match.name, 'image': match.imageUrl},
               );
             },
           );

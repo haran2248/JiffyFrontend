@@ -2,6 +2,9 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/core/services/profile_service.dart";
+import "package:jiffy/presentation/screens/chat/data/chat_repository.dart";
+import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
+import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
@@ -31,6 +34,8 @@ class ProfileViewScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
+  bool _isSendingSpark = false;
+
   void _handleClose() {
     context.popRoute();
   }
@@ -49,10 +54,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
     try {
       // Fetch conversation starter data from backend
       final profileService = ref.read(profileServiceProvider);
-      final conversationData =
-          await profileService.fetchConversationStarterData(
-        widget.profile.userId,
-      );
+      final conversationData = await profileService
+          .fetchConversationStarterData(widget.profile.userId);
 
       // Check if widget is still mounted before using context
       if (!mounted) return;
@@ -69,8 +72,70 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
 
       // If user sent a message, proceed with like
       if (result != null && result.isNotEmpty) {
-        // TODO: Send the spark message to backend
-        _handleLike();
+        if (_isSendingSpark) return;
+        setState(() {
+          _isSendingSpark = true;
+        });
+
+        try {
+          final matchesRepository = ref.read(matchesRepositoryProvider);
+          final chatRepository = ref.read(chatRepositoryProvider);
+
+          try {
+            // First, register the match on the backend so it creates the EventChat
+            await matchesRepository.addMatch(widget.profile.userId);
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    const Text('Failed to create match. Please try again.'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            return;
+          }
+
+          try {
+            // Then, send the actual message to Firestore
+            await chatRepository.sendMessage(widget.profile.userId, result);
+          } catch (e) {
+            // Compensating rollback: if message failed, undo the match
+            bool rollbackSucceeded = false;
+            try {
+              await matchesRepository.removeMatch(widget.profile.userId);
+              rollbackSucceeded = true;
+            } catch (rollbackError) {
+              debugPrint('ProfileViewScreen: Rollback failed: $rollbackError');
+            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  rollbackSucceeded
+                      ? 'Message failed and match was removed. Please try again.'
+                      : 'Message failed and rollback failed; match may exist. Please try again.',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+            return;
+          }
+
+          // Invalidate matches view model to refresh data
+          ref.invalidate(matchesViewModelProvider);
+
+          // Trigger a like action if the message was sent successfully
+          if (mounted) _handleLike();
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isSendingSpark = false;
+            });
+          }
+        }
       }
     } catch (e) {
       // Check if widget is still mounted before using context
@@ -172,7 +237,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 24),
                             child: _ProfileInterestsSection(
-                                interests: widget.profile.interests),
+                              interests: widget.profile.interests,
+                            ),
                           ),
 
                         // 9. Conversation Starter
@@ -197,7 +263,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                 left: 0,
                 right: 0,
                 child: ProfileStickyActions(
-                  onSparkConversation: _handleSparkConversation,
+                  onSparkConversation:
+                      _isSendingSpark ? () {} : _handleSparkConversation,
                   onPass: _handlePass,
                 ),
               ),
@@ -230,9 +297,7 @@ class _ProfileInterestsSection extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,8 +325,10 @@ class _ProfileInterestsSection extends StatelessWidget {
             runSpacing: 8,
             children: interests.map((interest) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
