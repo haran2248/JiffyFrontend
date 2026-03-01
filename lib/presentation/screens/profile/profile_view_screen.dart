@@ -34,6 +34,8 @@ class ProfileViewScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
+  bool _isSendingSpark = false;
+
   void _handleClose() {
     context.popRoute();
   }
@@ -70,22 +72,34 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
 
       // If user sent a message, proceed with like
       if (result != null && result.isNotEmpty) {
+        if (_isSendingSpark) return;
+        setState(() {
+          _isSendingSpark = true;
+        });
+
         try {
           final matchesRepository = ref.read(matchesRepositoryProvider);
           final chatRepository = ref.read(chatRepositoryProvider);
 
-          // First, register the match on the backend so it creates the EventChat
-          await matchesRepository.addMatch(widget.profile.userId);
+          try {
+            // First, register the match on the backend so it creates the EventChat
+            await matchesRepository.addMatch(widget.profile.userId);
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    const Text('Failed to create match. Please try again.'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+            return;
+          }
 
           try {
             // Then, send the actual message to Firestore
             await chatRepository.sendMessage(widget.profile.userId, result);
-
-            // Invalidate matches view model to refresh data
-            ref.invalidate(matchesViewModelProvider);
-
-            // Trigger a like action if the message was sent successfully
-            if (mounted) _handleLike();
           } catch (e) {
             // Compensating rollback: if message failed, undo the match
             bool rollbackSucceeded = false;
@@ -107,16 +121,20 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                 duration: const Duration(seconds: 4),
               ),
             );
+            return;
           }
-        } catch (e) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to create match. Please try again.'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+
+          // Invalidate matches view model to refresh data
+          ref.invalidate(matchesViewModelProvider);
+
+          // Trigger a like action if the message was sent successfully
+          if (mounted) _handleLike();
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isSendingSpark = false;
+            });
+          }
         }
       }
     } catch (e) {
@@ -245,7 +263,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                 left: 0,
                 right: 0,
                 child: ProfileStickyActions(
-                  onSparkConversation: _handleSparkConversation,
+                  onSparkConversation:
+                      _isSendingSpark ? () {} : _handleSparkConversation,
                   onPass: _handlePass,
                 ),
               ),
