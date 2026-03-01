@@ -51,17 +51,18 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   }
 
   Future<void> requestNotifications() async {
+    bool granted = false;
     // Both permission_handler and firebase_messaging can request this.
     // We use NotificationService for FCM specific settings.
     try {
-      await _notificationService.requestPermissions();
+      granted = await _notificationService.requestPermissions();
     } catch (e) {
       debugPrint('Firebase Notification request failed: $e');
       // If Firebase fails, we fallback to native permission_handler to at least get the prompt
       await _permissionService.requestNotificationPermission();
+      granted = await _permissionService.checkNotificationStatus();
     }
 
-    final granted = await _permissionService.checkNotificationStatus();
     debugPrint(
         'Notification permission status: ${granted ? 'Granted' : 'Denied'}');
 

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -20,10 +22,43 @@
 	<string>3.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>3</string>
+	<key>GIDClientID</key>
+	<string>923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBonjourServices</key>
+	<array/>
+	<key>NSCameraUsageDescription</key>
+	<string>Jiffy needs access to your camera to let you take photos for your profile.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app uses the local network for debugging and development purposes.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Jiffy needs your location to show you matches nearby even when the app is in background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Jiffy needs your location to show you matches nearby and calculate distances.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Jiffy needs permission to save photos to your library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Jiffy needs access to your photos to let you upload profile pictures and images.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -41,38 +76,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>This app uses the local network for debugging and development purposes.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Jiffy needs your location to show you matches nearby and calculate distances.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Jiffy needs your location to show you matches nearby even when the app is in background.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Jiffy needs access to your photos to let you upload profile pictures and images.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Jiffy needs permission to save photos to your library.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Jiffy needs access to your camera to let you take photos for your profile.</string>
-	<key>NSBonjourServices</key>
-	<array>
-	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj</string>
-			</array>
-		</dict>
-	</array>
-	<key>GIDClientID</key>
-	<string>923840009509-le3i28tq77u9l2ud6u07i3cn2s3bfmvj.apps.googleusercontent.com</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>
-

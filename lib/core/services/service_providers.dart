@@ -33,7 +33,8 @@ PermissionService permissionService(Ref ref) {
 
 @riverpod
 NotificationService notificationService(Ref ref) {
-  return NotificationService();
+  final dio = ref.watch(dioProvider);
+  return NotificationService(dio: dio);
 }
 
 @riverpod

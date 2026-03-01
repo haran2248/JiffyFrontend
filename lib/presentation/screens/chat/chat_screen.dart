@@ -33,7 +33,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Mark messages as read and ping last-active when entering the chat.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel =
           ref.read(chatViewModelProvider(widget.otherUserId).notifier);
@@ -44,7 +43,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ref.read(homeServiceProvider).updateLastActive(uid);
       }
 
-      // If there is a prompt text, try to send it as a system message
       if (widget.promptText != null && widget.promptText!.isNotEmpty) {
         viewModel.checkAndSendPrompt(widget.promptText!);
       }

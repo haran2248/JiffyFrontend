@@ -1,4 +1,5 @@
 import 'package:jiffy/core/services/chat_service.dart';
+import 'package:jiffy/core/network/dio_provider.dart';
 import '../models/chat_message.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -43,5 +44,6 @@ class ChatRepository {
 
 @Riverpod(keepAlive: true)
 ChatRepository chatRepository(Ref ref) {
-  return ChatRepository(ChatService());
+  final dio = ref.watch(dioProvider);
+  return ChatRepository(ChatService(dio: dio));
 }

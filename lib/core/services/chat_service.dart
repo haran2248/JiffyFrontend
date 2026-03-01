@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Dio? _dio;
+
+  ChatService({Dio? dio}) : _dio = dio;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -37,9 +41,31 @@ class ChatService {
           .doc(chatroomID)
           .collection("messages")
           .add(newMessage);
+
+      // Fire-and-forget: notify the receiver via push notification
+      _sendChatNotification(receiverID, currentUserID, message);
     } catch (e) {
       debugPrint("Error sending message: $e");
       rethrow;
+    }
+  }
+
+  /// Send a push notification to the receiver about a new chat message.
+  /// Fire-and-forget — errors are logged but never thrown.
+  void _sendChatNotification(
+      String receiverID, String senderID, String message) async {
+    if (_dio == null) return;
+    try {
+      final truncated =
+          message.length > 100 ? '${message.substring(0, 100)}...' : message;
+      await _dio!.post('/api/notification/send', data: {
+        'targetUid': receiverID,
+        'title': 'New Message \uD83D\uDCAC',
+        'body': truncated,
+        'data': {'type': 'chat', 'senderUid': senderID},
+      });
+    } catch (e) {
+      debugPrint('[ChatService] Failed to send chat notification: $e');
     }
   }
 

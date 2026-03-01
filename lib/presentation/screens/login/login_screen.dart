@@ -13,8 +13,10 @@ import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/navigation_service.dart';
 import '../../../core/network/errors/api_error.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/phone_verification_service.dart';
 import '../../../core/services/profile_service.dart';
+import '../../../core/services/service_providers.dart';
 import 'widgets/login_branding_widget.dart';
 import 'widgets/login_error_message_widget.dart';
 import 'widgets/login_terms_text_widget.dart';
@@ -59,7 +61,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: User verified/created in backend');
       } catch (e) {
         debugPrint('LoginScreen: Backend verification failed: $e');
-        final apiError = (e is DioException) ? (e.error is ApiError ? e.error as ApiError : null) : null;
+        final apiError = (e is DioException)
+            ? (e.error is ApiError ? e.error as ApiError : null)
+            : null;
         if (apiError?.isAuthError == true) {
           // Only sign out on auth errors (invalid/expired session)
           debugPrint('LoginScreen: Signing out due to invalid session');
@@ -79,8 +83,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return false;
 
       if (step == null) {
-        // User is fully onboarded - go directly to home
+        // User is fully onboarded - initialize notifications then go to home
         debugPrint('LoginScreen: User fully onboarded, going to home');
+
+        // Initialize push notifications for returning users
+        // (fresh users get this during onboarding permissions screen)
+        try {
+          final notificationService = ref.read(notificationServiceProvider);
+          await notificationService.registerForPushNotifications();
+          await notificationService.initialize();
+          debugPrint('LoginScreen: Notification service initialized');
+        } catch (e) {
+          debugPrint('LoginScreen: Notification init failed (non-fatal): $e');
+        }
+
         context.goToRoute(AppRoutes.home);
         return true;
       }
@@ -106,15 +122,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: Basics done, needs chat onboarding');
         // Check if user has already started chat onboarding (CONTEXT_STORED or ANSWERS_STORED)
         // If so, skip intro and go directly to profile setup
-        final onboardingStatus = await profileService.getOnboardingStatus(userId);
+        final onboardingStatus =
+            await profileService.getOnboardingStatus(userId);
         final hasStartedChat = onboardingStatus == 'CONTEXT_STORED' ||
             onboardingStatus == 'ANSWERS_STORED';
-        
+
         if (hasStartedChat) {
-          debugPrint('LoginScreen: User has already started chat onboarding (status: $onboardingStatus), going directly to profile setup');
+          debugPrint(
+              'LoginScreen: User has already started chat onboarding (status: $onboardingStatus), going directly to profile setup');
           context.goToRoute(AppRoutes.onboardingProfileSetup);
         } else {
-          debugPrint('LoginScreen: User needs to see co-pilot intro first (status: $onboardingStatus)');
+          debugPrint(
+              'LoginScreen: User needs to see co-pilot intro first (status: $onboardingStatus)');
           context.goToRoute(AppRoutes.onboardingCoPilotIntro);
         }
       } else {
