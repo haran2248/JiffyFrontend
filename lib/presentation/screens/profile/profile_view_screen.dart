@@ -4,7 +4,6 @@ import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/core/services/profile_service.dart";
 import "package:jiffy/presentation/screens/chat/data/chat_repository.dart";
 import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
-import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
@@ -89,19 +88,23 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
             if (mounted) _handleLike();
           } catch (e) {
             // Compensating rollback: if message failed, undo the match
+            bool rollbackSucceeded = false;
             try {
               await matchesRepository.removeMatch(widget.profile.userId);
+              rollbackSucceeded = true;
             } catch (rollbackError) {
               debugPrint('ProfileViewScreen: Rollback failed: $rollbackError');
             }
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text(
-                  'Match created but message failed. Please try again.',
+                content: Text(
+                  rollbackSucceeded
+                      ? 'Message failed and match was removed. Please try again.'
+                      : 'Message failed and rollback failed; match may exist. Please try again.',
                 ),
                 backgroundColor: Theme.of(context).colorScheme.error,
-                duration: const Duration(seconds: 3),
+                duration: const Duration(seconds: 4),
               ),
             );
           }

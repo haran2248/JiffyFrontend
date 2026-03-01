@@ -47,6 +47,7 @@ class MatchesRepository {
     } on DioException catch (e) {
       throw ApiError.fromDioException(e);
     } catch (e) {
+      if (e is ApiError) rethrow;
       throw ApiError(
         type: ApiErrorType.unknown,
         message: "Error fetching matches: $e",
@@ -81,6 +82,7 @@ class MatchesRepository {
     } on DioException catch (e) {
       throw ApiError.fromDioException(e);
     } catch (e) {
+      if (e is ApiError) rethrow;
       throw ApiError(
         type: ApiErrorType.unknown,
         message: "Error adding match: $e",
@@ -114,6 +116,7 @@ class MatchesRepository {
     } on DioException catch (e) {
       throw ApiError.fromDioException(e);
     } catch (e) {
+      if (e is ApiError) rethrow;
       throw ApiError(
         type: ApiErrorType.unknown,
         message: "Error removing match: $e",
