@@ -22,17 +22,6 @@ class MatchesScreen extends ConsumerStatefulWidget {
 
 class _MatchesScreenState extends ConsumerState<MatchesScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(matchesViewModelProvider);
-      if (state.matches.isEmpty) {
-        ref.read(matchesViewModelProvider.notifier).loadMatches();
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final state = ref.watch(matchesViewModelProvider);
     final viewModel = ref.read(matchesViewModelProvider.notifier);
@@ -52,10 +41,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.search,
-              color: colorScheme.onSurface,
-            ),
+            icon: Icon(Icons.search, color: colorScheme.onSurface),
             onPressed: () {
               // TODO: Implement search functionality
               _showSearchDialog(context, viewModel);
@@ -71,13 +57,12 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
             onFilterChanged: viewModel.setFilter,
           ),
           // Matches list
-          Expanded(
-            child: _buildContent(context, state, viewModel),
-          ),
+          Expanded(child: _buildContent(context, state, viewModel)),
         ],
       ),
-      bottomNavigationBar:
-          const BottomNavigationBarWidget(currentRoute: AppRoutes.matches),
+      bottomNavigationBar: const BottomNavigationBarWidget(
+        currentRoute: AppRoutes.matches,
+      ),
     );
   }
 
@@ -90,9 +75,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
 
     if (state.isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
-        ),
+        child: CircularProgressIndicator(color: colorScheme.primary),
       );
     }
 
@@ -101,11 +84,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
             const SizedBox(height: 16),
             Text(
               state.error!,
@@ -168,10 +147,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
               context.pushNamed(
                 RouteNames.chat,
                 pathParameters: {'userId': match.id},
-                extra: {
-                  'name': match.name,
-                  'image': match.imageUrl,
-                },
+                extra: {'name': match.name, 'image': match.imageUrl},
               );
             },
           );

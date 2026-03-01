@@ -36,7 +36,8 @@ class ChatService {
       ids.sort();
       String chatroomID = ids.join("_");
       debugPrint(
-          "ChatService SEND MESSAGE: current=$currentUserID, receiver=$receiverID -> chatroomID=$chatroomID");
+        "ChatService SEND MESSAGE: current=$currentUserID, receiver=$receiverID -> chatroomID=$chatroomID",
+      );
 
       // Add to Firestore
       await _firestore
@@ -56,36 +57,49 @@ class ChatService {
   /// Send a push notification to the receiver about a new chat message.
   /// Fire-and-forget — errors are logged but never thrown.
   void _sendChatNotification(
-      String receiverID, String senderID, String message) async {
+    String receiverID,
+    String senderID,
+    String message,
+  ) async {
     if (_dio == null) return;
     try {
-      final truncated =
-          message.length > 100 ? '${message.substring(0, 100)}...' : message;
-      await _dio!.post('/api/notification/send', data: {
-        'targetUid': receiverID,
-        'title': 'New Message \uD83D\uDCAC',
-        'body': truncated,
-        'data': {'type': 'chat', 'senderUid': senderID},
-      });
+      final truncated = message.length > 100
+          ? '${message.substring(0, 100)}...'
+          : message;
+      await _dio!.post(
+        '/api/notification/send',
+        data: {
+          'targetUid': receiverID,
+          'title': 'New Message \uD83D\uDCAC',
+          'body': truncated,
+          'data': {'type': 'chat', 'senderUid': senderID},
+        },
+      );
     } on DioException catch (e) {
-      if (e.error is ApiError) {
-        final apiError = e.error as ApiError;
-        // Ignore expected error when user hasn't enabled notifications yet
-        if (apiError.statusCode == 400 &&
-            apiError.message.contains('No FCM token')) {
+      final response = e.response;
+      if (response != null && response.statusCode == 400) {
+        final data = response.data;
+        if (data != null && data.toString().contains('No FCM token')) {
+          // Ignore expected error when user hasn't enabled notifications yet
           return;
         }
       }
-      debugPrint('[ChatService] Failed to send chat notification: $e');
+      debugPrint(
+        '[ChatService] Failed to send chat notification: ${e.message}',
+      );
     } catch (e) {
       debugPrint(
-          '[ChatService] Failed to send chat notification (unknown error): $e');
+        '[ChatService] Failed to send chat notification (unknown error): $e',
+      );
     }
   }
 
   // Send a system message (or bot message) with arbitrary sender ID
   Future<void> sendSystemMessage(
-      String receiverID, String message, String senderID) async {
+    String receiverID,
+    String message,
+    String senderID,
+  ) async {
     try {
       final Timestamp timestamp = Timestamp.now();
 
@@ -126,7 +140,8 @@ class ChatService {
     ids.sort();
     String chatroomID = ids.join("_");
     debugPrint(
-        "ChatService GET MESSAGES STREAM: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID");
+      "ChatService GET MESSAGES STREAM: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
+    );
 
     return _firestore
         .collection("chat_rooms")
@@ -138,12 +153,15 @@ class ChatService {
 
   // Get last message
   Future<Map<String, dynamic>?> getLastMessage(
-      String currentUserID, String otherUserID) async {
+    String currentUserID,
+    String otherUserID,
+  ) async {
     List<String> ids = [currentUserID, otherUserID];
     ids.sort();
     String chatroomID = ids.join("_");
     debugPrint(
-        "ChatService GET LAST MESSAGE: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID");
+      "ChatService GET LAST MESSAGE: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
+    );
 
     try {
       final snapshot = await _firestore
@@ -167,12 +185,15 @@ class ChatService {
 
   // Check if current user has sent any message to this chat room
   Future<bool> hasUserSentMessage(
-      String currentUserID, String otherUserID) async {
+    String currentUserID,
+    String otherUserID,
+  ) async {
     List<String> ids = [currentUserID, otherUserID];
     ids.sort();
     String chatroomID = ids.join("_");
     debugPrint(
-        "ChatService HAS USER SENT MSG: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID");
+      "ChatService HAS USER SENT MSG: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
+    );
 
     try {
       final snapshot = await _firestore

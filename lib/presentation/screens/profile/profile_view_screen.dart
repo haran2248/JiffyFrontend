@@ -4,6 +4,7 @@ import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/core/services/profile_service.dart";
 import "package:jiffy/presentation/screens/chat/data/chat_repository.dart";
 import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
+import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
@@ -52,10 +53,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
     try {
       // Fetch conversation starter data from backend
       final profileService = ref.read(profileServiceProvider);
-      final conversationData =
-          await profileService.fetchConversationStarterData(
-        widget.profile.userId,
-      );
+      final conversationData = await profileService
+          .fetchConversationStarterData(widget.profile.userId);
 
       // Check if widget is still mounted before using context
       if (!mounted) return;
@@ -79,17 +78,38 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
           // First, register the match on the backend so it creates the EventChat
           await matchesRepository.addMatch(widget.profile.userId);
 
-          // Then, send the actual message to Firestore
-          await chatRepository.sendMessage(widget.profile.userId, result);
+          try {
+            // Then, send the actual message to Firestore
+            await chatRepository.sendMessage(widget.profile.userId, result);
 
-          ref.invalidate(matchesViewModelProvider);
-          _handleLike();
+            // Invalidate matches view model to refresh data
+            ref.invalidate(matchesViewModelProvider);
+
+            // Trigger a like action if the message was sent successfully
+            if (mounted) _handleLike();
+          } catch (e) {
+            // Compensating rollback: if message failed, undo the match
+            try {
+              await matchesRepository.removeMatch(widget.profile.userId);
+            } catch (rollbackError) {
+              debugPrint('ProfileViewScreen: Rollback failed: $rollbackError');
+            }
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Match created but message failed. Please try again.',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         } catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  const Text('Failed to send spark message. Please try again.'),
+              content: const Text('Failed to create match. Please try again.'),
               backgroundColor: Theme.of(context).colorScheme.error,
               duration: const Duration(seconds: 3),
             ),
@@ -196,7 +216,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 24),
                             child: _ProfileInterestsSection(
-                                interests: widget.profile.interests),
+                              interests: widget.profile.interests,
+                            ),
                           ),
 
                         // 9. Conversation Starter
@@ -254,9 +275,7 @@ class _ProfileInterestsSection extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,8 +303,10 @@ class _ProfileInterestsSection extends StatelessWidget {
             runSpacing: 8,
             children: interests.map((interest) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),

@@ -87,4 +87,37 @@ class MatchesRepository {
       );
     }
   }
+
+  Future<void> removeMatch(String matchUid) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
+
+      final uid = user.uid;
+
+      final response = await _dio.post(
+        '/api/users/removeMatch',
+        queryParameters: {
+          'uid': uid,
+          'matchedUid': matchUid,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiError(
+          type: ApiErrorType.server,
+          message: "Failed to remove match: ${response.statusCode}",
+        );
+      }
+    } on DioException catch (e) {
+      throw ApiError.fromDioException(e);
+    } catch (e) {
+      throw ApiError(
+        type: ApiErrorType.unknown,
+        message: "Error removing match: $e",
+      );
+    }
+  }
 }
