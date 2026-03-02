@@ -72,6 +72,32 @@ class HomeService {
         return [];
       }
 
+      // Fetch current user's profile photo for the "Your Story" avatar
+      String? currentUserImageUrl;
+      try {
+        final userResp = await _dio.get(
+          '/api/users/getUser',
+          queryParameters: {'uid': user.uid},
+        );
+        final userData = userResp.data as Map<String, dynamic>?;
+        if (userData != null) {
+          // Prefer firstImageId, fallback to first entry in imageIds list
+          final firstImageId = userData['firstImageId'] as String?;
+          final imageIds = userData['imageIds'] as List?;
+          final imageId = (firstImageId != null && firstImageId.isNotEmpty)
+              ? firstImageId
+              : (imageIds != null && imageIds.isNotEmpty)
+                  ? imageIds[0]?.toString()
+                  : null;
+          if (imageId != null && imageId.isNotEmpty) {
+            currentUserImageUrl =
+                'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId';
+          }
+        }
+      } catch (e) {
+        debugPrint('HomeService: Could not fetch user profile image: $e');
+      }
+
       // Fetch stories from matched users
       final storiesJson = await _storiesRepository.fetchStories();
       debugPrint('HomeService: Fetched ${storiesJson.length} stories from API');
@@ -83,6 +109,7 @@ class HomeService {
             id: 'user-story',
             userId: user.uid,
             name: 'Your Story',
+            imageUrl: currentUserImageUrl,
             isUserStory: true,
           ),
         ];
@@ -138,6 +165,7 @@ class HomeService {
           id: 'user-story',
           userId: user.uid,
           name: 'Your Story',
+          imageUrl: currentUserImageUrl,
           isUserStory: true,
         ),
       ];
@@ -187,7 +215,7 @@ class HomeService {
             id: 'user-story',
             userId: user.uid,
             name: 'Your Story',
-            isUserStory: true,
+            isUserStory: true, // imageUrl not available in error fallback
           ),
         ];
       }

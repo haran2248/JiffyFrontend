@@ -92,12 +92,17 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
           final dobString = basicDetails?['birthDate'] as String?;
           age = _calculateAge(dobString);
 
-          // Get first photo URL from imageIds
+          // Get first photo — prefer explicit firstImageId field, fall back to imageIds list
+          final firstImageId = userData['firstImageId'] as String?;
           final imageIds = userData['imageIds'] as List<dynamic>?;
-          if (imageIds != null && imageIds.isNotEmpty) {
-            final firstImageId = imageIds[0] as String;
+          final imageId = (firstImageId != null && firstImageId.isNotEmpty)
+              ? firstImageId
+              : (imageIds != null && imageIds.isNotEmpty)
+                  ? imageIds[0] as String?
+                  : null;
+          if (imageId != null && imageId.isNotEmpty) {
             avatarUrl =
-                'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$firstImageId';
+                'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId';
           }
 
           // Read onboarding status
