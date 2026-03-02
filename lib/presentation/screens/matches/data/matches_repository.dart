@@ -66,7 +66,7 @@ class MatchesRepository {
 
       final response = await _dio.post(
         '/api/v1/match/addMatch',
-        data: {
+        queryParameters: {
           'uid': uid,
           'matchUid': matchUid,
           if (eventName != null) 'eventName': eventName,
