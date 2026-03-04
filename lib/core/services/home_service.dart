@@ -111,6 +111,7 @@ class HomeService {
             name: 'Your Story',
             imageUrl: currentUserImageUrl,
             isUserStory: true,
+            hasActiveStory: false,
           ),
         ];
       }
@@ -158,6 +159,11 @@ class HomeService {
         }
       }
 
+      // Check if the current user has an active story in the feed
+      final currentUserHasStory = storiesJson.any(
+        (s) => (s['userId'] as String?) == user.uid,
+      );
+
       // Convert to StoryItem objects
       final storyItems = <StoryItem>[
         // User's own story at the beginning
@@ -167,6 +173,7 @@ class HomeService {
           name: 'Your Story',
           imageUrl: currentUserImageUrl,
           isUserStory: true,
+          hasActiveStory: currentUserHasStory,
         ),
       ];
 

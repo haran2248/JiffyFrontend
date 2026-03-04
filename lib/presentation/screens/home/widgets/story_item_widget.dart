@@ -19,13 +19,13 @@ class StoryItemWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Instagram-style gradient for unread stories
+    // Pure red gradient for story rings
     const storyGradient = LinearGradient(
       colors: [
-        Color(0xFFF58529), // orange
-        Color(0xFFDD2A7B), // pink
-        Color(0xFF8134AF), // purple
-        Color(0xFF515BD4), // blue
+        Color(0xFFB71C1C), // deep crimson
+        Color(0xFFE53935), // bright red
+        Color(0xFFFF5252), // vivid red
+        Color(0xFFFF1744), // electric red
       ],
       begin: Alignment.bottomLeft,
       end: Alignment.topRight,
@@ -58,7 +58,9 @@ class StoryItemWidget extends StatelessWidget {
                   height: 66,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: isOwn ? seenGradient : storyGradient,
+                    gradient: (isOwn && story.hasActiveStory != true)
+                        ? seenGradient
+                        : storyGradient,
                   ),
                 ),
 
@@ -139,21 +141,56 @@ class StoryItemWidget extends StatelessWidget {
             // ── Label ──────────────────────────────────────────
             SizedBox(
               width: 68,
-              child: Text(
-                story.name ?? '',
-                style: textTheme.bodySmall?.copyWith(
-                  fontSize: isOwn ? 10 : 11,
-                  fontWeight: isOwn ? FontWeight.w600 : FontWeight.w400,
-                  color: colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: _buildLabel(
+                context,
+                isOwn: isOwn,
+                hasActiveStory: story.hasActiveStory == true,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildLabel(
+    BuildContext context, {
+    required bool isOwn,
+    required bool hasActiveStory,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final text = Text(
+      story.name ?? '',
+      style: textTheme.bodySmall?.copyWith(
+        fontSize: isOwn ? 10 : 11,
+        fontWeight: isOwn ? FontWeight.w600 : FontWeight.w400,
+        // White so ShaderMask blends through; plain colour otherwise
+        color: (isOwn && hasActiveStory) ? Colors.white : colorScheme.onSurface,
+      ),
+      textAlign: TextAlign.center,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+
+    if (isOwn && hasActiveStory) {
+      return ShaderMask(
+        blendMode: BlendMode.srcIn,
+        shaderCallback: (bounds) => const LinearGradient(
+          colors: [
+            Color(0xFFB71C1C), // deep crimson
+            Color(0xFFE53935), // bright red
+            Color(0xFFFF5252), // vivid red
+            Color(0xFFFF1744), // electric red
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ).createShader(bounds),
+        child: text,
+      );
+    }
+
+    return text;
   }
 }

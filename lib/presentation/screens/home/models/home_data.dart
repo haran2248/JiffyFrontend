@@ -10,6 +10,7 @@ class StoryItem {
   final String? name;
   final String? imageUrl;
   final bool isUserStory; // If true, shows "Your Story" with + icon
+  final bool hasActiveStory; // True when the user has actually uploaded a story
   final StoryType? storyType; // Type of story (dating, regular, etc.)
   final DateTime? createdAt;
 
@@ -19,6 +20,7 @@ class StoryItem {
     this.name,
     this.imageUrl,
     this.isUserStory = false,
+    this.hasActiveStory = false,
     this.storyType,
     this.createdAt,
   });

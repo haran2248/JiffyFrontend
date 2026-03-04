@@ -438,21 +438,12 @@ class _StoryContentPageState extends State<_StoryContentPage> {
             : Image.network(
                 content.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        color: Colors.white,
-                        size: 48,
-                      ),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) {
-                    // Image has finished loading - call callback once
+                // frameBuilder fires when the first frame is actually painted —
+                // this is the correct moment to start the timer.
+                frameBuilder:
+                    (context, child, frame, wasSynchronouslyLoaded) {
+                  if (frame != null || wasSynchronouslyLoaded) {
+                    // Image is painted — signal the timer to start
                     if (!_hasCalledImageLoaded &&
                         widget.onImageLoaded != null) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -464,14 +455,34 @@ class _StoryContentPageState extends State<_StoryContentPage> {
                     }
                     return child;
                   }
+                  // Still loading — show spinner
                   return Container(
                     color: Colors.grey[900],
-                    child: Center(
+                    child: const Center(
                       child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  // On error, still unblock the timer so the story progresses
+                  if (!_hasCalledImageLoaded && widget.onImageLoaded != null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && !_hasCalledImageLoaded) {
+                        _hasCalledImageLoaded = true;
+                        widget.onImageLoaded?.call();
+                      }
+                    });
+                  }
+                  return Container(
+                    color: Colors.grey[900],
+                    child: const Center(
+                      child: Icon(
+                        Icons.error_outline,
+                        color: Colors.white,
+                        size: 48,
                       ),
                     ),
                   );
