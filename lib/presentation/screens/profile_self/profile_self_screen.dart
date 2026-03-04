@@ -59,6 +59,15 @@ class ProfileSelfScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Rewards & Referrals
+          IconButton(
+            icon: Icon(
+              Icons.redeem_rounded,
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            tooltip: 'Rewards & Referrals',
+            onPressed: () => context.push(AppRoutes.rewards),
+          ),
           // Action menu with Logout and Delete Account
           PopupMenuButton<String>(
             icon: Icon(
