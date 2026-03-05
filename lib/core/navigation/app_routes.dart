@@ -31,6 +31,7 @@ class AppRoutes {
   static const String chat = '/chat/:userId';
   static const String storyViewer = '/stories/viewer';
   static const String storyCreation = '/stories/create';
+  static const String rewards = '/rewards';
   // static const String settings = '/settings';
 
   // Utility/debug screens
@@ -58,6 +59,7 @@ class RouteNames {
   static const String matches = 'matches';
   static const String storyViewer = 'story-viewer';
   static const String storyCreation = 'story-creation';
+  static const String rewards = 'rewards';
   static const String designSystem = 'design-system';
 }
 

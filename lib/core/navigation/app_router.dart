@@ -23,6 +23,7 @@ import 'package:jiffy/presentation/screens/phone_verification_ui/otp_verificatio
 import 'package:jiffy/presentation/screens/matches/matches_screen.dart';
 import 'package:jiffy/presentation/screens/stories/story_viewer_screen.dart';
 import 'package:jiffy/presentation/screens/stories/story_creation_screen.dart';
+import 'package:jiffy/presentation/screens/rewards/rewards_screen.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import '../auth/auth_viewmodel.dart';
 import '../auth/auth_state.dart';
@@ -395,6 +396,17 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const StoryCreationScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.rewards,
+        name: RouteNames.rewards,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const RewardsScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
