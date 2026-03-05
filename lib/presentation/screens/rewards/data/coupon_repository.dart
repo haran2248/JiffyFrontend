@@ -60,14 +60,13 @@ class CouponRepository {
     final response = await _dio.post(
       '/api/coupons/referral-code',
       queryParameters: {'userId': userId},
+      options: Options(responseType: ResponseType.plain),
     );
-    // Response body is the code string or a JSON object containing it
+    // Server returns the code as plain text
     final data = response.data;
-    if (data is String) return data;
+    if (data is String) return data.trim();
     if (data is Map) {
-      return data['referralCode']?.toString() ??
-          data['code']?.toString() ??
-          '';
+      return data['referralCode']?.toString() ?? data['code']?.toString() ?? '';
     }
     return '';
   }
@@ -79,9 +78,7 @@ class CouponRepository {
       queryParameters: {'userId': userId},
     );
     final list = response.data as List<dynamic>? ?? [];
-    return list
-        .map((e) => Coupon.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Coupon.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   /// POST /api/coupons/activate-referral?referralCode=&newUserId=

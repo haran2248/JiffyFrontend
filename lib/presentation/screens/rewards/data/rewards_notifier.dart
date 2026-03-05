@@ -10,7 +10,7 @@ class RewardsState {
   final String? error;
   final List<Coupon> coupons;
   final String? referralCode;
-  final bool isRedeeming;
+  final String? redeemingCouponId;
   final String? redeemError;
   final String? redeemSuccess;
 
@@ -19,23 +19,25 @@ class RewardsState {
     this.error,
     this.coupons = const [],
     this.referralCode,
-    this.isRedeeming = false,
+    this.redeemingCouponId,
     this.redeemError,
     this.redeemSuccess,
   });
 
   List<Coupon> get availableCoupons =>
-      coupons.where((c) => c.isAvailable).toList();
+      coupons.where((c) => c.isAvailable || c.isLocked).toList();
 
   List<Coupon> get expiredOrUsedCoupons =>
       coupons.where((c) => c.isExpiredOrUsed).toList();
+
+  bool isRedeemingCoupon(String couponId) => redeemingCouponId == couponId;
 
   RewardsState copyWith({
     bool? isLoading,
     String? Function()? error,
     List<Coupon>? coupons,
     String? Function()? referralCode,
-    bool? isRedeeming,
+    String? Function()? redeemingCouponId,
     String? Function()? redeemError,
     String? Function()? redeemSuccess,
   }) {
@@ -44,7 +46,9 @@ class RewardsState {
       error: error != null ? error() : this.error,
       coupons: coupons ?? this.coupons,
       referralCode: referralCode != null ? referralCode() : this.referralCode,
-      isRedeeming: isRedeeming ?? this.isRedeeming,
+      redeemingCouponId: redeemingCouponId != null
+          ? redeemingCouponId()
+          : this.redeemingCouponId,
       redeemError: redeemError != null ? redeemError() : this.redeemError,
       redeemSuccess:
           redeemSuccess != null ? redeemSuccess() : this.redeemSuccess,
@@ -53,12 +57,17 @@ class RewardsState {
 }
 
 /// Notifier for the Rewards screen.
-class RewardsNotifier extends StateNotifier<RewardsState> {
-  final CouponRepository _repo;
-  final AuthRepository _auth;
+class RewardsNotifier extends Notifier<RewardsState> {
+  late final CouponRepository _repo;
+  late final AuthRepository _auth;
 
-  RewardsNotifier(this._repo, this._auth) : super(const RewardsState()) {
-    load();
+  @override
+  RewardsState build() {
+    _repo = ref.read(couponRepositoryProvider);
+    _auth = ref.read(authRepositoryProvider);
+    // Trigger initial load after build
+    Future.microtask(load);
+    return const RewardsState();
   }
 
   String? get _uid => _auth.currentUser?.uid;
@@ -70,20 +79,24 @@ class RewardsNotifier extends StateNotifier<RewardsState> {
     state = state.copyWith(isLoading: true, error: () => null);
 
     try {
-      final results = await Future.wait([
-        _repo.fetchCoupons(uid),
-        _repo.getOrCreateReferralCode(uid),
-      ]);
+      // Fetch coupons — this is the critical call; failure shows an error.
+      final coupons = await _repo.fetchCoupons(uid);
 
-      if (!mounted) return;
+      // Fetch referral code independently — failure is non-fatal.
+      String? referralCode;
+      try {
+        referralCode = await _repo.getOrCreateReferralCode(uid);
+      } catch (e) {
+        debugPrint('RewardsNotifier.load referral code error (non-fatal): $e');
+      }
+
       state = state.copyWith(
         isLoading: false,
-        coupons: results[0] as List<Coupon>,
-        referralCode: () => results[1] as String,
+        coupons: coupons,
+        referralCode: () => referralCode,
       );
     } catch (e) {
       debugPrint('RewardsNotifier.load error: $e');
-      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         error: () => 'Could not load rewards. Please try again.',
@@ -95,35 +108,61 @@ class RewardsNotifier extends StateNotifier<RewardsState> {
     final uid = _uid;
     if (uid == null) return;
 
+    // Optimistically flip this coupon to 'used' immediately so the UI
+    // responds without waiting for the network round-trip.
+    final optimisticCoupons = state.coupons.map((c) {
+      if (c.id == coupon.id) {
+        return Coupon(
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          category: c.category,
+          redemptionCode: c.redemptionCode,
+          discountValue: c.discountValue,
+          discountType: c.discountType,
+          status: CouponStatus.used,
+          genderTarget: c.genderTarget,
+          requiresReferral: c.requiresReferral,
+          referralCode: c.referralCode,
+          validUntil: c.validUntil,
+          redeemedAt: DateTime.now(),
+        );
+      }
+      return c;
+    }).toList();
+
     state = state.copyWith(
-      isRedeeming: true,
+      redeemingCouponId: () => coupon.id,
+      coupons: optimisticCoupons,
       redeemError: () => null,
       redeemSuccess: () => null,
     );
 
     try {
       await _repo.redeemCoupon(couponId: coupon.id, userId: uid);
-      if (!mounted) return;
-      // Reload coupons to reflect updated status
+      // Confirm with the real server state
       final updated = await _repo.fetchCoupons(uid);
-      if (!mounted) return;
       state = state.copyWith(
-        isRedeeming: false,
+        redeemingCouponId: () => null,
         coupons: updated,
         redeemSuccess: () => '"${coupon.title}" redeemed! '
             'Use code ${coupon.redemptionCode} at checkout.',
       );
     } on CouponAlreadyRedeemedException {
-      if (!mounted) return;
+      // Coupon was already redeemed server-side — keep it as used
       state = state.copyWith(
-        isRedeeming: false,
+        redeemingCouponId: () => null,
         redeemError: () =>
             'This coupon has already been redeemed or has expired.',
       );
     } catch (e) {
-      if (!mounted) return;
+      // Roll back the optimistic update on failure
       state = state.copyWith(
-        isRedeeming: false,
+        redeemingCouponId: () => null,
+        coupons: state.coupons.map((c) {
+          if (c.id == coupon.id) return coupon; // restore original
+          return c;
+        }).toList(),
         redeemError: () => 'Failed to redeem coupon. Please try again.',
       );
     }
@@ -138,9 +177,4 @@ class RewardsNotifier extends StateNotifier<RewardsState> {
 }
 
 final rewardsProvider =
-    StateNotifierProvider<RewardsNotifier, RewardsState>((ref) {
-  return RewardsNotifier(
-    ref.read(couponRepositoryProvider),
-    ref.read(authRepositoryProvider),
-  );
-});
+    NotifierProvider<RewardsNotifier, RewardsState>(RewardsNotifier.new);

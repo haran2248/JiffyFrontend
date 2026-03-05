@@ -18,7 +18,8 @@ class RewardsScreen extends ConsumerWidget {
     final notifier = ref.read(rewardsProvider.notifier);
 
     // Show snackbars for redeem feedback
-    ref.listen(rewardsProvider, (prev, next) {
+    ref.listen(rewardsProvider, (RewardsState? prev, RewardsState? next) {
+      if (next == null) return;
       if (next.redeemSuccess != null &&
           next.redeemSuccess != prev?.redeemSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,8 +64,7 @@ class RewardsScreen extends ConsumerWidget {
           ),
           bottom: TabBar(
             labelColor: colorScheme.primary,
-            unselectedLabelColor:
-                colorScheme.onSurface.withValues(alpha: 0.5),
+            unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.5),
             indicatorColor: colorScheme.primary,
             tabs: [
               Tab(
@@ -89,14 +89,15 @@ class RewardsScreen extends ConsumerWidget {
                       _CouponsTab(
                         coupons: state.availableCoupons,
                         referralCode: state.referralCode,
-                        isRedeeming: state.isRedeeming,
+                        redeemingCouponId: state.redeemingCouponId,
                         onRedeem: notifier.redeem,
                         emptyMessage: 'No coupons available right now',
                       ),
                       _CouponsTab(
                         coupons: state.expiredOrUsedCoupons,
-                        referralCode: null, // Don't show referral on expired tab
-                        isRedeeming: false,
+                        referralCode:
+                            null, // Don't show referral on expired tab
+                        redeemingCouponId: null,
                         onRedeem: null,
                         emptyMessage: 'No expired or used coupons',
                       ),
@@ -112,14 +113,14 @@ class RewardsScreen extends ConsumerWidget {
 class _CouponsTab extends StatelessWidget {
   final List<Coupon> coupons;
   final String? referralCode;
-  final bool isRedeeming;
+  final String? redeemingCouponId;
   final void Function(Coupon)? onRedeem;
   final String emptyMessage;
 
   const _CouponsTab({
     required this.coupons,
     required this.referralCode,
-    required this.isRedeeming,
+    required this.redeemingCouponId,
     required this.onRedeem,
     required this.emptyMessage,
   });
@@ -152,8 +153,10 @@ class _CouponsTab extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _CouponCard(
                     coupon: c,
-                    isRedeeming: isRedeeming,
-                    onRedeem: onRedeem != null ? () => onRedeem!(c) : null,
+                    isRedeeming: redeemingCouponId == c.id,
+                    onRedeem: onRedeem != null && redeemingCouponId == null
+                        ? () => onRedeem!(c)
+                        : null,
                   ),
                 )),
           ] else
@@ -176,7 +179,6 @@ class _CouponsTab extends StatelessWidget {
                 ),
               ),
             ),
-
           if (referralCode != null) ...[
             const SizedBox(height: 8),
             _ReferralCard(referralCode: referralCode!),
@@ -214,8 +216,7 @@ class _CouponCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color:
-              colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: dimmed
@@ -241,9 +242,8 @@ class _CouponCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                color: dimmed
-                    ? colorScheme.outline.withValues(alpha: 0.15)
-                    : null,
+                color:
+                    dimmed ? colorScheme.outline.withValues(alpha: 0.15) : null,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -340,8 +340,18 @@ class _CouponCard extends StatelessWidget {
   }
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
   ];
 }
 

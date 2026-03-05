@@ -36,6 +36,7 @@ class Coupon {
   });
 
   bool get isAvailable => status == CouponStatus.active;
+  bool get isLocked => status == CouponStatus.locked;
   bool get isExpiredOrUsed =>
       status == CouponStatus.expired || status == CouponStatus.used;
 
