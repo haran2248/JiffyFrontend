@@ -71,9 +71,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _hasNavigated = false;
           return false; // Stay on login screen
         } else {
-          // For transient failures, re-throw to allow outer handler to run
-          debugPrint('LoginScreen: Transient error, letting outer handler run');
-          rethrow;
+          // For transient failures, stay on login to allow retry without
+          // triggering outer catch which routes to phone verification
+          debugPrint('LoginScreen: Transient error, staying on login');
+          return false;
         }
       }
 
