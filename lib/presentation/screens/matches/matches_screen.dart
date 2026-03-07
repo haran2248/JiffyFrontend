@@ -143,12 +143,14 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
           final match = matches[index];
           return MatchCardWidget(
             match: match,
-            onTap: () {
-              context.pushNamed(
+            onTap: () async {
+              await context.pushNamed(
                 RouteNames.chat,
                 pathParameters: {'userId': match.id},
                 extra: {'name': match.name, 'image': match.imageUrl},
               );
+              // Refresh matches after returning to catch any new state changes
+              viewModel.loadMatches();
             },
           );
         },

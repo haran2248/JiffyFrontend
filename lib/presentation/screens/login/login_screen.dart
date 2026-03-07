@@ -61,19 +61,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: User verified/created in backend');
       } catch (e) {
         debugPrint('LoginScreen: Backend verification failed: $e');
-        final apiError = (e is DioException)
-            ? (e.error is ApiError ? e.error as ApiError : null)
-            : null;
+        final apiError = (e is DioException) ? e.error as ApiError? : null;
         if (apiError?.isAuthError == true) {
           // Only sign out on auth errors (invalid/expired session)
           debugPrint('LoginScreen: Signing out due to invalid session');
           await authRepo.signOut();
           _hasNavigated = false;
           return false; // Stay on login screen
+        } else {
+          // For transient failures, stay on login to allow retry
+          debugPrint('LoginScreen: Transient error, staying on login');
+          return false;
         }
-
-        // Transient backend/network/server failures: don't log user out.
-        debugPrint('LoginScreen: Transient error, continuing navigation flow');
       }
 
       // Get the onboarding step the user needs to complete
