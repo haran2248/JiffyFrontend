@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 
 class ChatBubble extends StatelessWidget {
   final String text;
@@ -44,16 +45,40 @@ class ChatBubble extends StatelessWidget {
                       .withValues(alpha: 0.1),
                 ),
         ),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isMe
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.onSurface,
-                fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
-              ),
-        ),
+        child: _buildMessageText(context),
       ),
+    );
+  }
+
+  Widget _buildMessageText(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: isMe
+              ? Theme.of(context).colorScheme.onPrimary
+              : Theme.of(context).colorScheme.onSurface,
+          fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
+        );
+
+    const prefix = ChatConstants.storyReplyPrefix;
+    if (text.startsWith(prefix)) {
+      final actualMessage = text.substring(prefix.length);
+      return Text.rich(
+        TextSpan(
+          style: baseStyle,
+          children: [
+            const TextSpan(
+              text: '$prefix\n',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            TextSpan(text: actualMessage),
+          ],
+        ),
+        textScaler: MediaQuery.textScalerOf(context),
+      );
+    }
+
+    return Text(
+      text,
+      style: baseStyle,
     );
   }
 }
