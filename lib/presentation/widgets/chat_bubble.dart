@@ -44,16 +44,39 @@ class ChatBubble extends StatelessWidget {
                       .withValues(alpha: 0.1),
                 ),
         ),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isMe
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.onSurface,
-                fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
-              ),
-        ),
+        child: _buildMessageText(context),
       ),
+    );
+  }
+
+  Widget _buildMessageText(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: isMe
+              ? Theme.of(context).colorScheme.onPrimary
+              : Theme.of(context).colorScheme.onSurface,
+          fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
+        );
+
+    const prefix = 'Replied to your story: ';
+    if (text.startsWith(prefix)) {
+      final actualMessage = text.substring(prefix.length);
+      return RichText(
+        text: TextSpan(
+          style: baseStyle,
+          children: [
+            const TextSpan(
+              text: '$prefix\n',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+            TextSpan(text: actualMessage),
+          ],
+        ),
+      );
+    }
+
+    return Text(
+      text,
+      style: baseStyle,
     );
   }
 }
