@@ -61,8 +61,8 @@ class ChatBubble extends StatelessWidget {
     const prefix = ChatConstants.storyReplyPrefix;
     if (text.startsWith(prefix)) {
       final actualMessage = text.substring(prefix.length);
-      return RichText(
-        text: TextSpan(
+      return Text.rich(
+        TextSpan(
           style: baseStyle,
           children: [
             const TextSpan(
@@ -72,6 +72,7 @@ class ChatBubble extends StatelessWidget {
             TextSpan(text: actualMessage),
           ],
         ),
+        textScaler: MediaQuery.textScalerOf(context),
       );
     }
 

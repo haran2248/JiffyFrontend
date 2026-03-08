@@ -390,80 +390,122 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                     children: [
                       if (!isCurrentUserStory) ...[
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () async {
-                              _togglePause(forcePause: true);
-                              await StoryReplyBottomSheet.show(
-                                context,
-                                onSend: (message) async {
-                                  try {
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(24),
+                              onTap: () async {
+                                _togglePause(forcePause: true);
+                                await StoryReplyBottomSheet.show(
+                                  context,
+                                  onSend: (message) async {
+                                    bool matchCreated = false;
                                     try {
-                                      await matchesRepo.addMatch(story.userId);
-                                    } on ApiError catch (apiError) {
-                                      if (apiError.statusCode == 409 ||
-                                          apiError.message
-                                              .toLowerCase()
-                                              .contains('conflict')) {
-                                        // Ignore duplicate match error for existing matches
+                                      // Step 1: Create Match
+                                      try {
+                                        await matchesRepo
+                                            .addMatch(story.userId);
+                                        matchCreated = true;
+                                      } on ApiError catch (apiError) {
+                                        if (apiError.statusCode == 409 ||
+                                            apiError.message
+                                                .toLowerCase()
+                                                .contains('conflict')) {
+                                          // Ignore duplicate match error for existing matches
+                                          debugPrint(
+                                              'Match already exists, proceeding to send reply.');
+                                          matchCreated =
+                                              true; // Match already existed, so it's a success
+                                        } else {
+                                          rethrow;
+                                        }
+                                      }
+
+                                      // Step 2: Send Message
+                                      try {
+                                        final replyMessage =
+                                            '${ChatConstants.storyReplyPrefix}$message';
+                                        await chatRepo.sendMessage(
+                                            story.userId, replyMessage);
+
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Reply sent!'),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e, stack) {
                                         debugPrint(
-                                            'Match already exists, proceeding to send reply.');
-                                      } else {
-                                        rethrow;
+                                            'Message Send ERROR: $e\n$stack');
+                                        if (matchCreated) {
+                                          // Attempt rollback if matching succeeded but messaging failed
+                                          try {
+                                            await matchesRepo
+                                                .removeMatch(story.userId);
+                                            debugPrint(
+                                                'Rolled back duplicate match on send failure.');
+                                          } catch (rollbackErr) {
+                                            debugPrint(
+                                                'Failed to rollback match: $rollbackErr');
+                                          }
+                                        }
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: const Text(
+                                                  'Partial success: match created but message failed.'),
+                                              backgroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .error,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } catch (e, stack) {
+                                      debugPrint('ERROR in onSend: $e\n$stack');
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                                'Failed to send reply. Please try again.'),
+                                            backgroundColor: Theme.of(context)
+                                                .colorScheme
+                                                .error,
+                                          ),
+                                        );
                                       }
                                     }
-
-                                    final replyMessage =
-                                        '${ChatConstants.storyReplyPrefix}$message';
-                                    await chatRepo.sendMessage(
-                                        story.userId, replyMessage);
-
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Reply sent!'),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-                                  } catch (e, stack) {
-                                    debugPrint('ERROR in onSend: $e\n$stack');
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                              'Failed to send reply. Please try again.'),
-                                          backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .error,
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                              );
-                              // Resume story after bottom sheet closes
-                              _togglePause(forcePause: false);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                'Send a reply...',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
+                                  },
+                                );
+                                // Resume story after bottom sheet closes
+                                if (!context.mounted) return;
+                                _togglePause(forcePause: false);
+                              },
+                              child: Ink(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
                                       color:
-                                          Colors.white.withValues(alpha: 0.8),
-                                    ),
+                                          Colors.white.withValues(alpha: 0.3)),
+                                ),
+                                child: Text(
+                                  'Send a reply...',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.8),
+                                      ),
+                                ),
                               ),
                             ),
                           ),
