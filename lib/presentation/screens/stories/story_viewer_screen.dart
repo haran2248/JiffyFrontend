@@ -5,7 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/network/errors/api_error.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import 'package:jiffy/presentation/screens/stories/widgets/story_reply_bottom_sheet.dart';
+import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
+import 'package:jiffy/presentation/screens/matches/data/matches_repository.dart';
 import 'package:jiffy/presentation/widgets/avatar.dart';
 
 /// Story viewer screen that displays stories with swipe navigation,
@@ -118,9 +123,9 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     }
   }
 
-  void _togglePause() {
+  void _togglePause({bool? forcePause}) {
     setState(() {
-      _isPaused = !_isPaused;
+      _isPaused = forcePause ?? !_isPaused;
     });
 
     if (_isPaused) {
@@ -233,11 +238,11 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
       return;
     }
 
-    // Exclude bottom counter area
-    final bottomCounterTop =
-        screenSize.height - MediaQuery.of(context).padding.bottom - 50;
-    if (tapY >= bottomCounterTop) {
-      // Tap is in bottom counter area
+    // Exclude bottom counter and action bar area
+    final bottomActionTop =
+        screenSize.height - MediaQuery.of(context).padding.bottom - 100;
+    if (tapY >= bottomActionTop) {
+      // Tap is in bottom action area
       return;
     }
 
@@ -331,7 +336,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                 story: widget.stories[_currentStoryIndex],
                 isPaused: _isPaused,
                 onClose: () => context.popRoute(),
-                onTogglePause: _togglePause,
+                onTogglePause: () => _togglePause(),
               ),
             ),
 
@@ -361,14 +366,160 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                 ),
               ),
 
-            // Story counter at bottom
+            // Story action bar at bottom
             Positioned(
-              bottom: MediaQuery.of(context).padding.bottom + 24,
-              left: 0,
-              right: 0,
-              child: _StoryCounter(
-                current: _currentContentIndex + 1,
-                total: widget.stories[_currentStoryIndex].contents.length,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              left: 16,
+              right: 16,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final story = widget.stories[_currentStoryIndex];
+                  final authRepo = ref.read(authRepositoryProvider);
+                  final currentUser = authRepo.currentUser;
+                  final isCurrentUserStory =
+                      currentUser != null && story.userId == currentUser.uid;
+
+                  // Read repositories here since accessing ref asynchronously can throw
+                  final matchesRepo = ref.read(matchesRepositoryProvider);
+                  final chatRepo = ref.read(chatRepositoryProvider);
+
+                  return Row(
+                    mainAxisAlignment: isCurrentUserStory
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.end,
+                    children: [
+                      if (!isCurrentUserStory) ...[
+                        Expanded(
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(24),
+                              onTap: () async {
+                                _togglePause(forcePause: true);
+                                await StoryReplyBottomSheet.show(
+                                  context,
+                                  onSend: (message) async {
+                                    bool matchCreated = false;
+                                    try {
+                                      // Step 1: Create Match
+                                      try {
+                                        await matchesRepo
+                                            .addMatch(story.userId);
+                                        matchCreated = true;
+                                      } on ApiError catch (apiError) {
+                                        if (apiError.statusCode == 409 ||
+                                            apiError.message
+                                                .toLowerCase()
+                                                .contains('conflict')) {
+                                          // Ignore duplicate match error for existing matches
+                                          debugPrint(
+                                              'Match already exists, proceeding to send reply.');
+                                          matchCreated =
+                                              true; // Match already existed, so it's a success
+                                        } else {
+                                          rethrow;
+                                        }
+                                      }
+
+                                      // Step 2: Send Message
+                                      try {
+                                        final replyMessage =
+                                            '${ChatConstants.storyReplyPrefix}$message';
+                                        await chatRepo.sendMessage(
+                                            story.userId, replyMessage);
+
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Reply sent!'),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e, stack) {
+                                        debugPrint(
+                                            'Message Send ERROR: $e\n$stack');
+                                        if (matchCreated) {
+                                          // Attempt rollback if matching succeeded but messaging failed
+                                          try {
+                                            await matchesRepo
+                                                .removeMatch(story.userId);
+                                            debugPrint(
+                                                'Rolled back duplicate match on send failure.');
+                                          } catch (rollbackErr) {
+                                            debugPrint(
+                                                'Failed to rollback match: $rollbackErr');
+                                          }
+                                        }
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: const Text(
+                                                  'Partial success: match created but message failed.'),
+                                              backgroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .error,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } catch (e, stack) {
+                                      debugPrint('ERROR in onSend: $e\n$stack');
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                                'Failed to send reply. Please try again.'),
+                                            backgroundColor: Theme.of(context)
+                                                .colorScheme
+                                                .error,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                );
+                                // Resume story after bottom sheet closes
+                                if (!context.mounted) return;
+                                _togglePause(forcePause: false);
+                              },
+                              child: Ink(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.3)),
+                                ),
+                                child: Text(
+                                  'Send a reply...',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.8),
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      _StoryCounter(
+                        current: _currentContentIndex + 1,
+                        total:
+                            widget.stories[_currentStoryIndex].contents.length,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -440,8 +591,7 @@ class _StoryContentPageState extends State<_StoryContentPage> {
                 fit: BoxFit.cover,
                 // frameBuilder fires when the first frame is actually painted —
                 // this is the correct moment to start the timer.
-                frameBuilder:
-                    (context, child, frame, wasSynchronouslyLoaded) {
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (frame != null || wasSynchronouslyLoaded) {
                     // Image is painted — signal the timer to start
                     if (!_hasCalledImageLoaded &&
