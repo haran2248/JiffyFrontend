@@ -1,62 +1,105 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jiffy/presentation/screens/stories/widgets/story_reply_bottom_sheet.dart';
 
 void main() {
-  testWidgets('StoryReplyBottomSheet interaction test',
-      (WidgetTester tester) async {
-    bool wasSent = false;
-    String sentMessage = '';
-
-    // Create a wrapper to show the bottom sheet
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData.light(),
-        home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    StoryReplyBottomSheet.show(
-                      context,
-                      onSend: (message) async {
-                        wasSent = true;
-                        sentMessage = message;
-                      },
-                    );
-                  },
-                  child: const Text('Open Sheet'),
-                ),
-              );
-            },
-          ),
+  Widget buildTestApp({required Future<void> Function(String message) onSend}) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) {
+            return Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  StoryReplyBottomSheet.show(context, onSend: onSend);
+                },
+                child: const Text('Open Sheet'),
+              ),
+            );
+          },
         ),
       ),
     );
+  }
 
-    // Verify button is there
-    expect(find.text('Open Sheet'), findsOneWidget);
+  group('StoryReplyBottomSheet interaction tests', () {
+    testWidgets('Submitting an empty message does not call onSend',
+        (WidgetTester tester) async {
+      bool wasSent = false;
+      await tester.pumpWidget(buildTestApp(onSend: (msg) async {
+        wasSent = true;
+      }));
 
-    // Tap to open bottom sheet
-    await tester.tap(find.text('Open Sheet'));
-    await tester.pumpAndSettle();
+      // Open sheet
+      await tester.tap(find.text('Open Sheet'));
+      await tester.pumpAndSettle();
 
-    // Verify bottom sheet is shown
-    expect(find.byType(StoryReplyBottomSheet), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
-    expect(find.byIcon(Icons.send), findsOneWidget);
+      // Tap send without entering text
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
 
-    // Enter text
-    await tester.enterText(find.byType(TextField), 'Great story!');
-    await tester.pumpAndSettle();
+      expect(wasSent, isFalse);
+    });
 
-    // Tap send button
-    await tester.tap(find.byIcon(Icons.send));
-    await tester.pumpAndSettle();
+    testWidgets('Keyboard submit invokes onSend', (WidgetTester tester) async {
+      bool wasSent = false;
+      String sentMessage = '';
+      await tester.pumpWidget(buildTestApp(onSend: (msg) async {
+        wasSent = true;
+        sentMessage = msg;
+      }));
 
-    // Verify callback was triggered with correct text
-    expect(wasSent, isTrue);
-    expect(sentMessage, 'Great story!');
+      // Open sheet
+      await tester.tap(find.text('Open Sheet'));
+      await tester.pumpAndSettle();
+
+      // Enter text and submit via keyboard action
+      await tester.enterText(find.byType(TextField), 'Keyboard test');
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pumpAndSettle();
+
+      expect(wasSent, isTrue);
+      expect(sentMessage, 'Keyboard test');
+    });
+
+    testWidgets(
+        'Shows CircularProgressIndicator while sending and dismisses on success',
+        (WidgetTester tester) async {
+      bool wasSent = false;
+      final completer = Completer<void>();
+
+      await tester.pumpWidget(buildTestApp(onSend: (msg) async {
+        wasSent = true;
+        await completer.future; // Hold the async state
+      }));
+
+      // Open sheet
+      await tester.tap(find.text('Open Sheet'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StoryReplyBottomSheet), findsOneWidget);
+
+      // Enter text
+      await tester.enterText(find.byType(TextField), 'Loading test');
+      await tester.pumpAndSettle();
+
+      // Tap send
+      await tester.tap(find.byIcon(Icons.send));
+      await tester
+          .pump(); // Start the animation (but don't wait for completion)
+
+      // Verify Loading indicator appears and send icon disappears
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byIcon(Icons.send), findsNothing);
+
+      // Complete the future
+      completer.complete();
+      await tester.pumpAndSettle(); // Let the bottom sheet dismiss
+
+      expect(wasSent, isTrue);
+      // Verify the bottom sheet has been dismissed
+      expect(find.byType(StoryReplyBottomSheet), findsNothing);
+    });
   });
 }

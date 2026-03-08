@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/network/errors/api_error.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'package:jiffy/presentation/screens/stories/widgets/story_reply_bottom_sheet.dart';
 import 'package:jiffy/presentation/screens/chat/data/chat_repository.dart';
@@ -394,20 +396,26 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                               await StoryReplyBottomSheet.show(
                                 context,
                                 onSend: (message) async {
-                                  debugPrint('==== ONSEND TRIGGERED ====');
                                   try {
-                                    debugPrint(
-                                        'Adding match for ${story.userId}');
-                                    await matchesRepo.addMatch(story.userId);
-                                    debugPrint('Match added successfully.');
+                                    try {
+                                      await matchesRepo.addMatch(story.userId);
+                                    } on ApiError catch (apiError) {
+                                      if (apiError.statusCode == 409 ||
+                                          apiError.message
+                                              .toLowerCase()
+                                              .contains('conflict')) {
+                                        // Ignore duplicate match error for existing matches
+                                        debugPrint(
+                                            'Match already exists, proceeding to send reply.');
+                                      } else {
+                                        rethrow;
+                                      }
+                                    }
 
                                     final replyMessage =
-                                        'Replied to your story: $message';
-                                    debugPrint(
-                                        'Sending message to Firebase: $replyMessage');
+                                        '${ChatConstants.storyReplyPrefix}$message';
                                     await chatRepo.sendMessage(
                                         story.userId, replyMessage);
-                                    debugPrint('Message sent successfully.');
 
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
@@ -424,8 +432,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         SnackBar(
-                                          content:
-                                              Text('Failed to send reply: $e'),
+                                          content: const Text(
+                                              'Failed to send reply. Please try again.'),
                                           backgroundColor: Theme.of(context)
                                               .colorScheme
                                               .error,

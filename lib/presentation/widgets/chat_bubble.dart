@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 
 class ChatBubble extends StatelessWidget {
   final String text;
@@ -57,7 +58,7 @@ class ChatBubble extends StatelessWidget {
           fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
         );
 
-    const prefix = 'Replied to your story: ';
+    const prefix = ChatConstants.storyReplyPrefix;
     if (text.startsWith(prefix)) {
       final actualMessage = text.substring(prefix.length);
       return RichText(
