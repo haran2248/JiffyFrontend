@@ -246,6 +246,35 @@ class HomeService {
     }
   }
 
+  Future<void> respondToSuggestion({
+    required String currentUserId,
+    required String candidateId,
+    required String action, // "ACCEPT" or "REJECT"
+    double? timeSpentSeconds,
+    String? feedbackText,
+  }) async {
+    try {
+      debugPrint(
+          'HomeService: Responding $action to suggestion $candidateId...');
+      final response = await _dio.post(
+        '/api/suggestions/$currentUserId/respond/$candidateId',
+        data: {
+          'action': action,
+          if (timeSpentSeconds != null) 'timeSpentSeconds': timeSpentSeconds,
+          if (feedbackText != null) 'feedbackText': feedbackText,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            'Failed to respond to suggestion: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('HomeService: Error responding to suggestion: $e');
+      rethrow;
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchMatches(String userId) async {
     try {
       debugPrint('HomeService: Fetching matches for $userId...');

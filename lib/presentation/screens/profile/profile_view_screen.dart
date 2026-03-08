@@ -4,6 +4,8 @@ import "package:jiffy/core/navigation/navigation_service.dart";
 import "package:jiffy/core/services/profile_service.dart";
 import "package:jiffy/presentation/screens/chat/data/chat_repository.dart";
 import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
+import "package:jiffy/core/auth/auth_repository.dart";
+import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
@@ -35,6 +37,38 @@ class ProfileViewScreen extends ConsumerStatefulWidget {
 
 class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
   bool _isSendingSpark = false;
+  late final DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+  }
+
+  Future<void> _respondToSuggestion(String action, {String? feedback}) async {
+    // Only respond if this is an actual suggestion card (not just viewing own profile or a matched profile)
+    if (widget.isPreview) return;
+
+    final timeSpent =
+        DateTime.now().difference(_startTime).inMilliseconds / 1000.0;
+    try {
+      final homeService = ref.read(homeServiceProvider);
+      final currentUser = ref.read(authRepositoryProvider).currentUser;
+
+      if (currentUser != null) {
+        await homeService.respondToSuggestion(
+          currentUserId: currentUser.uid,
+          candidateId: widget.profile.userId,
+          action: action,
+          timeSpentSeconds: timeSpent,
+          feedbackText: feedback,
+        );
+      }
+    } catch (e) {
+      // Fire and forget; don't break UI if metrics fail
+      debugPrint('ProfileViewScreen: Failed to record suggestion response: $e');
+    }
+  }
 
   void _handleClose() {
     context.popRoute();
@@ -45,9 +79,10 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
     _handleClose();
   }
 
-  void _handlePass() {
-    // TODO: Implement pass functionality
-    _handleClose();
+  void _handlePass() async {
+    // Treat "pass" as a REJECT
+    await _respondToSuggestion("REJECT");
+    if (mounted) _handleClose();
   }
 
   void _handleSparkConversation() async {
@@ -128,6 +163,7 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
           ref.invalidate(matchesViewModelProvider);
 
           // Trigger a like action if the message was sent successfully
+          await _respondToSuggestion("ACCEPT");
           if (mounted) _handleLike();
         } finally {
           if (mounted) {
