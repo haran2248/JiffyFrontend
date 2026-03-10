@@ -2,19 +2,27 @@
 class Photo {
   final String url; // URL to fetch the photo
   final String? caption; // Optional caption text
+  final String? id; // Original imageId from backend
+  final int? backendSlot; // 1-4 for positional avatars
 
   const Photo({
     required this.url,
     this.caption,
+    this.id,
+    this.backendSlot,
   });
 
   Photo copyWith({
     String? url,
     String? Function()? caption,
+    String? id,
+    int? backendSlot,
   }) {
     return Photo(
       url: url ?? this.url,
       caption: caption != null ? caption() : this.caption,
+      id: id ?? this.id,
+      backendSlot: backendSlot ?? this.backendSlot,
     );
   }
 }
@@ -36,6 +44,7 @@ class ProfileData {
   final String?
       conversationStyle; // e.g., "Playful wit, balancing deep & thoughtful chats"
   final String? conversationStarter; // Prompt text
+  final String? onboardingStatus; // E.g., 'COMPLETED'
 
   const ProfileData({
     required this.id,
@@ -51,6 +60,7 @@ class ProfileData {
     this.traits = const [],
     this.conversationStyle,
     this.conversationStarter,
+    this.onboardingStatus,
   });
 
   ProfileData copyWith({
@@ -67,6 +77,7 @@ class ProfileData {
     List<String>? traits,
     String? Function()? conversationStyle,
     String? Function()? conversationStarter,
+    String? onboardingStatus,
   }) {
     return ProfileData(
       id: id ?? this.id,
@@ -88,6 +99,7 @@ class ProfileData {
       conversationStarter: conversationStarter != null
           ? conversationStarter()
           : this.conversationStarter,
+      onboardingStatus: onboardingStatus ?? this.onboardingStatus,
     );
   }
 }

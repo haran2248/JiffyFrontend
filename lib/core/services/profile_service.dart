@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
+import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
 import '../network/dio_provider.dart';
 
 part 'profile_service.g.dart';
@@ -274,24 +275,6 @@ class ProfileService {
     }
   }
 
-  /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
-  int _calculateAge(String? dobString) {
-    if (dobString == null || dobString.isEmpty) return 0;
-    try {
-      final dob = DateTime.parse(dobString);
-      final now = DateTime.now();
-      int age = now.year - dob.year;
-      if (now.month < dob.month ||
-          (now.month == dob.month && now.day < dob.day)) {
-        age--;
-      }
-      return age;
-    } catch (e) {
-      debugPrint("ProfileService: Error parsing DOB: $e");
-      return 0;
-    }
-  }
-
   /// Fetch full profile data for a specific user ID
   Future<ProfileData?> fetchUserProfile(String userId) async {
     try {
@@ -313,39 +296,35 @@ class ProfileService {
           "User";
 
       final dobString = basicDetails?['birthDate'] as String?;
-      final age = _calculateAge(dobString);
+      final age = ProfileHelpers.calculateAge(dobString);
       final location = basicDetails?['location'] as String?;
+      final onboardingStatusRaw = userData['onboardingStatus'];
+      final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
 
       // Parse photos
       final photos = <Photo>[];
       final imageFields = [
         'firstImageId',
         'secondImageId',
-        ' thirdImageId',
+        'thirdImageId',
         'fourthImageId'
       ];
-      for (final field in imageFields) {
-        final imageId = userData[field] as String?;
+      for (int i = 0; i < imageFields.length; i++) {
+        final field = imageFields[i];
+        String? imageId = userData[field] as String?;
+
+        // If firstImageId is missing, fallback to the legacy 'imageId' to match ViewModels
+        if (field == 'firstImageId' && (imageId == null || imageId.isEmpty)) {
+          imageId = userData['imageId'] as String?;
+        }
+
         if (imageId != null && imageId.isNotEmpty) {
           photos.add(Photo(
             url:
                 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId',
+            id: imageId,
+            backendSlot: i + 1,
           ));
-        }
-      }
-
-      // If no discrete image fields, fallback to images array if any
-      if (photos.isEmpty) {
-        final images = userData['imageIds'] as List?;
-        if (images != null) {
-          for (final imageId in images) {
-            if (imageId != null && imageId.toString().isNotEmpty) {
-              photos.add(Photo(
-                url:
-                    'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId',
-              ));
-            }
-          }
         }
       }
 
@@ -404,6 +383,7 @@ class ProfileService {
         interests: interests,
         traits: traits,
         conversationStyle: conversationStyle,
+        onboardingStatus: onboardingStatus,
       );
     } catch (e) {
       debugPrint("ProfileService: Error fetching user profile: $e");

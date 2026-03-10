@@ -3,6 +3,23 @@ import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 
 /// Helper functions for profile data conversion
 class ProfileHelpers {
+  /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
+  static int calculateAge(String? dobString) {
+    if (dobString == null || dobString.isEmpty) return 0;
+    try {
+      final dob = DateTime.parse(dobString);
+      final now = DateTime.now();
+      int age = now.year - dob.year;
+      if (now.month < dob.month ||
+          (now.month == dob.month && now.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// Convert SuggestionCard to ProfileData
   static ProfileData suggestionCardToProfileData(SuggestionCard suggestion) {
     // Create mock photos with multiline captions
