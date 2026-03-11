@@ -154,13 +154,6 @@ class HomeViewModel extends _$HomeViewModel {
               }
             }
 
-            // Check for list of images if available (fallback)
-            if (imgs.isEmpty && json['imageUrls'] is List) {
-              imgs.addAll((json['imageUrls'] as List)
-                  .map((e) => e.toString())
-                  .toList());
-            }
-
             return SuggestionCard(
               id: id,
               userId: id,
@@ -206,22 +199,15 @@ class HomeViewModel extends _$HomeViewModel {
     }
   }
 
-  /// Helper to construct image URL from match data (copied from MatchesViewModel)
   String? _constructMatchImageUrl(Map<String, dynamic> user) {
     String? currentImageId;
 
-    if (user['imageId'] != null && user['imageId'].toString().isNotEmpty) {
+    if (user['firstImageId'] != null &&
+        user['firstImageId'].toString().isNotEmpty) {
+      currentImageId = user['firstImageId'].toString();
+    } else if (user['imageId'] != null &&
+        user['imageId'].toString().isNotEmpty) {
       currentImageId = user['imageId'].toString();
-    } else if (user['images'] != null &&
-        user['images'] is List &&
-        (user['images'] as List).isNotEmpty) {
-      currentImageId = (user['images'] as List)[0]?.toString();
-    } else if (user['imageIds'] != null &&
-        user['imageIds'] is List &&
-        (user['imageIds'] as List).isNotEmpty) {
-      currentImageId = (user['imageIds'] as List)[0]?.toString();
-    } else if (user['firstImageId'] != null) {
-      currentImageId = user['firstImageId']?.toString();
     }
 
     if (currentImageId == null || currentImageId.isEmpty) {

@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart' show debugPrint;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart';
+import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
+import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
 import '../network/dio_provider.dart';
 
 part 'profile_service.g.dart';
@@ -55,7 +57,8 @@ class ProfileService {
     } on DioException catch (e) {
       // Handle 500 error when user doesn't exist yet (new user)
       if (e.response?.statusCode == 500 || e.response?.statusCode == 404) {
-        debugPrint('ProfileService: User not found when getting onboarding status - new user');
+        debugPrint(
+            'ProfileService: User not found when getting onboarding status - new user');
         return null;
       }
       debugPrint('ProfileService: Error getting onboarding status: $e');
@@ -85,7 +88,8 @@ class ProfileService {
 
       final data = response.data as Map<String, dynamic>?;
       if (data == null) {
-        debugPrint('ProfileService: No user data found - new user, needs basics');
+        debugPrint(
+            'ProfileService: No user data found - new user, needs basics');
         return 'basics';
       }
 
@@ -99,7 +103,8 @@ class ProfileService {
           'ProfileService: onboardingStatus=$onboardingStatusRaw (normalized: $onboardingStatus), isChatOnboardingComplete=$isChatOnboardingComplete');
 
       if (isChatOnboardingComplete) {
-        debugPrint('ProfileService: User has COMPLETED onboarding status - fully onboarded');
+        debugPrint(
+            'ProfileService: User has COMPLETED onboarding status - fully onboarded');
         return null; // User is fully onboarded
       }
 
@@ -126,13 +131,15 @@ class ProfileService {
 
       // User has completed basics if they have name and basicDetails
       // Images are required UNLESS they've already started chat onboarding
-      final hasCompletedBasics = hasName && hasBasicDetails && (hasImages || hasStartedChatOnboarding);
+      final hasCompletedBasics =
+          hasName && hasBasicDetails && (hasImages || hasStartedChatOnboarding);
 
       debugPrint(
           'ProfileService: hasName=$hasName, hasBasicDetails=$hasBasicDetails, hasImages=$hasImages, hasStartedChatOnboarding=$hasStartedChatOnboarding, hasCompletedBasics=$hasCompletedBasics');
 
       if (!hasCompletedBasics) {
-        debugPrint('ProfileService: User needs to complete basics (missing: ${!hasName ? "name" : ""} ${!hasBasicDetails ? "basicDetails" : ""} ${!hasImages && !hasStartedChatOnboarding ? "images" : ""})');
+        debugPrint(
+            'ProfileService: User needs to complete basics (missing: ${!hasName ? "name" : ""} ${!hasBasicDetails ? "basicDetails" : ""} ${!hasImages && !hasStartedChatOnboarding ? "images" : ""})');
         return 'basics';
       }
 
@@ -145,12 +152,14 @@ class ProfileService {
           onboardingStatus == 'ANSWERS_STORED';
 
       if (needsChatOnboarding) {
-        debugPrint('ProfileService: User needs to complete chat onboarding (status: $onboardingStatus)');
+        debugPrint(
+            'ProfileService: User needs to complete chat onboarding (status: $onboardingStatus)');
         return 'chat';
       }
 
       // Unknown status but basics are complete - assume chat onboarding needed
-      debugPrint('ProfileService: Unknown onboarding status ($onboardingStatus), routing to chat onboarding');
+      debugPrint(
+          'ProfileService: Unknown onboarding status ($onboardingStatus), routing to chat onboarding');
       return 'chat';
     } on DioException catch (e) {
       // Handle 500 error when user doesn't exist yet (new user)
@@ -158,7 +167,7 @@ class ProfileService {
         debugPrint('ProfileService: User not found (new user) - needs basics');
         return 'basics';
       }
-      
+
       debugPrint(
           'ProfileService: DioException checking onboarding - ${e.message}');
       if (e.response != null) {
@@ -263,6 +272,122 @@ class ProfileService {
       debugPrint(
           'ProfileService: Error fetching conversation starter data for user $userId - $e');
       rethrow;
+    }
+  }
+
+  /// Fetch full profile data for a specific user ID
+  Future<ProfileData?> fetchUserProfile(String userId) async {
+    try {
+      debugPrint("ProfileService: Fetching profile data for user: $userId");
+
+      // 1. Fetch user basic info
+      final userResponse = await _dio.get(
+        '/api/users/getUser',
+        queryParameters: {'uid': userId},
+      );
+
+      final userData = userResponse.data as Map<String, dynamic>?;
+      if (userData == null) return null;
+
+      // Parse basic details
+      final basicDetails = userData['basicDetails'] as Map<String, dynamic>?;
+      final name = basicDetails?['name'] as String? ??
+          userData['name'] as String? ??
+          "User";
+
+      final dobString = basicDetails?['birthDate'] as String?;
+      final age = ProfileHelpers.calculateAge(dobString);
+      final location = basicDetails?['location'] as String?;
+      final onboardingStatusRaw = userData['onboardingStatus'];
+      final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
+
+      // Parse photos
+      final photos = <Photo>[];
+      final imageFields = [
+        'firstImageId',
+        'secondImageId',
+        'thirdImageId',
+        'fourthImageId'
+      ];
+      for (int i = 0; i < imageFields.length; i++) {
+        final field = imageFields[i];
+        String? imageId = userData[field] as String?;
+
+        // If firstImageId is missing, fallback to the legacy 'imageId' to match ViewModels
+        if (field == 'firstImageId' && (imageId == null || imageId.isEmpty)) {
+          imageId = userData['imageId'] as String?;
+        }
+
+        if (imageId != null && imageId.isNotEmpty) {
+          photos.add(Photo(
+            url:
+                'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId',
+            id: imageId,
+            backendSlot: i + 1,
+          ));
+        }
+      }
+
+      // 2. Fetch curated profile data if available
+      String aboutMe = '';
+      List<String> interests = [];
+      List<String> traits = [];
+      String? conversationStyle;
+
+      try {
+        final curatedResponse = await _dio.get(
+          '/api/onboarding/curated-profile',
+          queryParameters: {'uid': userId},
+        );
+
+        if (curatedResponse.statusCode == 200) {
+          final curatedDataData = curatedResponse.data as Map<String, dynamic>?;
+          if (curatedDataData != null) {
+            final curatedProfileData =
+                curatedDataData['curatedProfile'] as Map<String, dynamic>?;
+            if (curatedProfileData != null) {
+              aboutMe = curatedProfileData['aboutMe'] as String? ?? '';
+              interests = (curatedProfileData['interests'] as List<dynamic>?)
+                      ?.map((e) => e.toString())
+                      .toList() ??
+                  [];
+              traits =
+                  (curatedProfileData['personalityTraits'] as List<dynamic>?)
+                          ?.map((e) => e.toString())
+                          .toList() ??
+                      [];
+              conversationStyle =
+                  curatedProfileData['conversationStyleDescription'] as String?;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint(
+            "ProfileService: Error fetching curated profile for $userId: $e");
+        // Non-fatal, continue with what we have
+      }
+
+      // If no aboutMe, fallback to bio if available in root
+      if (aboutMe.isEmpty) {
+        aboutMe = userData['bio'] as String? ?? '';
+      }
+
+      return ProfileData(
+        id: userId,
+        userId: userId,
+        name: name,
+        age: age,
+        location: location,
+        photos: photos,
+        bio: aboutMe,
+        interests: interests,
+        traits: traits,
+        conversationStyle: conversationStyle,
+        onboardingStatus: onboardingStatus,
+      );
+    } catch (e) {
+      debugPrint("ProfileService: Error fetching user profile: $e");
+      return null;
     }
   }
 }

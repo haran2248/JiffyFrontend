@@ -234,23 +234,16 @@ class MatchesViewModel extends _$MatchesViewModel {
   String? _getImageUrl(Map<String, dynamic> user) {
     String? currentImageId;
 
-    if (user['imageId'] != null && user['imageId'].toString().isNotEmpty) {
+    if (user['firstImageId'] != null &&
+        user['firstImageId'].toString().isNotEmpty) {
+      currentImageId = user['firstImageId'].toString();
+    } else if (user['imageId'] != null &&
+        user['imageId'].toString().isNotEmpty) {
       currentImageId = user['imageId'].toString();
-    } else if (user['images'] != null &&
-        user['images'] is List &&
-        (user['images'] as List).isNotEmpty) {
-      currentImageId = (user['images'] as List)[0]?.toString();
-    } else if (user['imageIds'] != null &&
-        user['imageIds'] is List &&
-        (user['imageIds'] as List).isNotEmpty) {
-      currentImageId = (user['imageIds'] as List)[0]?.toString();
-    } else if (user['firstImageId'] != null) {
-      currentImageId = user['firstImageId']?.toString();
     } else {
       return null;
     }
-
-    if (currentImageId == null || currentImageId.isEmpty) {
+    if (currentImageId.isEmpty) {
       return null;
     }
 

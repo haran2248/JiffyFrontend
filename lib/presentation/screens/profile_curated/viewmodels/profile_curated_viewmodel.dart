@@ -5,8 +5,7 @@ import "package:jiffy/presentation/screens/profile_curated/models/profile_curate
 import "package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart";
 import "package:jiffy/presentation/screens/onboarding/data/models/curated_profile.dart";
 import "package:jiffy/core/auth/auth_repository.dart";
-import "package:dio/dio.dart";
-import "package:jiffy/core/network/dio_provider.dart";
+import "package:jiffy/core/services/profile_service.dart";
 
 part "profile_curated_viewmodel.g.dart";
 
@@ -28,26 +27,6 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
 
   AuthRepository get _authRepository => ref.read(authRepositoryProvider);
 
-  Dio get _dio => ref.read(dioProvider);
-
-  /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
-  int _calculateAge(String? dobString) {
-    if (dobString == null || dobString.isEmpty) return 0;
-    try {
-      final dob = DateTime.parse(dobString);
-      final now = DateTime.now();
-      int age = now.year - dob.year;
-      if (now.month < dob.month ||
-          (now.month == dob.month && now.day < dob.day)) {
-        age--;
-      }
-      return age;
-    } catch (e) {
-      debugPrint("ProfileCuratedViewModel: Error parsing DOB: $e");
-      return 0;
-    }
-  }
-
   /// Load curated profile data from backend
   Future<void> loadCuratedProfile() async {
     if (!ref.mounted) return;
@@ -67,56 +46,23 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
 
       final uid = user.uid;
 
-      // Fetch user basic info
-      String name = "You";
-      int age = 0;
-      String? avatarUrl;
-      String onboardingStatus = '';
+      final profileService = ref.read(profileServiceProvider);
+      final fetchedData = await profileService.fetchUserProfile(uid);
 
-      try {
-        final userResponse = await _dio.get(
-          '/api/users/getUser',
-          queryParameters: {'uid': uid},
-        );
-
-        final userData = userResponse.data as Map<String, dynamic>?;
-        if (userData != null) {
-          // Get name from basicDetails or root
-          final basicDetails =
-              userData['basicDetails'] as Map<String, dynamic>?;
-          name = basicDetails?['name'] as String? ??
-              userData['name'] as String? ??
-              "You";
-
-          // Calculate age from DOB
-          final dobString = basicDetails?['birthDate'] as String?;
-          age = _calculateAge(dobString);
-
-          // Get first photo — prefer explicit firstImageId field, fall back to imageIds list
-          final firstImageId = userData['firstImageId'] as String?;
-          final imageIds = userData['imageIds'] as List<dynamic>?;
-          final imageId = (firstImageId != null && firstImageId.isNotEmpty)
-              ? firstImageId
-              : (imageIds != null && imageIds.isNotEmpty)
-                  ? imageIds[0] as String?
-                  : null;
-          if (imageId != null && imageId.isNotEmpty) {
-            avatarUrl =
-                'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId';
-          }
-
-          // Read onboarding status
-          final onboardingStatusRaw = userData['onboardingStatus'];
-          onboardingStatus =
-              onboardingStatusRaw?.toString().toUpperCase() ?? '';
-
-          debugPrint(
-              "ProfileCuratedViewModel: Loaded user - name: $name, age: $age, hasPhoto: ${avatarUrl != null}, onboardingStatus: $onboardingStatus");
-        }
-      } catch (e) {
-        debugPrint("ProfileCuratedViewModel: Error fetching user data: $e");
-        rethrow;
+      if (fetchedData == null) {
+        throw Exception("Failed to fetch user profile data");
       }
+
+      String? avatarUrl;
+      final photo1 =
+          fetchedData.photos.where((p) => p.backendSlot == 1).firstOrNull;
+      if (photo1 != null) {
+        avatarUrl = photo1.url;
+      } else if (fetchedData.photos.isNotEmpty) {
+        avatarUrl = fetchedData.photos.first.url;
+      }
+
+      final onboardingStatus = fetchedData.onboardingStatus;
 
       // If onboarding chat was not completed, show placeholder instead of
       // generating from insufficient data.
@@ -126,8 +72,8 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         if (!ref.mounted) return;
         state = state.copyWith(
           data: ProfileCuratedData.empty(
-            name: name,
-            age: age,
+            name: fetchedData.name,
+            age: fetchedData.age,
             avatarUrl: avatarUrl,
           ),
           isLoading: false,
@@ -148,8 +94,8 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
 
       // Convert to UI data model
       final profileData = ProfileCuratedData(
-        name: name,
-        age: age,
+        name: fetchedData.name,
+        age: fetchedData.age,
         subtitle:
             "Here's what we've learned about you.\nReview and edit to make sure it's perfect.",
         avatarUrl: avatarUrl,

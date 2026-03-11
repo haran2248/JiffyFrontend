@@ -8,11 +8,13 @@ import '../models/match_item.dart';
 class MatchCardWidget extends StatelessWidget {
   final MatchItem match;
   final VoidCallback? onTap;
+  final VoidCallback? onAvatarTap;
 
   const MatchCardWidget({
     super.key,
     required this.match,
     this.onTap,
+    this.onAvatarTap,
   });
 
   @override
@@ -105,41 +107,44 @@ class MatchCardWidget extends StatelessWidget {
             colorScheme.outline.withValues(alpha: 0.3)
           ];
 
-    return Container(
-      width: size + borderWidth * 2,
-      height: size + borderWidth * 2,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      padding: EdgeInsets.all(borderWidth),
+    return GestureDetector(
+      onTap: onAvatarTap,
       child: Container(
+        width: size + borderWidth * 2,
+        height: size + borderWidth * 2,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: colorScheme.surface,
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        child: ClipOval(
-          child: match.isJiffyAi
-              ? Container(
-                  color: colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.auto_awesome,
-                    color: colorScheme.primary,
-                    size: 28,
-                  ),
-                )
-              : match.imageUrl != null
-                  ? Image.network(
-                      match.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildPlaceholderAvatar(colorScheme),
-                    )
-                  : _buildPlaceholderAvatar(colorScheme),
+        padding: EdgeInsets.all(borderWidth),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colorScheme.surface,
+          ),
+          child: ClipOval(
+            child: match.isJiffyAi
+                ? Container(
+                    color: colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.auto_awesome,
+                      color: colorScheme.primary,
+                      size: 28,
+                    ),
+                  )
+                : match.imageUrl != null
+                    ? Image.network(
+                        match.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildPlaceholderAvatar(colorScheme),
+                      )
+                    : _buildPlaceholderAvatar(colorScheme),
+          ),
         ),
       ),
     );

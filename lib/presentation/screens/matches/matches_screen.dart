@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/services/profile_service.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
+import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import 'viewmodels/matches_viewmodel.dart';
 import 'widgets/matches_tab_bar.dart';
 import 'widgets/match_card_widget.dart';
@@ -126,7 +128,7 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
             Text(
               'Check back later for new matches',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
             ),
           ],
@@ -151,6 +153,48 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
               );
               // Refresh matches after returning to catch any new state changes
               viewModel.loadMatches();
+            },
+            onAvatarTap: () async {
+              if (match.isJiffyAi) return;
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) =>
+                    const Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                final profileService = ref.read(profileServiceProvider);
+                final profileData =
+                    await profileService.fetchUserProfile(match.id);
+
+                if (context.mounted) Navigator.pop(context); // pop loading
+
+                if (profileData != null && context.mounted) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    useRootNavigator: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => ProfileViewScreen(
+                      profile: profileData,
+                      isPreview: false,
+                    ),
+                  );
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not load profile')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context); // pop loading
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error loading profile: $e')),
+                  );
+                }
+              }
             },
           );
         },

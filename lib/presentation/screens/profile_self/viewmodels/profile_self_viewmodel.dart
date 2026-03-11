@@ -5,11 +5,10 @@ import "package:jiffy/presentation/screens/profile_self/models/profile_self_data
 import "package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart";
 import "package:jiffy/presentation/screens/onboarding/data/models/curated_profile.dart";
 import "package:jiffy/core/auth/auth_repository.dart";
-import "package:dio/dio.dart";
 import "package:jiffy/core/services/photo_upload_service.dart";
 import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/core/services/face_verification_service.dart";
-import "package:jiffy/core/network/dio_provider.dart";
+import "package:jiffy/core/services/profile_service.dart";
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/profile_view_screen.dart";
 
@@ -44,28 +43,8 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
   PhotoUploadService get _photoUploadService =>
       ref.read(photoUploadServiceProvider);
 
-  Dio get _dio => ref.read(dioProvider);
-
   FaceVerificationService get _faceVerificationService =>
       ref.read(faceVerificationServiceProvider);
-
-  /// Calculate age from date of birth string (format: "YYYY-MM-DD" or similar)
-  int _calculateAge(String? dobString) {
-    if (dobString == null || dobString.isEmpty) return 0;
-    try {
-      final dob = DateTime.parse(dobString);
-      final now = DateTime.now();
-      int age = now.year - dob.year;
-      if (now.month < dob.month ||
-          (now.month == dob.month && now.day < dob.day)) {
-        age--;
-      }
-      return age;
-    } catch (e) {
-      debugPrint("ProfileSelfViewModel: Error parsing DOB: $e");
-      return 0;
-    }
-  }
 
   /// Load profile data from backend
   Future<void> loadProfileData() async {
@@ -86,138 +65,35 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
 
       final uid = user.uid;
 
-      // Fetch user basic info
-      String name = "You";
-      int age = 0;
-      String? location;
-      List<ProfileSelfPhoto> photos = [];
+      final profileService = ref.read(profileServiceProvider);
+      final fetchedData = await profileService.fetchUserProfile(uid);
 
-      try {
-        final userResponse = await _dio.get(
-          '/api/users/getUser',
-          queryParameters: {'uid': uid},
-        );
-
-        final userData = userResponse.data as Map<String, dynamic>?;
-        if (userData != null) {
-          // Get name from basicDetails or root
-          final basicDetails =
-              userData['basicDetails'] as Map<String, dynamic>?;
-          name = basicDetails?['name'] as String? ??
-              userData['name'] as String? ??
-              "You";
-
-          // Calculate age from birthDate
-          final dobString = basicDetails?['birthDate'] as String?;
-          debugPrint(
-              "ProfileSelfViewModel: DOB string from server: $dobString");
-          age = _calculateAge(dobString);
-
-          // Get location
-          location = basicDetails?['location'] as String?;
-
-          // Get photos from specific image ID fields
-          final firstImageId = userData['firstImageId'] as String?;
-          if (firstImageId != null && firstImageId.isNotEmpty) {
-            photos.add(ProfileSelfPhoto(
-              id: firstImageId,
-              url:
-                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$firstImageId',
-              isPrimary: true,
-              backendSlot: 1,
-            ));
-          }
-
-          final secondImageId = userData['secondImageId'] as String?;
-          if (secondImageId != null && secondImageId.isNotEmpty) {
-            photos.add(ProfileSelfPhoto(
-              id: secondImageId,
-              url:
-                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$secondImageId',
-              isPrimary: false,
-              backendSlot: 2,
-            ));
-          }
-
-          final thirdImageId = userData['thirdImageId'] as String?;
-          if (thirdImageId != null && thirdImageId.isNotEmpty) {
-            photos.add(ProfileSelfPhoto(
-              id: thirdImageId,
-              url:
-                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$thirdImageId',
-              isPrimary: false,
-              backendSlot: 3,
-            ));
-          }
-
-          final fourthImageId = userData['fourthImageId'] as String?;
-          if (fourthImageId != null && fourthImageId.isNotEmpty) {
-            photos.add(ProfileSelfPhoto(
-              id: fourthImageId,
-              url:
-                  'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$fourthImageId',
-              isPrimary: false,
-              backendSlot: 4,
-            ));
-          }
-
-          debugPrint(
-              "ProfileSelfViewModel: Loaded user - name: $name, age: $age, photos: ${photos.length}");
-        }
-      } catch (e) {
-        debugPrint("ProfileSelfViewModel: Error fetching user data: $e");
-        rethrow;
+      if (fetchedData == null) {
+        throw Exception("Failed to fetch user profile data");
       }
 
-      // Fetch curated profile from API
-      CuratedProfile? curatedProfile;
-      try {
-        curatedProfile = await _onboardingRepository.getCuratedProfile();
-        debugPrint(
-            "ProfileSelfViewModel: Curated profile fetched - traits: ${curatedProfile?.personalityTraits}, interests: ${curatedProfile?.interests}");
-      } catch (e) {
-        debugPrint("ProfileSelfViewModel: Error fetching curated profile: $e");
-      }
+      final selfPhotos = fetchedData.photos
+          .map((p) => ProfileSelfPhoto(
+                id: p.id ?? '',
+                url: p.url,
+                isPrimary: p.backendSlot == 1,
+                backendSlot: p.backendSlot ?? 1,
+              ))
+          .toList();
 
-      // Build "About Me" text from curated profile
-      String aboutMe =
-          "Complete your onboarding to see your AI-generated profile summary.";
-      if (curatedProfile != null) {
-        // Use stored aboutMe if available, otherwise generate from traits/interests
-        if (curatedProfile.aboutMe != null &&
-            curatedProfile.aboutMe!.isNotEmpty) {
-          aboutMe = curatedProfile.aboutMe!;
-        } else {
-          final traits = curatedProfile.personalityTraits;
-          final interests = curatedProfile.interests;
-          if (traits.isNotEmpty || interests.isNotEmpty) {
-            final traitsPart =
-                traits.isNotEmpty ? "I'm ${traits.join(', ')}." : "";
-            final interestsPart =
-                interests.isNotEmpty ? "I love ${interests.join(', ')}." : "";
-            aboutMe = [traitsPart, interestsPart]
-                .where((s) => s.isNotEmpty)
-                .join(" ");
-          }
-        }
-      }
-
-      // Build profile data
       final profileData = ProfileSelfData(
         id: uid,
-        name: name,
-        age: age,
-        location: location,
-        photos: photos,
-        aboutMe: aboutMe,
-        interests: curatedProfile?.interests ?? [],
-        conversationStyleTitle: curatedProfile != null
+        name: fetchedData.name,
+        age: fetchedData.age,
+        location: fetchedData.location,
+        photos: selfPhotos,
+        aboutMe: fetchedData.bio,
+        interests: fetchedData.interests,
+        conversationStyleTitle: fetchedData.onboardingStatus == 'COMPLETED'
             ? "Your Conversation Style"
             : "Not yet analyzed",
-        conversationStyleDescription: curatedProfile
-                ?.conversationStyleDescription ??
-            "Complete your onboarding to see your AI-generated conversation style.",
-        personalityTraits: curatedProfile?.personalityTraits ?? [],
+        conversationStyleDescription: fetchedData.conversationStyle ?? '',
+        personalityTraits: fetchedData.traits,
       );
 
       // Check verification status

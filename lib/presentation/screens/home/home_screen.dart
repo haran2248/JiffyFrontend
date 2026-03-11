@@ -10,7 +10,8 @@ import 'package:jiffy/presentation/screens/home/viewmodels/home_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/presentation/screens/home/widgets/story_item_widget.dart';
 import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.dart';
-import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
+import 'package:jiffy/core/services/profile_service.dart';
+import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
@@ -63,6 +64,7 @@ class HomeScreen extends ConsumerWidget {
                         _buildSuggestionsSection(
                           context,
                           state.data!.suggestions,
+                          ref,
                         ),
 
                         const SizedBox(height: 24),
@@ -82,6 +84,7 @@ class HomeScreen extends ConsumerWidget {
                         _buildCurrentMatchesSection(
                           context,
                           state.data!.matches,
+                          ref,
                         ),
 
                         const SizedBox(height: 80), // Space for bottom nav
@@ -457,7 +460,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildSuggestionsSection(
-      BuildContext context, List<SuggestionCard> suggestions) {
+    BuildContext context,
+    List<SuggestionCard> suggestions,
+    WidgetRef ref,
+  ) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -471,7 +477,7 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Suggestions for the Day',
+                  'Suggestions',
                   style: textTheme.headlineSmall?.copyWith(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
@@ -482,7 +488,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: () => context.pushNamed(RouteNames.discover),
+                onPressed: null,
                 child: Text(
                   "See All",
                   style: textTheme.labelLarge?.copyWith(
@@ -494,8 +500,18 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (suggestions.isEmpty)
-            // Empty state
-            Center(
+            // Empty state for suggestions
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 32),
                 child: Column(
@@ -536,18 +552,47 @@ class HomeScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   return SuggestionCardWidget(
                     suggestion: suggestions[index],
-                    onTap: () {
-                      final profile =
-                          ProfileHelpers.suggestionCardToProfileData(
-                        suggestions[index],
+                    onTap: () async {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
                       );
-                      context.navigation.pushNamed(
-                        RouteNames.profileView,
-                        pathParameters: {
-                          RouteParams.userId: suggestions[index].userId,
-                        },
-                        extra: profile,
-                      );
+                      try {
+                        final profileService = ref.read(profileServiceProvider);
+                        final profileData = await profileService
+                            .fetchUserProfile(suggestions[index].userId);
+                        if (context.mounted)
+                          Navigator.of(context, rootNavigator: true)
+                              .pop(); // pop loading
+                        if (profileData != null && context.mounted) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            useRootNavigator: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => ProfileViewScreen(
+                              profile: profileData,
+                              isPreview: false,
+                            ),
+                          );
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Could not load profile')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          Navigator.of(context, rootNavigator: true)
+                              .pop(); // pop loading
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Error loading profile: $e')),
+                          );
+                        }
+                      }
                     },
                   );
                 },
@@ -601,7 +646,7 @@ class HomeScreen extends ConsumerWidget {
   */
 
   Widget _buildCurrentMatchesSection(
-      BuildContext context, List<SuggestionCard> matches) {
+      BuildContext context, List<SuggestionCard> matches, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -647,17 +692,45 @@ class HomeScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 return SuggestionCardWidget(
                   suggestion: matches[index],
-                  onTap: () {
-                    final profile = ProfileHelpers.suggestionCardToProfileData(
-                      matches[index],
+                  onTap: () async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) =>
+                          const Center(child: CircularProgressIndicator()),
                     );
-                    context.navigation.pushNamed(
-                      RouteNames.profileView,
-                      pathParameters: {
-                        RouteParams.userId: matches[index].userId,
-                      },
-                      extra: profile,
-                    );
+                    try {
+                      final profileService = ref.read(profileServiceProvider);
+                      final profileData = await profileService
+                          .fetchUserProfile(matches[index].userId);
+                      if (context.mounted)
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // pop loading
+                      if (profileData != null && context.mounted) {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          useRootNavigator: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => ProfileViewScreen(
+                            profile: profileData,
+                            isPreview: false,
+                          ),
+                        );
+                      } else if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Could not load profile')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        Navigator.of(context, rootNavigator: true).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error loading profile: $e')),
+                        );
+                      }
+                    }
                   },
                 );
               },
