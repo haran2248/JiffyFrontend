@@ -81,34 +81,18 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
               ))
           .toList();
 
-      String aboutMe = fetchedData.bio;
-      if (aboutMe.isEmpty) {
-        final traits = fetchedData.traits;
-        final interests = fetchedData.interests;
-        if (traits.isNotEmpty || interests.isNotEmpty) {
-          aboutMe = [
-            traits.isNotEmpty ? "I'm ${traits.join(', ')}." : "",
-            interests.isNotEmpty ? "I love ${interests.join(', ')}." : ""
-          ].where((s) => s.isNotEmpty).join(" ");
-        } else {
-          aboutMe =
-              "Complete your onboarding to see your AI-generated profile summary.";
-        }
-      }
-
       final profileData = ProfileSelfData(
         id: uid,
         name: fetchedData.name,
         age: fetchedData.age,
         location: fetchedData.location,
         photos: selfPhotos,
-        aboutMe: aboutMe,
+        aboutMe: fetchedData.bio,
         interests: fetchedData.interests,
         conversationStyleTitle: fetchedData.onboardingStatus == 'COMPLETED'
             ? "Your Conversation Style"
             : "Not yet analyzed",
-        conversationStyleDescription: fetchedData.conversationStyle ??
-            "Complete your onboarding to see your AI-generated conversation style.",
+        conversationStyleDescription: fetchedData.conversationStyle ?? '',
         personalityTraits: fetchedData.traits,
       );
 

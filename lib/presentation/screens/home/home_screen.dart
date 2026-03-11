@@ -488,7 +488,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: () {},
+                onPressed: null,
                 child: Text(
                   "See All",
                   style: textTheme.labelLarge?.copyWith(
@@ -564,7 +564,8 @@ class HomeScreen extends ConsumerWidget {
                         final profileData = await profileService
                             .fetchUserProfile(suggestions[index].userId);
                         if (context.mounted)
-                          Navigator.pop(context); // pop loading
+                          Navigator.of(context, rootNavigator: true)
+                              .pop(); // pop loading
                         if (profileData != null && context.mounted) {
                           showModalBottomSheet(
                             context: context,
@@ -584,7 +585,8 @@ class HomeScreen extends ConsumerWidget {
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          Navigator.pop(context); // pop loading
+                          Navigator.of(context, rootNavigator: true)
+                              .pop(); // pop loading
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text('Error loading profile: $e')),
@@ -702,7 +704,8 @@ class HomeScreen extends ConsumerWidget {
                       final profileData = await profileService
                           .fetchUserProfile(matches[index].userId);
                       if (context.mounted)
-                        Navigator.pop(context); // pop loading
+                        Navigator.of(context, rootNavigator: true)
+                            .pop(); // pop loading
                       if (profileData != null && context.mounted) {
                         showModalBottomSheet(
                           context: context,
@@ -722,7 +725,7 @@ class HomeScreen extends ConsumerWidget {
                       }
                     } catch (e) {
                       if (context.mounted) {
-                        Navigator.pop(context); // pop loading
+                        Navigator.of(context, rootNavigator: true).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error loading profile: $e')),
                         );

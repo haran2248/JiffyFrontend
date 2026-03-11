@@ -62,7 +62,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         avatarUrl = fetchedData.photos.first.url;
       }
 
-      final onboardingStatus = fetchedData.onboardingStatus ?? '';
+      final onboardingStatus = fetchedData.onboardingStatus;
 
       // If onboarding chat was not completed, show placeholder instead of
       // generating from insufficient data.
