@@ -39,7 +39,10 @@ class BasicsViewModel extends _$BasicsViewModel {
   }
 
   bool get isStep1Valid =>
-      state.firstName != null && state.firstName!.isNotEmpty;
+      state.firstName != null &&
+      state.firstName!.isNotEmpty &&
+      state.photoUrl != null &&
+      state.photoUrl!.isNotEmpty;
 
   bool get isStep2Valid =>
       state.dateOfBirth != null &&
