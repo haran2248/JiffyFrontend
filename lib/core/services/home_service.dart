@@ -81,14 +81,11 @@ class HomeService {
         );
         final userData = userResp.data as Map<String, dynamic>?;
         if (userData != null) {
-          // Prefer firstImageId, fallback to first entry in imageIds list
+          // Prefer firstImageId
           final firstImageId = userData['firstImageId'] as String?;
-          final imageIds = userData['imageIds'] as List?;
           final imageId = (firstImageId != null && firstImageId.isNotEmpty)
               ? firstImageId
-              : (imageIds != null && imageIds.isNotEmpty)
-                  ? imageIds[0]?.toString()
-                  : null;
+              : null;
           if (imageId != null && imageId.isNotEmpty) {
             currentUserImageUrl =
                 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$imageId';
