@@ -60,15 +60,19 @@ class ReferralViewModel extends _$ReferralViewModel {
 
       await repository.activateReferral(state.code.trim(), userId);
       
+      if (!ref.mounted) return false;
+      
       state = state.copyWith(isLoading: false);
       return true;
     } on ApiError catch (e) {
+      if (!ref.mounted) return false;
       state = state.copyWith(
         isLoading: false,
         error: () => e.message,
       );
       return false;
     } catch (e) {
+      if (!ref.mounted) return false;
       state = state.copyWith(
         isLoading: false,
         error: () => 'An unexpected error occurred. Please try again.',
