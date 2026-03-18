@@ -6,6 +6,7 @@ import 'package:jiffy/presentation/screens/home/home_screen.dart';
 import 'package:jiffy/presentation/screens/login/login_screen.dart';
 import 'package:jiffy/presentation/screens/splash/splash_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/referral/referral_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
@@ -121,9 +122,21 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.onboardingBasics,
         name: 'basics',
+        pageBuilder: (context, state) {
+          final hideBackButtonStr = state.uri.queryParameters['hideBackButton'];
+          final hideBackButton = hideBackButtonStr == 'true';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: BasicsScreen(hideBackButton: hideBackButton),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingReferral,
+        name: RouteNames.onboardingReferral,
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const BasicsScreen(),
+          child: const ReferralScreen(),
         ),
       ),
       GoRoute(
