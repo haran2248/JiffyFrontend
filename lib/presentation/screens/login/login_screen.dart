@@ -71,9 +71,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _hasNavigated = false;
           return false; // Stay on login screen
         } else {
-          // For transient failures, stay on login to allow retry without
-          // triggering outer catch which routes to phone verification
-          debugPrint('LoginScreen: Transient error, staying on login');
+          // Sign out so the user isn't permanently trapped on the loading spinner
+          debugPrint('LoginScreen: Transient error, signing out to allow fresh retry');
+          await authRepo.signOut();
+          ref.read(authViewModelProvider.notifier).setError('Connection timed out. Please try again.');
+          _hasNavigated = false;
           return false;
         }
       }
@@ -119,7 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Phone is verified, route to the appropriate onboarding step
       if (step == 'basics') {
         debugPrint('LoginScreen: Phone verified, needs basics onboarding');
-        context.goToRoute(AppRoutes.onboardingBasics);
+        context.goToRoute(AppRoutes.onboardingReferral);
       } else if (step == 'chat') {
         debugPrint('LoginScreen: Basics done, needs chat onboarding');
         // Check if user has already started chat onboarding (CONTEXT_STORED or ANSWERS_STORED)
@@ -141,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else {
         // Unknown step, default to basics
         debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');
-        context.goToRoute(AppRoutes.onboardingBasics);
+        context.goToRoute(AppRoutes.onboardingReferral);
       }
       return true;
     } catch (e) {
