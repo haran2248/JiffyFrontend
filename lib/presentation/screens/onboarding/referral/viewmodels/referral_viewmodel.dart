@@ -41,7 +41,7 @@ class ReferralViewModel extends _$ReferralViewModel {
   }
 
   Future<bool> submitCode() async {
-    if (state.code.trim().isEmpty) return false;
+    if (state.isLoading || state.code.trim().isEmpty) return false;
 
     state = state.copyWith(isLoading: true, error: () => null);
 
