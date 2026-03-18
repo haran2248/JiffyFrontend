@@ -1,6 +1,6 @@
 enum GenderPreference {
-  women('Women'),
-  men('Men'),
+  women('Woman'),
+  men('Man'),
   nonBinary('Non-binary'),
   everyone('Everyone');
 

@@ -55,6 +55,42 @@ class OnboardingRepository {
     }
   }
 
+  /// Saves professional details (college, company).
+  /// Endpoint: POST /professionalDetails
+  Future<void> saveProfessionalDetails(String? college, String? company) async {
+    try {
+      final user = _authRepo.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      final uid = user.uid;
+      final response = await _dio.post(
+        '/api/users/professionalDetails',
+        data: {
+          'college': college,
+          'work': company,
+        },
+        queryParameters: {'uid': uid},
+      );
+
+      if (response.statusCode == null ||
+          response.statusCode! < 200 ||
+          response.statusCode! >= 300) {
+        throw Exception(
+            "Failed to save professional details: ${response.statusCode}");
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            "Failed to save professional details: ${e.response?.statusCode} - ${e.response?.data}");
+      } else {
+        throw Exception(
+            "Network error saving professional details: ${e.message}");
+      }
+    } catch (e) {
+      throw Exception("Error saving professional details: $e");
+    }
+  }
+
   /// Uploads profile image to the server.
   /// Endpoint: POST /api/users/uploadImages (Index 1)
   ///           POST /api/users/uploadSecondImage (Index 2)

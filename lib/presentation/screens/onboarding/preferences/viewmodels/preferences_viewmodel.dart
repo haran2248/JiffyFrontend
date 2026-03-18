@@ -62,6 +62,12 @@ class PreferencesViewModel extends _$PreferencesViewModel {
         preferredGender: preferredGender,
       ));
 
+      // Save professional details separately
+      if ((basicsData.college != null && basicsData.college!.isNotEmpty) ||
+          (basicsData.work != null && basicsData.work!.isNotEmpty)) {
+        await repo.saveProfessionalDetails(basicsData.college, basicsData.work);
+      }
+
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

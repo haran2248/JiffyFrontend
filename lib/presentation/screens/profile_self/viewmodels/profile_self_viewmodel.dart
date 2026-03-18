@@ -86,6 +86,8 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         name: fetchedData.name,
         age: fetchedData.age,
         location: fetchedData.location,
+        college: fetchedData.college,
+        company: fetchedData.work,
         photos: selfPhotos,
         aboutMe: fetchedData.bio,
         interests: fetchedData.interests,
@@ -359,6 +361,8 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       name: currentData.name,
       age: currentData.age,
       location: currentData.location,
+      college: currentData.college,
+      work: currentData.company,
       bio: currentData.aboutMe,
       // Map photos: ProfileSelfPhoto -> Photo
       photos: currentData.photos

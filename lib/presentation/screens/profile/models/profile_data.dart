@@ -39,6 +39,8 @@ class ProfileData {
   final String name;
   final int age;
   final String? location; // e.g., "New York, NY"
+  final String? college;
+  final String? work;
   final List<Photo> photos; // Array of photos with URLs and captions
   final String bio;
   final String? relationshipPreview; // Full relationship preview text
@@ -57,6 +59,8 @@ class ProfileData {
     required this.name,
     required this.age,
     this.location,
+    this.college,
+    this.work,
     this.photos = const [],
     required this.bio,
     this.relationshipPreview,
@@ -74,6 +78,8 @@ class ProfileData {
     String? name,
     int? age,
     Object? location = _sentinel,
+    Object? college = _sentinel,
+    Object? work = _sentinel,
     List<Photo>? photos,
     String? bio,
     Object? relationshipPreview = _sentinel,
@@ -91,6 +97,9 @@ class ProfileData {
       age: age ?? this.age,
       location:
           identical(location, _sentinel) ? this.location : location as String?,
+      college:
+          identical(college, _sentinel) ? this.college : college as String?,
+      work: identical(work, _sentinel) ? this.work : work as String?,
       photos: photos ?? this.photos,
       bio: bio ?? this.bio,
       relationshipPreview: identical(relationshipPreview, _sentinel)

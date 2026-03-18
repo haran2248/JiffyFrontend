@@ -34,6 +34,8 @@ class ProfileSelfData {
   final String name;
   final int age;
   final String? location;
+  final String? college;
+  final String? company;
   final List<ProfileSelfPhoto> photos;
   final String aboutMe;
   final List<String> interests;
@@ -46,6 +48,8 @@ class ProfileSelfData {
     required this.name,
     required this.age,
     this.location,
+    this.college,
+    this.company,
     this.photos = const [],
     required this.aboutMe,
     this.interests = const [],
@@ -58,7 +62,9 @@ class ProfileSelfData {
     String? id,
     String? name,
     int? age,
-    String? Function()? location,
+    Object? location = const Object(),
+    Object? college = const Object(),
+    Object? company = const Object(),
     List<ProfileSelfPhoto>? photos,
     String? aboutMe,
     List<String>? interests,
@@ -66,11 +72,21 @@ class ProfileSelfData {
     String? conversationStyleTitle,
     String? conversationStyleDescription,
   }) {
+    // using a local sentinel since we can't easily import the private one
+    const sentinel = Object();
     return ProfileSelfData(
       id: id ?? this.id,
       name: name ?? this.name,
       age: age ?? this.age,
-      location: location != null ? location() : this.location,
+      location: identical(location, sentinel) && location is! String?
+          ? this.location
+          : location as String?,
+      college: identical(college, sentinel) && college is! String?
+          ? this.college
+          : college as String?,
+      company: identical(company, sentinel) && company is! String?
+          ? this.company
+          : company as String?,
       photos: photos ?? this.photos,
       aboutMe: aboutMe ?? this.aboutMe,
       interests: interests ?? this.interests,

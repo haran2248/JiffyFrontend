@@ -3,6 +3,8 @@ class BasicsFormData {
   final DateTime? dateOfBirth;
   final String? gender;
   final String? photoUrl;
+  final String? college;
+  final String? work;
   final int currentStep;
 
   const BasicsFormData({
@@ -10,6 +12,8 @@ class BasicsFormData {
     this.dateOfBirth,
     this.gender,
     this.photoUrl,
+    this.college,
+    this.work,
     this.currentStep = 1,
   });
 
@@ -18,6 +22,8 @@ class BasicsFormData {
     DateTime? dateOfBirth,
     String? gender,
     String? photoUrl,
+    String? college,
+    String? work,
     int? currentStep,
   }) {
     return BasicsFormData(
@@ -25,6 +31,8 @@ class BasicsFormData {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       photoUrl: photoUrl ?? this.photoUrl,
+      college: college ?? this.college,
+      work: work ?? this.work,
       currentStep: currentStep ?? this.currentStep,
     );
   }

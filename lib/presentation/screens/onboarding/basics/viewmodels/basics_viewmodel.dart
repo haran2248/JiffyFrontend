@@ -26,6 +26,14 @@ class BasicsViewModel extends _$BasicsViewModel {
     state = state.copyWith(photoUrl: url);
   }
 
+  void updateCollege(String? value) {
+    state = state.copyWith(college: value);
+  }
+
+  void updateWork(String? value) {
+    state = state.copyWith(work: value);
+  }
+
   void nextStep() {
     if (state.currentStep < 2) {
       state = state.copyWith(currentStep: state.currentStep + 1);
