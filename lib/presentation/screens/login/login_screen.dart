@@ -63,7 +63,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: Backend verification failed: $e');
         final apiError = (e is DioException && e.error is ApiError)
             ? e.error as ApiError
-            : null;
+            : (e is ApiError ? e : null);
+            
         if (apiError?.isAuthError == true) {
           // Only sign out on auth errors (invalid/expired session)
           debugPrint('LoginScreen: Signing out due to invalid session');
@@ -74,7 +75,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // Sign out so the user isn't permanently trapped on the loading spinner
           debugPrint('LoginScreen: Transient error, signing out to allow fresh retry');
           await authRepo.signOut();
-          ref.read(authViewModelProvider.notifier).setError('Connection timed out. Please try again.');
+          
+          final message = apiError?.message ?? 'An unexpected error occurred. Please try again.';
+          ref.read(authViewModelProvider.notifier).setError(message);
+          
           _hasNavigated = false;
           return false;
         }
