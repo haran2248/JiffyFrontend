@@ -162,7 +162,7 @@ class OtpVerificationScreen extends ConsumerWidget {
                 onTap: () async {
                   final success = await viewModel.verifyOtp();
                   if (success && context.mounted) {
-                    context.pushRoute(AppRoutes.onboardingBasics);
+                    context.pushRoute(AppRoutes.onboardingReferral);
                   }
                 },
               ),
