@@ -63,7 +63,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('LoginScreen: Backend verification failed: $e');
         final apiError = (e is DioException && e.error is ApiError)
             ? e.error as ApiError
-            : null;
+            : (e is ApiError ? e : null);
+            
         if (apiError?.isAuthError == true) {
           // Only sign out on auth errors (invalid/expired session)
           debugPrint('LoginScreen: Signing out due to invalid session');
@@ -71,9 +72,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _hasNavigated = false;
           return false; // Stay on login screen
         } else {
-          // For transient failures, stay on login to allow retry without
-          // triggering outer catch which routes to phone verification
-          debugPrint('LoginScreen: Transient error, staying on login');
+          // Sign out so the user isn't permanently trapped on the loading spinner
+          debugPrint('LoginScreen: Transient error, signing out to allow fresh retry');
+          await authRepo.signOut();
+          
+          final message = apiError?.message ?? 'An unexpected error occurred. Please try again.';
+          ref.read(authViewModelProvider.notifier).setError(message);
+          
+          _hasNavigated = false;
           return false;
         }
       }
@@ -119,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Phone is verified, route to the appropriate onboarding step
       if (step == 'basics') {
         debugPrint('LoginScreen: Phone verified, needs basics onboarding');
-        context.goToRoute(AppRoutes.onboardingBasics);
+        context.goToRoute(AppRoutes.onboardingReferral);
       } else if (step == 'chat') {
         debugPrint('LoginScreen: Basics done, needs chat onboarding');
         // Check if user has already started chat onboarding (CONTEXT_STORED or ANSWERS_STORED)
@@ -141,7 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else {
         // Unknown step, default to basics
         debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');
-        context.goToRoute(AppRoutes.onboardingBasics);
+        context.goToRoute(AppRoutes.onboardingReferral);
       }
       return true;
     } catch (e) {

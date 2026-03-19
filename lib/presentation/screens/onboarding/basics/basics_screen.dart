@@ -12,7 +12,8 @@ import 'widgets/name_photo_step.dart';
 import 'widgets/vitals_step.dart';
 
 class BasicsScreen extends ConsumerWidget {
-  const BasicsScreen({super.key});
+  final bool hideBackButton;
+  const BasicsScreen({super.key, this.hideBackButton = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,11 +22,13 @@ class BasicsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: BackButton(
-          onPressed: formData.currentStep > 1
-              ? viewModel.previousStep
-              : () => context.popRoute(),
-        ),
+        leading: (hideBackButton && formData.currentStep == 1)
+            ? const SizedBox.shrink()
+            : BackButton(
+                onPressed: formData.currentStep > 1
+                    ? viewModel.previousStep
+                    : () => context.popRoute(),
+              ),
         title: Text(formData.currentStep == 1 ? "Basics" : "A little more"),
         backgroundColor: Colors.transparent,
         elevation: 0,

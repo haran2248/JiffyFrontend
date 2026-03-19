@@ -187,4 +187,9 @@ class AuthViewModel extends _$AuthViewModel {
       state = state.copyWith(errorMessage: null);
     }
   }
+
+  /// Set an error message manually.
+  void setError(String message) {
+    state = state.copyWithError(message);
+  }
 }

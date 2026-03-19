@@ -12,6 +12,7 @@ class AppRoutes {
 
   // Onboarding flow
   static const String onboardingBasics = '/onboarding/basics';
+  static const String onboardingReferral = '/onboarding/referral';
   static const String onboardingCoPilotIntro = '/onboarding/co-pilot-intro';
   static const String onboardingProfileSetup = '/onboarding/profile-setup';
   static const String onboardingPermissions = '/onboarding/permissions';
@@ -44,6 +45,7 @@ class AppRoutes {
 /// Use these when calling pushNamed, replaceNamed, or goNamed.
 class RouteNames {
   static const String basics = 'basics';
+  static const String onboardingReferral = 'referral';
   static const String coPilotIntro = 'co-pilot-intro';
   static const String profileSetup = 'profile-setup';
   static const String permissions = 'permissions';
