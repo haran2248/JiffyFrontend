@@ -25,8 +25,19 @@ class ProfileCloseButton extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colorScheme.surface.withValues(alpha: 0.7),
+              color: colorScheme.surface,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Icon(
               Icons.close,
@@ -39,4 +50,3 @@ class ProfileCloseButton extends StatelessWidget {
     );
   }
 }
-

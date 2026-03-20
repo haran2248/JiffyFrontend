@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart';
 import 'package:jiffy/presentation/screens/chat/chat_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,12 +15,40 @@ import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart'
 import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jiffy/presentation/screens/home/widgets/first_time_story_prompt_sheet.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowStoryPrompt();
+    });
+  }
+
+  Future<void> _checkAndShowStoryPrompt() async {
+    if (!mounted) return;
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeen = prefs.getBool('has_seen_story_prompt') ?? false;
+
+    if (!hasSeen && mounted) {
+      await prefs.setBool('has_seen_story_prompt', true);
+      if (mounted) {
+        FirstTimeStoryPromptSheet.show(context);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(homeViewModelProvider);
     final viewModel = ref.read(homeViewModelProvider.notifier);
 
@@ -559,13 +586,13 @@ class HomeScreen extends ConsumerWidget {
                         builder: (context) =>
                             const Center(child: CircularProgressIndicator()),
                       );
+                      final navigator =
+                          Navigator.of(context, rootNavigator: true);
                       try {
                         final profileService = ref.read(profileServiceProvider);
                         final profileData = await profileService
                             .fetchUserProfile(suggestions[index].userId);
-                        if (context.mounted)
-                          Navigator.of(context, rootNavigator: true)
-                              .pop(); // pop loading
+                        navigator.pop(); // pop loading safely
                         if (profileData != null && context.mounted) {
                           showModalBottomSheet(
                             context: context,
@@ -584,9 +611,8 @@ class HomeScreen extends ConsumerWidget {
                           );
                         }
                       } catch (e) {
+                        navigator.pop(); // pop loading safely
                         if (context.mounted) {
-                          Navigator.of(context, rootNavigator: true)
-                              .pop(); // pop loading
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text('Error loading profile: $e')),
@@ -699,13 +725,13 @@ class HomeScreen extends ConsumerWidget {
                       builder: (context) =>
                           const Center(child: CircularProgressIndicator()),
                     );
+                    final navigator =
+                        Navigator.of(context, rootNavigator: true);
                     try {
                       final profileService = ref.read(profileServiceProvider);
                       final profileData = await profileService
                           .fetchUserProfile(matches[index].userId);
-                      if (context.mounted)
-                        Navigator.of(context, rootNavigator: true)
-                            .pop(); // pop loading
+                      navigator.pop(); // pop loading safely
                       if (profileData != null && context.mounted) {
                         showModalBottomSheet(
                           context: context,
@@ -724,8 +750,8 @@ class HomeScreen extends ConsumerWidget {
                         );
                       }
                     } catch (e) {
+                      navigator.pop(); // pop loading safely
                       if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error loading profile: $e')),
                         );
