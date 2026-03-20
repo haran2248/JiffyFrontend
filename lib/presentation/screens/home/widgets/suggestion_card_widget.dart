@@ -68,6 +68,7 @@ class SuggestionCardWidget extends StatelessWidget {
                             width: double.infinity,
                             height: 200,
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                             errorBuilder: (context, error, stackTrace) {
                               // Return transparent sized widget to maintain layout
                               // Base icon will show through from the layer below

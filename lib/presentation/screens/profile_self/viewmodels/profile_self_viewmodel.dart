@@ -383,6 +383,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ProfileViewScreen(
         profile: profileData,
