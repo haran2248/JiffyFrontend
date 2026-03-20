@@ -586,20 +586,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         builder: (context) =>
                             const Center(child: CircularProgressIndicator()),
                       );
+                      final navigator =
+                          Navigator.of(context, rootNavigator: true);
                       try {
                         final profileService = ref.read(profileServiceProvider);
                         final profileData = await profileService
                             .fetchUserProfile(suggestions[index].userId);
-                        if (context.mounted) {
-                          Navigator.of(context, rootNavigator: true)
-                              .pop(); // pop loading
-                        }
+                        navigator.pop(); // pop loading safely
                         if (profileData != null && context.mounted) {
                           showModalBottomSheet(
                             context: context,
                             isScrollControlled: true,
                             useRootNavigator: true,
-                            useSafeArea: true,
                             backgroundColor: Colors.transparent,
                             builder: (context) => ProfileViewScreen(
                               profile: profileData,
@@ -613,9 +611,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                         }
                       } catch (e) {
+                        navigator.pop(); // pop loading safely
                         if (context.mounted) {
-                          Navigator.of(context, rootNavigator: true)
-                              .pop(); // pop loading
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content: Text('Error loading profile: $e')),
@@ -728,20 +725,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       builder: (context) =>
                           const Center(child: CircularProgressIndicator()),
                     );
+                    final navigator =
+                        Navigator.of(context, rootNavigator: true);
                     try {
                       final profileService = ref.read(profileServiceProvider);
                       final profileData = await profileService
                           .fetchUserProfile(matches[index].userId);
-                      if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true)
-                            .pop(); // pop loading
-                      }
+                      navigator.pop(); // pop loading safely
                       if (profileData != null && context.mounted) {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
                           useRootNavigator: true,
-                          useSafeArea: true,
                           backgroundColor: Colors.transparent,
                           builder: (context) => ProfileViewScreen(
                             profile: profileData,
@@ -755,8 +750,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       }
                     } catch (e) {
+                      navigator.pop(); // pop loading safely
                       if (context.mounted) {
-                        Navigator.of(context, rootNavigator: true).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Error loading profile: $e')),
                         );

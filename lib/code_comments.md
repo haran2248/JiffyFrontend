@@ -1,9 +1,9 @@
 This is a comment left during a code review.
 
-**Path:** lib/core/services/phone_verification_service.dart
-**Line:** 79:79
+**Path:** lib/presentation/screens/home/home_screen.dart
+**Line:** 591:595
 **Comment:**
-	*Security: The new error logging prints the full HTTP response body, which can include sensitive user data (phone numbers, OTP codes, tokens, etc.) and may end up in logs or external logging systems, creating a potential information disclosure vulnerability; it's safer to log only high-level metadata like the status code and perhaps a minimal summary, not the entire `data` payload.
+	*Possible Bug: The loading dialog dismissal now depends on `mounted`, so if the widget is disposed while the async fetch runs, the spinner route can remain stuck on the root navigator. Capture the root navigator before awaiting and always pop it safely when the call finishes.
 
 Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
 
@@ -11,36 +11,47 @@ Validate the correctness of the flagged issue. If correct, How can I resolve thi
 
 This is a comment left during a code review.
 
-**Path:** lib/presentation/screens/login/login_screen.dart
-**Line:** 58:65
+**Path:** lib/presentation/screens/home/home_screen.dart
+**Line:** 733:737
 **Comment:**
-	*Logic Error: All exceptions from backend verification are currently treated as a stale session and cause an immediate sign-out, which means transient network or server errors will log the user out and prevent navigation, conflicting with the more tolerant behavior in the auth viewmodel and leading to unnecessary logouts on temporary backend issues.
+	*Possible Bug: This duplicate async profile flow has the same lifecycle issue: when the widget unmounts during the fetch, the loading dialog is not dismissed because pop is gated by `mounted`. Capture and reuse the root navigator so the dialog is always cleaned up.
 
 Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
 
 ----------------------
 
-In `@lib/core/services/phone_verification_service.dart` around lines 78 - 80, The
-current catch block in PhoneVerificationService logs the full HTTP response
-payload (e.response?.data), which can contain PII; update the debugPrint in the
-error handling to omit or redact the response body and only log safe metadata
-such as e.response?.statusCode (or a fixed placeholder like "<redacted>" for the
-body) so no phone numbers or UIDs are written to device logs; locate the logging
-in the PhoneVerificationService error/catch handler where e.response is
-referenced and replace the data interpolation with status-only or redacted text.
+This is a comment left during a code review.
 
-} catch (e) {
-  debugPrint('LoginScreen: Backend verification failed: $e');
-  final apiError = (e is DioException) ? e.error as ApiError? : null;
-  if (apiError?.isAuthError == true) {
-    // Only sign out on auth errors
-    debugPrint('LoginScreen: Signing out due to invalid session');
-    await authRepo.signOut();
-    _hasNavigated = false;
-    return false;
-  } else {
-    // For transient failures, stay on login to allow retry
-    debugPrint('LoginScreen: Transient error, staying on login');
-    return false;
-  }
-}
+**Path:** lib/presentation/screens/home/widgets/first_time_story_prompt_sheet.dart
+**Line:** 76:79
+**Comment:**
+	*Possible Bug: This handler pops the bottom sheet and then immediately uses the same sheet `BuildContext` for navigation. After `pop`, that context can be deactivated, which can trigger runtime ancestor lookup/navigation errors. Capture a stable navigator context before popping and navigate with that instead.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+
+----------------------
+
+Verify each finding against the current code and only fix it if needed.
+
+In `@lib/presentation/screens/home/home_screen.dart` around lines 598 - 603,
+Remove the redundant useSafeArea parameter from the two showModalBottomSheet
+calls that present ProfileViewScreen (which already wraps its UI in a SafeArea).
+Locate the two invocations of showModalBottomSheet in home_screen.dart and
+delete the useSafeArea: true argument from each call so the inner
+ProfileViewScreen's SafeArea handles insets exclusively.
+
+----------------------
+
+Verify each finding against the current code and only fix it if needed.
+
+In `@lib/presentation/screens/home/widgets/first_time_story_prompt_sheet.dart`
+around lines 10 - 16, The sheet is using the sheet's (deactivated) context for
+navigation after pop; fix by capturing a stable parent context before calling
+showModalBottomSheet in FirstTimeStoryPromptSheet.show (e.g. final parentContext
+= context) and use that parentContext for any navigation after dismissing the
+sheet (the primary CTA logic inside FirstTimeStoryPromptSheet should call
+Navigator.pop(sheetContext) or Navigator.of(sheetContext).pop(), then call
+GoRouter.of(parentContext).pushRoute(...) or similar using parentContext).
+Update references in the primary CTA handler to use the captured parentContext
+instead of the sheet's builder context so ancestor lookups (pushRoute) run
+against a live context.

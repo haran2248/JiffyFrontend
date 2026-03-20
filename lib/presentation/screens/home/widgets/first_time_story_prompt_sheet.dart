@@ -5,14 +5,17 @@ import 'package:jiffy/presentation/widgets/button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FirstTimeStoryPromptSheet extends StatelessWidget {
-  const FirstTimeStoryPromptSheet({super.key});
+  final BuildContext parentContext;
+
+  const FirstTimeStoryPromptSheet({super.key, required this.parentContext});
 
   static Future<void> show(BuildContext context) {
+    final parentCtx = context;
     return showModalBottomSheet<void>(
-      context: context,
+      context: parentCtx,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const FirstTimeStoryPromptSheet(),
+      builder: (context) => FirstTimeStoryPromptSheet(parentContext: parentCtx),
     );
   }
 
@@ -75,8 +78,10 @@ class FirstTimeStoryPromptSheet extends StatelessWidget {
                   onTap: () {
                     // Close the sheet
                     Navigator.of(context).pop();
-                    // Navigate to story creation
-                    context.pushRoute(AppRoutes.storyCreation);
+                    // Navigate to story creation using stable parent context
+                    if (parentContext.mounted) {
+                      parentContext.pushRoute(AppRoutes.storyCreation);
+                    }
                   },
                 ),
               ),
