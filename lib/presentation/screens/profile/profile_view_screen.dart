@@ -195,119 +195,142 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: colorScheme.surface.withValues(alpha: 0.9),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Main content
-            SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
 
-                  // Main Profile Photo
-                  ProfileMainPhoto(profile: widget.profile),
+    // Bottom sheets often strip the top padding from MediaQuery.
+    // We restore the physical device padding here so the internal SafeArea works correctly.
+    final mq = MediaQuery.of(context);
+    final physicalPadding = MediaQueryData.fromView(View.of(context)).padding;
 
-                  const SizedBox(height: 16),
+    return MediaQuery(
+        data: mq.copyWith(
+          padding: EdgeInsets.only(
+            top: physicalPadding.top,
+            bottom: mq.padding.bottom,
+            left: mq.padding.left,
+            right: mq.padding.right,
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: colorScheme.surface,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                // Main content
+                SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
 
-                  // Content sections - Interleaved with photos
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. Relationship Preview
-                        ProfileRelationshipPreview(profile: widget.profile),
+                      // Main Profile Photo
+                      ProfileMainPhoto(profile: widget.profile),
 
-                        const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                        // 2. Bio
-                        ProfileBio(profile: widget.profile),
+                      // Content sections - Interleaved with photos
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 1. Relationship Preview
+                            ProfileRelationshipPreview(profile: widget.profile),
 
-                        const SizedBox(height: 24),
+                            const SizedBox(height: 16),
 
-                        // 3. Second Photo (if available)
-                        // Photos array: [0] = primary (displayed above), [1] = second, [2] = third, [3] = fourth
-                        if (widget.profile.photos.length > 1)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: PhotoWithCaption(
-                              photoUrl: widget.profile.photos[1].url,
-                              caption: widget.profile.photos[1].caption,
-                            ),
-                          ),
+                            // 2. Bio
+                            ProfileBio(profile: widget.profile),
 
-                        // 4. Personality & Values
-                        ProfilePersonalitySection(profile: widget.profile),
+                            const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
+                            // 3. Second Photo (if available)
+                            // Photos array: [0] = primary (displayed above), [1] = second, [2] = third, [3] = fourth
+                            if (widget.profile.photos.length > 1)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: PhotoWithCaption(
+                                  photoUrl: widget.profile.photos[1].url,
+                                  caption: widget.profile.photos[1].caption,
+                                ),
+                              ),
 
-                        // 5. Third Photo (if available)
-                        if (widget.profile.photos.length > 2)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: PhotoWithCaption(
-                              photoUrl: widget.profile.photos[2].url,
-                              caption: widget.profile.photos[2].caption,
-                            ),
-                          ),
+                            // 4. Personality & Values
+                            ProfilePersonalitySection(profile: widget.profile),
 
-                        // 6. Conversation Style
-                        ProfileConversationStyle(profile: widget.profile),
+                            const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
+                            // 5. Third Photo (if available)
+                            if (widget.profile.photos.length > 2)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: PhotoWithCaption(
+                                  photoUrl: widget.profile.photos[2].url,
+                                  caption: widget.profile.photos[2].caption,
+                                ),
+                              ),
 
-                        // 7. Fourth Photo (if available)
-                        if (widget.profile.photos.length > 3)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: PhotoWithCaption(
-                              photoUrl: widget.profile.photos[3].url,
-                              caption: widget.profile.photos[3].caption,
-                            ),
-                          ),
+                            // 6. Conversation Style
+                            ProfileConversationStyle(profile: widget.profile),
 
-                        // 8. Interests
-                        if (widget.profile.interests.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: _ProfileInterestsSection(
-                              interests: widget.profile.interests,
-                            ),
-                          ),
+                            const SizedBox(height: 24),
 
-                        // 9. Conversation Starter
-                        ProfileConversationStarter(profile: widget.profile),
+                            // 7. Fourth Photo (if available)
+                            if (widget.profile.photos.length > 3)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: PhotoWithCaption(
+                                  photoUrl: widget.profile.photos[3].url,
+                                  caption: widget.profile.photos[3].caption,
+                                ),
+                              ),
 
-                        // Spacer for sticky buttons (or safe area)
-                        SizedBox(height: widget.isPreview ? 24 : 120),
-                      ],
+                            // 8. Interests
+                            if (widget.profile.interests.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 24),
+                                child: _ProfileInterestsSection(
+                                  interests: widget.profile.interests,
+                                ),
+                              ),
+
+                            // 9. Conversation Starter
+                            ProfileConversationStarter(profile: widget.profile),
+
+                            // Spacer for sticky buttons (or safe area)
+                            SizedBox(height: widget.isPreview ? 24 : 120),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Close button - top right
+                ProfileCloseButton(onClose: _handleClose),
+
+                // Sticky Actions - bottom (only if not preview)
+                if (!widget.isPreview)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: ProfileStickyActions(
+                      onSparkConversation:
+                          _isSendingSpark ? () {} : _handleSparkConversation,
+                      onPass: _handlePass,
                     ),
                   ),
-                ],
-              ),
+                // Loading overlay for matching
+                if (_isSendingSpark)
+                  Container(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              ],
             ),
-
-            // Close button - top right
-            ProfileCloseButton(onClose: _handleClose),
-
-            // Sticky Actions - bottom (only if not preview)
-            if (!widget.isPreview)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: ProfileStickyActions(
-                  onSparkConversation:
-                      _isSendingSpark ? () {} : _handleSparkConversation,
-                  onPass: _handlePass,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 }
 
