@@ -34,7 +34,7 @@ class ChipCategory {
     return ChipCategory(
       id: json['id'] as String,
       title: json['title'] as String,
-      subtitle: json['subtitle'] as String,
+      subtitle: json['subtitle']?.toString() ?? '',
       options: optionsList,
     );
   }
