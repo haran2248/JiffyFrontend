@@ -32,7 +32,7 @@ class ChipCategory {
         .map((o) => ChipOption.fromJson(o as Map<String, dynamic>))
         .toList();
     return ChipCategory(
-      id: json['id'] as String,
+      id: json['id']?.toString() ?? '',
       title: json['title'] as String,
       subtitle: json['subtitle']?.toString() ?? '',
       options: optionsList,
