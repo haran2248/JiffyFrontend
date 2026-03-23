@@ -61,7 +61,7 @@ class PreferredGenderScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
-                                    ? Theme.of(context).primaryColor
+                                    ? Theme.of(context).colorScheme.primary
                                     : Colors.white12,
                                 width: isSelected ? 2 : 1,
                               ),
@@ -86,7 +86,9 @@ class PreferredGenderScreen extends ConsumerWidget {
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: isSelected
-                                          ? Theme.of(context).primaryColor
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
                                           : Colors.white24,
                                       width: 2,
                                     ),
@@ -100,7 +102,8 @@ class PreferredGenderScreen extends ConsumerWidget {
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               color: Theme.of(context)
-                                                  .primaryColor,
+                                                  .colorScheme
+                                                  .primary,
                                             ),
                                           ),
                                         )

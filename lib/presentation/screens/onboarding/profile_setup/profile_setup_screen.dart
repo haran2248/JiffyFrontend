@@ -112,10 +112,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         child: Column(
           children: [
             ProgressBar(
-              currentStep: formData.currentStep,
-              totalSteps: 3,
+              currentStep:
+                  (formData.messages.where((m) => m.isFromUser).length + 1)
+                      .clamp(1, 6),
+              totalSteps: 6,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                "Just be yourself. The more authentic you are, the better we can find your perfect matches.",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
             Expanded(
               child: Column(
                 children: [

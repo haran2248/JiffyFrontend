@@ -93,12 +93,8 @@ class BasicsScreen extends ConsumerWidget {
                     : VitalsStep(
                         selectedDateOfBirth: formData.dateOfBirth,
                         selectedGender: formData.gender,
-                        selectedCollege: formData.college,
-                        selectedWork: formData.work,
                         onDateOfBirthChanged: viewModel.updateDateOfBirth,
                         onGenderChanged: viewModel.updateGender,
-                        onCollegeChanged: viewModel.updateCollege,
-                        onWorkChanged: viewModel.updateWork,
                       ),
               ),
             ),
@@ -113,8 +109,8 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            context
-                                .pushRoute(AppRoutes.onboardingPreferredGender);
+                            context.pushRoute(
+                                AppRoutes.onboardingProfessionalDetails);
                           }
                         }
                       : () {},

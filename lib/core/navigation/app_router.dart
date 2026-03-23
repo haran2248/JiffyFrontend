@@ -7,6 +7,8 @@ import 'package:jiffy/presentation/screens/login/login_screen.dart';
 import 'package:jiffy/presentation/screens/splash/splash_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/referral/referral_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/pulse_check/pulse_check_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/professional_details/professional_details_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
@@ -137,6 +139,28 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const ReferralScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingPulseCheck,
+        name: RouteNames.pulseCheck,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PulseCheckScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingProfessionalDetails,
+        name: RouteNames.professionalDetails,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfessionalDetailsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         ),
       ),
       GoRoute(

@@ -165,7 +165,7 @@ class RelationshipGoalsScreen extends ConsumerWidget {
                   onTap: () async {
                     final success = await viewModel.saveRelationshipGoal();
                     if (success && context.mounted) {
-                      context.push(AppRoutes.onboardingCoPilotIntro);
+                      context.push(AppRoutes.onboardingPulseCheck);
                     }
                   },
                   isLoading: state.isLoading,

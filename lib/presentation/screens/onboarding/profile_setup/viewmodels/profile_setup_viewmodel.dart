@@ -1,48 +1,36 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../data/repository/onboarding_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:jiffy/core/services/chat_streaming_service.dart';
 import '../models/profile_setup_form_data.dart';
 
 part 'profile_setup_viewmodel.g.dart';
 
 @riverpod
 class ProfileSetupViewModel extends _$ProfileSetupViewModel {
-  Timer? _typingTimer;
-  final List<String> _currentQuestions = [];
-  final List<String> _currentAnswers = [];
-  int _currentQuestionIndex = 0;
+  StreamSubscription<String>? _streamSubscription;
   bool _isInitialized = false;
-  bool _onboardingComplete = false;
 
   @override
   ProfileSetupFormData build() {
     ref.onDispose(() {
-      _typingTimer?.cancel();
-      _typingTimer = null;
+      _streamSubscription?.cancel();
     });
 
-    // Initialize onboarding when viewmodel is created (using microtask for testability)
+    // Initialize onboarding when viewmodel is created
     Future.microtask(() {
       if (!_isInitialized) {
         _initializeOnboarding();
       }
     });
 
-    // Show initial welcome message
-    final initialMessage = ChatMessage(
-      text:
-          "Hey there! 👋 I'm here to help create your perfect profile. Let me get to know you better...",
-      isFromUser: false,
-      timestamp: DateTime.now(),
-    );
-
-    return ProfileSetupFormData(
-      messages: [initialMessage],
-      suggestedResponses: const [],
+    return const ProfileSetupFormData(
+      messages: [],
+      suggestedResponses: [],
       currentQuestion: null,
-      currentStep: 2, // Step 2 of 3
-      isTyping: true, // Show typing while initializing
+      currentStep: 2,
+      isTyping: true,
       showCompletionDialog: false,
     );
   }
@@ -51,79 +39,30 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    try {
-      debugPrint('🔄 Initializing onboarding...');
+    // Get the user's display name or fallback
+    final user = FirebaseAuth.instance.currentUser;
+    final userName = user?.displayName?.split(' ').first ?? 'there';
 
-      final repository = ref.read(onboardingRepositoryProvider);
+    final firstMessage = ChatMessage(
+      text:
+          "Hey $userName, we want to know you a bit better so that we can find you relevant matches, so tell me whats the craziest thing you have done lately?",
+      isFromUser: false,
+      timestamp: DateTime.now(),
+    );
 
-      // Get predefined answers from user's existing profile data
-      // These should come from earlier onboarding steps (basics, preferences, etc.)
-      final predefinedAnswers = await _getPredefinedAnswers();
-
-      if (predefinedAnswers.isEmpty) {
-        debugPrint(
-            '⚠️ No predefined answers found - using minimal fallback data');
-        // Fallback: Add minimal required data if user data is not available
-        // In production, this should rarely happen as predefined answers come from
-        // earlier onboarding steps (basics, preferences, etc.)
-        predefinedAnswers['name'] = 'User';
-      }
-
-      debugPrint(
-          '📝 Using predefined answers: ${predefinedAnswers.keys.toList()}');
-      final questions =
-          await repository.initializeOnboarding(predefinedAnswers);
-
-      debugPrint('✅ Received ${questions.length} onboarding questions');
-
-      // Store questions and reset tracking
-      _currentQuestions.clear();
-      _currentQuestions.addAll(questions);
-      _currentQuestionIndex = 0;
-      _currentAnswers.clear();
-
-      // Show first question as AI message
-      if (questions.isNotEmpty) {
-        final firstQuestion = ChatMessage(
-          text: questions[0],
-          isFromUser: false,
-          timestamp: DateTime.now(),
-        );
-
-        state = state.copyWith(
-          messages: [...state.messages, firstQuestion],
-          isTyping: false,
-          currentQuestion: questions[0],
-          suggestedResponses: const [], // No suggested responses for AI-generated questions
-        );
-      }
-    } catch (e, stackTrace) {
-      debugPrint('❌ Error initializing onboarding: $e');
-      debugPrint('Stack trace: $stackTrace');
-
-      // Fallback to error message
-      final errorMessage = ChatMessage(
-        text:
-            "Sorry, I'm having trouble connecting right now. Please try again later.",
-        isFromUser: false,
-        timestamp: DateTime.now(),
-      );
-
-      state = state.copyWith(
-        messages: [...state.messages, errorMessage],
-        isTyping: false,
-        suggestedResponses: const [],
-      );
-    }
+    // Inject the first app prompt and unlock input immediately
+    state = state.copyWith(
+      messages: [firstMessage],
+      isTyping: false,
+    );
   }
 
   void addUserMessage(String text) {
-    if (text.trim().isEmpty || _onboardingComplete) return;
-
-    // Don't accept answers if we don't have questions yet
-    if (!_isInitialized || _currentQuestions.isEmpty) {
+    debugPrint(
+        '💬 [ProfileSetupViewModel] addUserMessage called with: "$text"');
+    if (text.trim().isEmpty || state.isTyping) {
       debugPrint(
-          '⚠️ Cannot accept answer: initialized=$_isInitialized, questions=${_currentQuestions.length}');
+          '⚠️ [ProfileSetupViewModel] Message blocked. isEmpty: ${text.trim().isEmpty}, isTyping: ${state.isTyping}');
       return;
     }
 
@@ -133,141 +72,20 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
       timestamp: DateTime.now(),
     );
 
-    // Add answer to current batch
-    _currentAnswers.add(text.trim());
-
+    final nextMessages = [...state.messages, userMessage];
+    debugPrint(
+        '🔄 [ProfileSetupViewModel] Updating state with new user message');
     state = state.copyWith(
-      messages: [...state.messages, userMessage],
+      messages: nextMessages,
       userInput: () => null,
       clearUserInput: true,
     );
 
-    // Move to next question in current batch
-    _currentQuestionIndex++;
-
-    // Check if we've answered all questions in current batch
-    if (_currentQuestions.isEmpty) {
-      debugPrint('⚠️ No questions available yet - waiting for initialization');
-      return;
-    }
-
-    if (_currentQuestionIndex >= _currentQuestions.length) {
-      // All questions in this batch answered, submit and get next batch
-      _submitAnswersAndGetNextBatch();
-    } else {
-      // Show next question from current batch
-      _showNextQuestion();
-    }
-  }
-
-  void selectSuggestedResponse(String response) {
-    addUserMessage(response);
-  }
-
-  void updateUserInput(String? input) {
-    state = state.copyWith(userInput: () => input);
-  }
-
-  void _showNextQuestion() {
-    if (_currentQuestionIndex < _currentQuestions.length) {
-      final nextQuestion = _currentQuestions[_currentQuestionIndex];
-
-      // Set typing indicator
-      state = state.copyWith(isTyping: true);
-
-      // Show next question after short delay
-      _typingTimer?.cancel();
-      _typingTimer = Timer(const Duration(milliseconds: 800), () {
-        final questionMessage = ChatMessage(
-          text: nextQuestion,
-          isFromUser: false,
-          timestamp: DateTime.now(),
-        );
-
-        state = state.copyWith(
-          messages: [...state.messages, questionMessage],
-          isTyping: false,
-          currentQuestion: nextQuestion,
-          suggestedResponses: const [], // No suggested responses for AI-generated questions
-        );
-      });
-    }
-  }
-
-  Future<void> _submitAnswersAndGetNextBatch() async {
-    if (_onboardingComplete) return;
-
-    // Guard: Don't submit if we don't have questions or answers
-    if (_currentQuestions.isEmpty || _currentAnswers.isEmpty) {
+    // Hard cap the conversation at 6 user answers to prevent infinite loop
+    final userMessageCount = nextMessages.where((m) => m.isFromUser).length;
+    if (userMessageCount >= 6) {
       debugPrint(
-          '⚠️ Cannot submit: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
-      return;
-    }
-
-    // Ensure questions and answers arrays match in length
-    if (_currentQuestions.length != _currentAnswers.length) {
-      debugPrint(
-          '⚠️ Mismatch: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
-      // Only submit the matching pairs
-      final minLength = _currentQuestions.length < _currentAnswers.length
-          ? _currentQuestions.length
-          : _currentAnswers.length;
-      _currentQuestions.removeRange(minLength, _currentQuestions.length);
-      _currentAnswers.removeRange(minLength, _currentAnswers.length);
-    }
-
-    state = state.copyWith(isTyping: true);
-
-    try {
-      debugPrint('🔄 Submitting batch of ${_currentAnswers.length} answers...');
-      debugPrint('📝 Questions: ${_currentQuestions.join(", ")}');
-      debugPrint('📝 Answers: ${_currentAnswers.join(", ")}');
-      final repository = ref.read(onboardingRepositoryProvider);
-
-      // Submit current batch of answers
-      final result =
-          await repository.submitAnswers(_currentQuestions, _currentAnswers);
-
-      final nextQuestions = result['nextQuestions'] as List<String>? ?? [];
-      final isComplete = result['isComplete'] as bool? ??
-          false; // Default to false (more questions might come)
-
-      debugPrint(
-          '✅ Answers submitted. Next questions: ${nextQuestions.length}, isComplete: $isComplete');
-
-      // Check if we got next batch of questions
-      if (nextQuestions.isNotEmpty && !isComplete) {
-        debugPrint(
-            '✅ Starting next batch with ${nextQuestions.length} questions');
-
-        // Start new batch
-        _currentQuestions.clear();
-        _currentQuestions.addAll(nextQuestions);
-        _currentAnswers.clear();
-        _currentQuestionIndex = 0;
-
-        // Show first question of next batch after short delay
-        _typingTimer?.cancel();
-        _typingTimer = Timer(const Duration(milliseconds: 500), () {
-          final nextQuestion = ChatMessage(
-            text: nextQuestions[0],
-            isFromUser: false,
-            timestamp: DateTime.now(),
-          );
-
-          state = state.copyWith(
-            messages: [...state.messages, nextQuestion],
-            isTyping: false,
-            currentQuestion: nextQuestions[0],
-            suggestedResponses: const [], // No suggested responses for AI-generated questions
-          );
-        });
-        return;
-      }
-
-      // No more questions, onboarding complete
-      debugPrint('✅ Onboarding complete');
-      _onboardingComplete = true;
+          '✅ [ProfileSetupViewModel] Conversation cap reached. Ending onboarding natively.');
 
       final completionMessage = ChatMessage(
         text:
@@ -278,48 +96,78 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
 
       state = state.copyWith(
         messages: [...state.messages, completionMessage],
-        isTyping: false,
-        suggestedResponses: const [],
-        currentQuestion: null,
-        showCompletionDialog: true, // Show dialog with "Next" button
+        showCompletionDialog: true,
       );
-    } catch (e, stackTrace) {
-      debugPrint('❌ Error submitting answers: $e');
-      debugPrint('Stack trace: $stackTrace');
-
-      final errorMessage = ChatMessage(
-        text:
-            "Sorry, something went wrong saving your responses. Please try again.",
-        isFromUser: false,
-        timestamp: DateTime.now(),
-      );
-
-      state = state.copyWith(
-        messages: [...state.messages, errorMessage],
-        isTyping: false,
-        suggestedResponses: const [],
-      );
+    } else {
+      _startAssistantStream();
     }
   }
 
-  /// Get predefined answers from user's existing profile data
-  /// These should come from earlier onboarding steps (basics, preferences, etc.)
-  /// Returns empty map if no data is available (fallback will be used in caller)
-  Future<Map<String, String>> _getPredefinedAnswers() async {
-    try {
-      // TODO: Fetch user data from API and extract predefined answers
-      // This should include: name, gender, preferredGender, relationshipGoals, etc.
-      // from earlier onboarding screens
-      return <String, String>{};
-    } catch (e) {
-      debugPrint('⚠️ Error fetching predefined answers: $e');
-      return <String, String>{};
-    }
+  void _startAssistantStream() {
+    debugPrint('🚀 [ProfileSetupViewModel] _startAssistantStream initiated');
+    // 1. Prepare history mapped to role/content JSON expectations
+    final history = state.messages
+        .map((msg) => {
+              'role': msg.isFromUser ? 'user' : 'assistant',
+              'content': msg.text,
+            })
+        .toList();
+
+    // 2. Lock input and set typing indicator natively
+    state = state.copyWith(
+      isTyping: true, // Lock input while receiving stream
+    );
+
+    // 3. Initialize SSE Stream request
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
+    final chatService = ref.read(chatStreamingServiceProvider);
+
+    _streamSubscription?.cancel();
+    _streamSubscription =
+        chatService.streamQuestions(uid: uid, history: history).listen(
+      (chunk) {
+        final currentMessages = List<ChatMessage>.from(state.messages);
+
+        // If the last message was the user's, this is the first assistant token.
+        // We will instantiate the assistant bubble now!
+        if (currentMessages.isEmpty || currentMessages.last.isFromUser) {
+          currentMessages.add(ChatMessage(
+            text: chunk,
+            isFromUser: false,
+            timestamp: DateTime.now(),
+          ));
+        } else {
+          // Trailing assistant message exists, append chunk
+          final lastMsg = currentMessages.last;
+          currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
+            text: lastMsg.text + chunk,
+          );
+        }
+
+        // Setting state rapidly updates the UI to reflect new tokens
+        state = state.copyWith(messages: currentMessages);
+      },
+      onDone: () {
+        debugPrint('✅ [ProfileSetupViewModel] Stream completed natively');
+        // [DONE] payload resolves the stream, unlock input.
+        state = state.copyWith(isTyping: false);
+      },
+      onError: (e) {
+        debugPrint('❌ [ProfileSetupViewModel] Streaming error SSE: $e');
+        state = state.copyWith(isTyping: false);
+      },
+    );
+  }
+
+  void selectSuggestedResponse(String response) {
+    addUserMessage(response);
+  }
+
+  void updateUserInput(String? input) {
+    state = state.copyWith(userInput: () => input);
   }
 
   void nextStep() {
-    // Navigate to next step (permissions screen)
-    // This will be handled by navigation logic
     debugPrint('🚀 Navigating to next step (permissions)');
   }
 
@@ -328,7 +176,6 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
   }
 
   void skip() {
-    // Skip to next step
     nextStep();
   }
 }
