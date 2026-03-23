@@ -36,7 +36,7 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const ProgressBar(currentStep: 3, totalSteps: 5),
+                    const ProgressBar(currentStep: 2, totalSteps: 5),
                     const SizedBox(height: 32),
 
                     // Heading

@@ -36,7 +36,7 @@ class BasicsScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            ProgressBar(currentStep: 2, totalSteps: 4),
+            ProgressBar(currentStep: 1, totalSteps: 5),
             const SizedBox(height: 32),
             Expanded(
               child: SingleChildScrollView(

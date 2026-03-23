@@ -5,6 +5,7 @@ import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/widgets/button.dart';
+import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/pulse_check_viewmodel.dart';
 
 class PulseCheckScreen extends ConsumerWidget {
@@ -42,6 +43,7 @@ class PulseCheckScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const ProgressBar(currentStep: 5, totalSteps: 5),
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(

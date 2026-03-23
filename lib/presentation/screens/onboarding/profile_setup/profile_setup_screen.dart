@@ -108,63 +108,92 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            ProgressBar(
-              currentStep:
-                  (formData.messages.where((m) => m.isFromUser).length + 1)
-                      .clamp(1, 6),
-              totalSteps: 6,
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text(
-                "Just be yourself. The more authentic you are, the better we can find your perfect matches.",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      reverse: true,
-                      child: Column(
-                        children: [
-                          ChatMessageList(
-                            messages: formData.messages,
-                            isTyping: formData.isTyping,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                ProgressBar(
+                  currentStep:
+                      (formData.messages.where((m) => m.isFromUser).length + 1)
+                          .clamp(1, 6),
+                  totalSteps: 6,
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Text(
+                    "Just be yourself. The more authentic you are, the better we can find your perfect matches.",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          reverse: true,
+                          child: Column(
+                            children: [
+                              ChatMessageList(
+                                messages: formData.messages,
+                                isTyping: formData.isTyping,
+                              ),
+                              SuggestedResponses(
+                                responses: formData.suggestedResponses,
+                                onSelect: (response) {
+                                  viewModel.selectSuggestedResponse(response);
+                                },
+                              ),
+                            ],
                           ),
-                          SuggestedResponses(
-                            responses: formData.suggestedResponses,
-                            onSelect: (response) {
-                              viewModel.selectSuggestedResponse(response);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                      ChatInputField(
+                        initialValue: formData.userInput,
+                        onSend: (text) {
+                          viewModel.addUserMessage(text);
+                        },
+                        isEnabled: !formData.isTyping && !formData.isCompleting,
+                      ),
+                    ],
                   ),
-                  ChatInputField(
-                    initialValue: formData.userInput,
-                    onSend: (text) {
-                      viewModel.addUserMessage(text);
-                    },
-                    isEnabled: !formData.isTyping,
+                ),
+              ],
+            ),
+          ),
+          if (formData.isCompleting)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.6),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Finishing up your profile...',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

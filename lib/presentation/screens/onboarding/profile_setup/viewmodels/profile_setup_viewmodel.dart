@@ -57,7 +57,7 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     );
   }
 
-  void addUserMessage(String text) {
+  Future<void> addUserMessage(String text) async {
     debugPrint(
         '💬 [ProfileSetupViewModel] addUserMessage called with: "$text"');
     if (text.trim().isEmpty || state.isTyping) {
@@ -94,9 +94,31 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
         timestamp: DateTime.now(),
       );
 
+      // Notify backend that onboarding is complete
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
+      debugPrint(
+          '🏁 [ProfileSetupViewModel] Completion triggered for UID: $uid');
+      final chatService = ref.read(chatStreamingServiceProvider);
+      final history = nextMessages
+          .map((msg) => {
+                'role': msg.isFromUser ? 'user' : 'assistant',
+                'content': msg.text,
+              })
+          .toList();
+
+      state = state.copyWith(isCompleting: true);
+      try {
+        await chatService.completeOnboarding(uid: uid, history: history);
+        debugPrint(
+            '✅ [ProfileSetupViewModel] Onboarding marked complete on backend');
+      } catch (e) {
+        debugPrint('⚠️ [ProfileSetupViewModel] Completion call failed: $e');
+      }
+
       state = state.copyWith(
         messages: [...state.messages, completionMessage],
         showCompletionDialog: true,
+        isCompleting: false,
       );
     } else {
       _startAssistantStream();

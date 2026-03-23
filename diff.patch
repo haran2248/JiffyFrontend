@@ -1,0 +1,2184 @@
+diff --git a/android/app/build.gradle b/android/app/build.gradle
+index b92fae0..5197165 100644
+--- a/android/app/build.gradle
++++ b/android/app/build.gradle
+@@ -24,8 +24,8 @@ android {
+         applicationId = "com.jiffydating.app"
+         minSdk = flutter.minSdkVersion
+         targetSdk = 35
+-        versionCode = 44
+-        versionName = "1.0.44"
++        versionCode = 45
++        versionName = "1.0.45"
+         multiDexEnabled true
+     }
+ 
+diff --git a/lib/core/navigation/app_router.dart b/lib/core/navigation/app_router.dart
+index 1973211..3183cf1 100644
+--- a/lib/core/navigation/app_router.dart
++++ b/lib/core/navigation/app_router.dart
+@@ -7,6 +7,8 @@ import 'package:jiffy/presentation/screens/login/login_screen.dart';
+ import 'package:jiffy/presentation/screens/splash/splash_screen.dart';
+ import 'package:jiffy/presentation/screens/onboarding/basics/basics_screen.dart';
+ import 'package:jiffy/presentation/screens/onboarding/referral/referral_screen.dart';
++import 'package:jiffy/presentation/screens/onboarding/pulse_check/pulse_check_screen.dart';
++import 'package:jiffy/presentation/screens/onboarding/professional_details/professional_details_screen.dart';
+ import 'package:jiffy/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart';
+ import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_screen.dart';
+ import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
+@@ -139,6 +141,28 @@ GoRouter appRouter(Ref ref) {
+           child: const ReferralScreen(),
+         ),
+       ),
++      GoRoute(
++        path: AppRoutes.onboardingPulseCheck,
++        name: RouteNames.pulseCheck,
++        pageBuilder: (context, state) => CustomTransitionPage(
++          key: state.pageKey,
++          child: const PulseCheckScreen(),
++          transitionsBuilder: (context, animation, secondaryAnimation, child) {
++            return FadeTransition(opacity: animation, child: child);
++          },
++        ),
++      ),
++      GoRoute(
++        path: AppRoutes.onboardingProfessionalDetails,
++        name: RouteNames.professionalDetails,
++        pageBuilder: (context, state) => CustomTransitionPage(
++          key: state.pageKey,
++          child: const ProfessionalDetailsScreen(),
++          transitionsBuilder: (context, animation, secondaryAnimation, child) {
++            return FadeTransition(opacity: animation, child: child);
++          },
++        ),
++      ),
+       GoRoute(
+         path: AppRoutes.onboardingPreferredGender,
+         name: 'preferred-gender',
+diff --git a/lib/core/navigation/app_routes.dart b/lib/core/navigation/app_routes.dart
+index 4159727..d0b156a 100644
+--- a/lib/core/navigation/app_routes.dart
++++ b/lib/core/navigation/app_routes.dart
+@@ -13,7 +13,10 @@ class AppRoutes {
+   // Onboarding flow
+   static const String onboardingBasics = '/onboarding/basics';
+   static const String onboardingReferral = '/onboarding/referral';
++  static const String onboardingPulseCheck = '/onboarding/pulse-check';
+   static const String onboardingCoPilotIntro = '/onboarding/co-pilot-intro';
++  static const String onboardingProfessionalDetails =
++      '/onboarding/professional-details';
+   static const String onboardingProfileSetup = '/onboarding/profile-setup';
+   static const String onboardingPermissions = '/onboarding/permissions';
+   static const String phoneVerification = '/onboarding/phone-verification';
+@@ -46,7 +49,9 @@ class AppRoutes {
+ class RouteNames {
+   static const String basics = 'basics';
+   static const String onboardingReferral = 'referral';
++  static const String pulseCheck = 'pulse-check';
+   static const String coPilotIntro = 'co-pilot-intro';
++  static const String professionalDetails = 'professional-details';
+   static const String profileSetup = 'profile-setup';
+   static const String permissions = 'permissions';
+   static const String home = 'home';
+diff --git a/lib/core/services/chat_streaming_service.dart b/lib/core/services/chat_streaming_service.dart
+new file mode 100644
+index 0000000..4b2c121
+--- /dev/null
++++ b/lib/core/services/chat_streaming_service.dart
+@@ -0,0 +1,69 @@
++import 'dart:convert';
++import 'dart:async';
++import 'package:flutter/foundation.dart';
++import 'package:http/http.dart' as http;
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++
++final chatStreamingServiceProvider = Provider((ref) => ChatStreamingService());
++
++class ChatStreamingService {
++  final String _baseUrl = 'http://192.168.0.100:5003';
++
++  /// Streams chunks of the assistant's response via Server-Sent Events.
++  /// Converts the `text/event-stream` format (`data:{chunk}\n\n`) into a Stream<String>.
++  Stream<String> streamQuestions({
++    required String uid,
++    required List<Map<String, String>> history,
++  }) async* {
++    final client = http.Client();
++    try {
++      final uri =
++          Uri.parse('$_baseUrl/api/onboarding/stream-questions?uid=$uid');
++      debugPrint('🚀 [ChatStreamingService] Connecting to: $uri');
++
++      final request = http.Request('POST', uri);
++      request.headers['Content-Type'] = 'application/json';
++      request.body = jsonEncode(history);
++
++      debugPrint('📦 [ChatStreamingService] Payload: ${request.body}');
++
++      final response = await client.send(request);
++      debugPrint(
++          '📥 [ChatStreamingService] Response status: ${response.statusCode}');
++
++      if (response.statusCode != 200) {
++        final errorBody = await response.stream.bytesToString();
++        debugPrint('❌ [ChatStreamingService] Error body: $errorBody');
++        throw Exception('Failed to stream questions: ${response.statusCode}');
++      }
++
++      final stream = response.stream
++          .transform(utf8.decoder)
++          .transform(const LineSplitter());
++
++      await for (final line in stream) {
++        if (line.isEmpty) continue;
++
++        debugPrint('🌊 [ChatStreamingService] Received raw line: $line');
++
++        if (line.startsWith('data:')) {
++          String data = line.substring(5); // Remove 'data:' prefix
++          // Removed the SSE delimiter space logic, as the backend drops raw payload right after the colon
++
++          if (data.trim() == '[DONE]') {
++            debugPrint('✅ [ChatStreamingService] [DONE] signal received');
++            break;
++          }
++
++          yield data;
++        }
++      }
++    } catch (e, st) {
++      debugPrint('❌ [ChatStreamingService] Exception caught: $e\n$st');
++      rethrow;
++    } finally {
++      debugPrint('🔌 [ChatStreamingService] Closing client stream');
++      client.close();
++    }
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/basics/basics_screen.dart b/lib/presentation/screens/onboarding/basics/basics_screen.dart
+index 949653e..f1f84ca 100644
+--- a/lib/presentation/screens/onboarding/basics/basics_screen.dart
++++ b/lib/presentation/screens/onboarding/basics/basics_screen.dart
+@@ -93,12 +93,8 @@ class BasicsScreen extends ConsumerWidget {
+                     : VitalsStep(
+                         selectedDateOfBirth: formData.dateOfBirth,
+                         selectedGender: formData.gender,
+-                        selectedCollege: formData.college,
+-                        selectedWork: formData.work,
+                         onDateOfBirthChanged: viewModel.updateDateOfBirth,
+                         onGenderChanged: viewModel.updateGender,
+-                        onCollegeChanged: viewModel.updateCollege,
+-                        onWorkChanged: viewModel.updateWork,
+                       ),
+               ),
+             ),
+@@ -113,8 +109,8 @@ class BasicsScreen extends ConsumerWidget {
+                           if (formData.currentStep == 1) {
+                             viewModel.nextStep();
+                           } else {
+-                            context
+-                                .pushRoute(AppRoutes.onboardingPreferredGender);
++                            context.pushRoute(
++                                AppRoutes.onboardingProfessionalDetails);
+                           }
+                         }
+                       : () {},
+diff --git a/lib/presentation/screens/onboarding/basics/widgets/photo_upload_section.dart b/lib/presentation/screens/onboarding/basics/widgets/photo_upload_section.dart
+index 9c92662..a8ddc1d 100644
+--- a/lib/presentation/screens/onboarding/basics/widgets/photo_upload_section.dart
++++ b/lib/presentation/screens/onboarding/basics/widgets/photo_upload_section.dart
+@@ -24,7 +24,7 @@ class PhotoUploadSection extends StatelessWidget {
+           ),
+           const SizedBox(height: 24),
+           Text(
+-            "Add your photo to get started",
++            "Add your cutest photo here",
+             textAlign: TextAlign.center,
+             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+diff --git a/lib/presentation/screens/onboarding/basics/widgets/vitals_step.dart b/lib/presentation/screens/onboarding/basics/widgets/vitals_step.dart
+index 6b0bf84..0d57a85 100644
+--- a/lib/presentation/screens/onboarding/basics/widgets/vitals_step.dart
++++ b/lib/presentation/screens/onboarding/basics/widgets/vitals_step.dart
+@@ -5,23 +5,15 @@ import '../../../../widgets/option_picker_field.dart';
+ class VitalsStep extends StatelessWidget {
+   final DateTime? selectedDateOfBirth;
+   final String? selectedGender;
+-  final String? selectedCollege;
+-  final String? selectedWork;
+   final ValueChanged<DateTime?>? onDateOfBirthChanged;
+   final ValueChanged<String?>? onGenderChanged;
+-  final ValueChanged<String>? onCollegeChanged;
+-  final ValueChanged<String>? onWorkChanged;
+ 
+   const VitalsStep({
+     super.key,
+     this.selectedDateOfBirth,
+     this.selectedGender,
+-    this.selectedCollege,
+-    this.selectedWork,
+     this.onDateOfBirthChanged,
+     this.onGenderChanged,
+-    this.onCollegeChanged,
+-    this.onWorkChanged,
+   });
+ 
+   @override
+@@ -49,24 +41,6 @@ class VitalsStep extends StatelessWidget {
+           ],
+           onChanged: onGenderChanged,
+         ),
+-        const SizedBox(height: 24),
+-        TextFormField(
+-          initialValue: selectedCollege,
+-          decoration: const InputDecoration(
+-            labelText: 'College/University (Optional)',
+-            hintText: 'Where did you study?',
+-          ),
+-          onChanged: onCollegeChanged,
+-        ),
+-        const SizedBox(height: 24),
+-        TextFormField(
+-          initialValue: selectedWork,
+-          decoration: const InputDecoration(
+-            labelText: 'Work/Company (Optional)',
+-            hintText: 'Where do you work?',
+-          ),
+-          onChanged: onWorkChanged,
+-        ),
+       ],
+     );
+   }
+diff --git a/lib/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart b/lib/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart
+index 9f420ae..dea7c36 100644
+--- a/lib/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart
++++ b/lib/presentation/screens/onboarding/co_pilot_intro/co_pilot_intro_screen.dart
+@@ -1,85 +1,378 @@
+ import 'package:flutter/material.dart';
++import 'package:flutter_animate/flutter_animate.dart';
+ import 'package:jiffy/core/navigation/navigation_service.dart';
+ import 'package:jiffy/core/navigation/app_routes.dart';
++import 'package:jiffy/core/theme/app_colors.dart';
+ import '../../../widgets/button.dart';
+-import '../../../widgets/progress_bar.dart';
+-import 'widgets/feature_item.dart';
+-import 'widgets/demo_section.dart';
+ 
+ class CoPilotIntroScreen extends StatelessWidget {
+   const CoPilotIntroScreen({super.key});
+ 
+   @override
+   Widget build(BuildContext context) {
+-    final colorScheme = Theme.of(context).colorScheme;
+     final textTheme = Theme.of(context).textTheme;
+ 
+     return Scaffold(
++      backgroundColor: const Color(0xFF141414), // Dark background from mockup
++      appBar: AppBar(
++        automaticallyImplyLeading: false,
++        backgroundColor: Colors.transparent,
++        elevation: 0,
++        title: Row(
++          children: [
++            // Simplified logo (three dots)
++            SizedBox(
++              width: 24,
++              height: 24,
++              child: Stack(
++                children: [
++                  Positioned(
++                    top: 2,
++                    left: 2,
++                    child: Container(
++                      width: 10,
++                      height: 10,
++                      decoration: const BoxDecoration(
++                        color: AppColors.primaryRaspberry,
++                        shape: BoxShape.circle,
++                      ),
++                    ),
++                  ),
++                  Positioned(
++                    bottom: 2,
++                    left: 2,
++                    child: Container(
++                      width: 12,
++                      height: 12,
++                      decoration: BoxDecoration(
++                        color:
++                            AppColors.primaryRaspberry.withValues(alpha: 0.7),
++                        shape: BoxShape.circle,
++                      ),
++                    ),
++                  ),
++                  Positioned(
++                    top: 6,
++                    right: 2,
++                    child: Container(
++                      width: 14,
++                      height: 14,
++                      decoration: const BoxDecoration(
++                        color: AppColors.primaryRaspberry,
++                        shape: BoxShape.circle,
++                      ),
++                    ),
++                  ),
++                ],
++              ),
++            ),
++            const SizedBox(width: 8),
++            Text(
++              "Jiffy",
++              style: textTheme.titleLarge?.copyWith(
++                color: AppColors.primaryRaspberry,
++                fontWeight: FontWeight.w900,
++                fontStyle: FontStyle.italic,
++                letterSpacing: -0.5,
++              ),
++            ),
++          ],
++        ),
++        actions: [
++          Container(
++            margin: const EdgeInsets.only(right: 16),
++            width: 32,
++            height: 32,
++            decoration: BoxDecoration(
++              color: Colors.white.withValues(alpha: 0.05),
++              shape: BoxShape.circle,
++            ),
++            child: Icon(
++              Icons.info_outline,
++              size: 18,
++              color: Colors.white.withValues(alpha: 0.3),
++            ),
++          ),
++        ],
++      ),
+       body: SafeArea(
+         child: Column(
+           children: [
+-            const ProgressBar(currentStep: 3, totalSteps: 4),
+-            const SizedBox(height: 32),
+             Expanded(
+               child: SingleChildScrollView(
+-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
++                padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+                 child: Column(
+-                  crossAxisAlignment: CrossAxisAlignment.center,
++                  crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+-                    const SizedBox(height: 20),
+-              Text(
+-                "Your Conversation Co-Pilot",
+-                textAlign: TextAlign.center,
+-                style: textTheme.headlineMedium?.copyWith(
+-                  fontWeight: FontWeight.bold,
+-                  color: colorScheme.onSurface,
+-                ),
+-              ),
+-              const SizedBox(height: 16),
+-              Text(
+-                "Helping you break the ice and keep conversations fun and meaningful with thoughtful suggestions and topics.",
+-                textAlign: TextAlign.center,
+-                style: textTheme.bodyMedium?.copyWith(
+-                  color: colorScheme.onSurfaceVariant,
+-                ),
+-              ),
+-              const SizedBox(height: 48),
+-              const FeatureItem(
+-                icon: Icons.auto_awesome,
+-                title: "Smart Icebreakers",
+-                description:
+-                    "Never be stuck on what to text first. Get suggestions based on shared interests.",
+-              ),
+-              const SizedBox(height: 32),
+-              const FeatureItem(
+-                icon: Icons.lightbulb_outline,
+-                title: "Fresh Topics",
+-                description:
+-                    "Find common ground with topic ideas based on your interests + insights.",
+-              ),
+-              const SizedBox(height: 32),
+-              const FeatureItem(
+-                icon: Icons.security,
+-                title: "You're in Control",
+-                description:
+-                    "You choose what you want to send. We only give you the tools to be the best version.",
+-              ),
+-              const SizedBox(height: 64),
+-              const DemoSection(),
+-              const SizedBox(height: 48),
+-                    Button(
+-                      text: "Got it, Let's Continue",
+-                      onTap: () {
+-                        context.replaceRoute(AppRoutes.onboardingProfileSetup);
+-                      },
+-                    ),
++                    // Heading
++                    Text(
++                      "Deeper than",
++                      style: textTheme.displayMedium?.copyWith(
++                        fontWeight: FontWeight.w900,
++                        color: Colors.white,
++                        letterSpacing: -1,
++                        height: 1.0,
++                      ),
++                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
++
++                    // "the Swipe" with glow
++                    Text(
++                      "the Swipe",
++                      style: textTheme.displayMedium?.copyWith(
++                        fontWeight: FontWeight.w900,
++                        fontStyle: FontStyle.italic,
++                        color: AppColors.primaryRaspberry,
++                        letterSpacing: -1,
++                        height: 1.0,
++                        shadows: [
++                          BoxShadow(
++                            color: AppColors.primaryRaspberry
++                                .withValues(alpha: 0.5),
++                            blurRadius: 20,
++                            offset: const Offset(0, 0),
++                          ),
++                        ],
++                      ),
++                    )
++                        .animate()
++                        .fadeIn(duration: 400.ms, delay: 100.ms)
++                        .slideY(begin: 0.1),
++
++                    const SizedBox(height: 16),
++
++                    // Subtitle
++                    Text(
++                      "Stop scrolling, start connecting. A\ndating experience that actually\nunderstands your vibe.",
++                      style: textTheme.titleMedium?.copyWith(
++                        color: Colors.white.withValues(alpha: 0.7),
++                        height: 1.4,
++                        fontWeight: FontWeight.w500,
++                      ),
++                    ).animate().fadeIn(duration: 400.ms, delay: 200.ms),
++
++                    const SizedBox(height: 48),
++
++                    // The Two Cards Row
++                    IntrinsicHeight(
++                      child: Row(
++                        crossAxisAlignment: CrossAxisAlignment.stretch,
++                        children: [
++                          // Card 1: AI Layer
++                          Expanded(
++                            child: _FeatureCard(
++                              icon: Icons.bolt,
++                              iconColor: AppColors.primaryRaspberry,
++                              title: "The AI Layer",
++                              description:
++                                  "Neural engine maps your vibe to curate matches that click instantly.",
++                              delay: 300.ms,
++                              bottomWidget: const _SoundWaveViz(),
++                            ),
++                          ),
++                          const SizedBox(width: 16),
++                          // Card 2: Moments
++                          Expanded(
++                            child: _FeatureCard(
++                              icon: Icons.auto_awesome,
++                              iconColor: const Color(
++                                  0xFFAEA1FF), // Light purple sparkles
++                              title: "Moments",
++                              description:
++                                  "Connections happen organically through stories, not static profiles.",
++                              delay: 400.ms,
++                              bottomWidget: const _AvatarsViz(),
++                            ),
++                          ),
++                        ],
++                      ),
++                    ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                   ],
+                 ),
+               ),
+             ),
++
++            // Bottom CTA
++            Padding(
++              padding: const EdgeInsets.all(24),
++              child: Button(
++                text: "Got It",
++                onTap: () {
++                  context.replaceRoute(AppRoutes.onboardingProfileSetup);
++                },
++              ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
++            ),
+           ],
+         ),
+       ),
+     );
+   }
+ }
++
++// ---------------------------------------------------------------------------
++// Feature Card Widget
++// ---------------------------------------------------------------------------
++
++class _FeatureCard extends StatelessWidget {
++  final IconData icon;
++  final Color iconColor;
++  final String title;
++  final String description;
++  final Duration delay;
++  final Widget bottomWidget;
++
++  const _FeatureCard({
++    required this.icon,
++    required this.iconColor,
++    required this.title,
++    required this.description,
++    required this.delay,
++    required this.bottomWidget,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    return Container(
++      padding: const EdgeInsets.all(20),
++      decoration: BoxDecoration(
++        color: const Color(0xFF222222), // Dark card background
++        borderRadius: BorderRadius.circular(28),
++      ),
++      child: Column(
++        crossAxisAlignment: CrossAxisAlignment.start,
++        children: [
++          // Icon
++          Container(
++            padding: const EdgeInsets.all(10),
++            decoration: const BoxDecoration(
++              color: Color(0xFF111111), // Even darker circle
++              shape: BoxShape.circle,
++            ),
++            child: Icon(icon, color: iconColor, size: 22),
++          ),
++          const SizedBox(height: 20),
++          // Title
++          Text(
++            title,
++            style: const TextStyle(
++              color: Colors.white,
++              fontWeight: FontWeight.bold,
++              fontSize: 18,
++              letterSpacing: -0.3,
++            ),
++          ),
++          const SizedBox(height: 8),
++          // Description
++          Text(
++            description,
++            style: TextStyle(
++              color: Colors.white.withValues(alpha: 0.6),
++              fontSize: 13,
++              height: 1.4,
++            ),
++          ),
++          const Spacer(),
++          const SizedBox(height: 24),
++          // Bottom visualization placeholder
++          bottomWidget,
++        ],
++      ),
++    );
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Abstract Visualizations for the cards
++// ---------------------------------------------------------------------------
++
++class _SoundWaveViz extends StatelessWidget {
++  const _SoundWaveViz();
++
++  @override
++  Widget build(BuildContext context) {
++    return Container(
++      height: 40,
++      decoration: BoxDecoration(
++        color: const Color(0xFF111111),
++        borderRadius: BorderRadius.circular(20),
++      ),
++      child: Row(
++        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
++        crossAxisAlignment: CrossAxisAlignment.center,
++        children: [
++          _bar(12, AppColors.primaryRaspberry.withValues(alpha: 0.3)),
++          _bar(20, AppColors.primaryRaspberry.withValues(alpha: 0.5)),
++          _bar(28, AppColors.primaryRaspberry),
++          _bar(18, AppColors.primaryRaspberry.withValues(alpha: 0.5)),
++          _bar(12, AppColors.primaryRaspberry.withValues(alpha: 0.3)),
++        ],
++      ),
++    );
++  }
++
++  Widget _bar(double height, Color color) {
++    return Container(
++      width: 3,
++      height: height,
++      decoration: BoxDecoration(
++        color: color,
++        borderRadius: BorderRadius.circular(2),
++      ),
++    );
++  }
++}
++
++class _AvatarsViz extends StatelessWidget {
++  const _AvatarsViz();
++
++  @override
++  Widget build(BuildContext context) {
++    return SizedBox(
++      height: 40,
++      child: Stack(
++        children: [
++          Positioned(
++            left: 0,
++            child: _avatarPlaceholder(const Color(0xFF8E909B), Icons.person,
++                leftOffset: 0),
++          ),
++          Positioned(
++            left: 20,
++            child: _avatarPlaceholder(const Color(0xFFFFD1A9), Icons.face,
++                isForeground: true),
++          ),
++          Positioned(
++            left: 45,
++            child: Container(
++              width: 40,
++              height: 40,
++              decoration: BoxDecoration(
++                color: const Color(0xFF5A537A),
++                shape: BoxShape.circle,
++                border: Border.all(color: const Color(0xFF222222), width: 2),
++              ),
++              child: const Center(
++                child: Icon(Icons.add, color: Colors.white, size: 16),
++              ),
++            ),
++          ),
++        ],
++      ),
++    );
++  }
++
++  Widget _avatarPlaceholder(Color bgColor, IconData icon,
++      {bool isForeground = false, double leftOffset = 0}) {
++    return Container(
++      width: 40,
++      height: 40,
++      decoration: BoxDecoration(
++        color: bgColor,
++        shape: BoxShape.circle,
++        border: Border.all(color: const Color(0xFF222222), width: 2),
++      ),
++      child: Center(
++        child: Icon(icon, color: Colors.black.withValues(alpha: 0.3), size: 24),
++      ),
++    );
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/preferences/preferred_gender_screen.dart b/lib/presentation/screens/onboarding/preferences/preferred_gender_screen.dart
+index fdf2350..06fa543 100644
+--- a/lib/presentation/screens/onboarding/preferences/preferred_gender_screen.dart
++++ b/lib/presentation/screens/onboarding/preferences/preferred_gender_screen.dart
+@@ -61,7 +61,7 @@ class PreferredGenderScreen extends ConsumerWidget {
+                               borderRadius: BorderRadius.circular(16),
+                               border: Border.all(
+                                 color: isSelected
+-                                    ? Theme.of(context).primaryColor
++                                    ? Theme.of(context).colorScheme.primary
+                                     : Colors.white12,
+                                 width: isSelected ? 2 : 1,
+                               ),
+@@ -86,7 +86,9 @@ class PreferredGenderScreen extends ConsumerWidget {
+                                     shape: BoxShape.circle,
+                                     border: Border.all(
+                                       color: isSelected
+-                                          ? Theme.of(context).primaryColor
++                                          ? Theme.of(context)
++                                              .colorScheme
++                                              .primary
+                                           : Colors.white24,
+                                       width: 2,
+                                     ),
+@@ -100,7 +102,8 @@ class PreferredGenderScreen extends ConsumerWidget {
+                                             decoration: BoxDecoration(
+                                               shape: BoxShape.circle,
+                                               color: Theme.of(context)
+-                                                  .primaryColor,
++                                                  .colorScheme
++                                                  .primary,
+                                             ),
+                                           ),
+                                         )
+diff --git a/lib/presentation/screens/onboarding/preferences/relationship_goals_screen.dart b/lib/presentation/screens/onboarding/preferences/relationship_goals_screen.dart
+index ace43f7..41fca2a 100644
+--- a/lib/presentation/screens/onboarding/preferences/relationship_goals_screen.dart
++++ b/lib/presentation/screens/onboarding/preferences/relationship_goals_screen.dart
+@@ -165,7 +165,7 @@ class RelationshipGoalsScreen extends ConsumerWidget {
+                   onTap: () async {
+                     final success = await viewModel.saveRelationshipGoal();
+                     if (success && context.mounted) {
+-                      context.push(AppRoutes.onboardingCoPilotIntro);
++                      context.push(AppRoutes.onboardingPulseCheck);
+                     }
+                   },
+                   isLoading: state.isLoading,
+diff --git a/lib/presentation/screens/onboarding/professional_details/professional_details_screen.dart b/lib/presentation/screens/onboarding/professional_details/professional_details_screen.dart
+new file mode 100644
+index 0000000..ba87234
+--- /dev/null
++++ b/lib/presentation/screens/onboarding/professional_details/professional_details_screen.dart
+@@ -0,0 +1,157 @@
++import 'package:flutter/material.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:flutter_animate/flutter_animate.dart';
++import 'package:jiffy/core/navigation/app_routes.dart';
++import 'package:jiffy/core/navigation/navigation_service.dart';
++import 'package:jiffy/core/theme/app_colors.dart';
++import 'package:jiffy/presentation/widgets/button.dart';
++import 'package:jiffy/presentation/widgets/progress_bar.dart';
++import '../basics/viewmodels/basics_viewmodel.dart';
++
++class ProfessionalDetailsScreen extends ConsumerWidget {
++  const ProfessionalDetailsScreen({super.key});
++
++  @override
++  Widget build(BuildContext context, WidgetRef ref) {
++    final formData = ref.watch(basicsViewModelProvider);
++    final viewModel = ref.read(basicsViewModelProvider.notifier);
++    final textTheme = Theme.of(context).textTheme;
++    final colors = Theme.of(context).colorScheme;
++
++    return Scaffold(
++      appBar: AppBar(
++        leading: BackButton(onPressed: () => context.popRoute()),
++        title: const Text('A little more'),
++        backgroundColor: Colors.transparent,
++        elevation: 0,
++      ),
++      body: SafeArea(
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.stretch,
++          children: [
++            // Scrollable content
++            Expanded(
++              child: SingleChildScrollView(
++                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
++                child: Column(
++                  crossAxisAlignment: CrossAxisAlignment.start,
++                  children: [
++                    const ProgressBar(currentStep: 3, totalSteps: 5),
++                    const SizedBox(height: 32),
++
++                    // Heading
++                    Text(
++                      'Where do you belong?',
++                      style: textTheme.displaySmall?.copyWith(
++                        fontWeight: FontWeight.bold,
++                        color: colors.onSurface,
++                      ),
++                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
++
++                    const SizedBox(height: 8),
++
++                    Text(
++                      'College is required — work is optional.',
++                      style: textTheme.bodyLarge?.copyWith(
++                        color: colors.onSurface.withValues(alpha: 0.6),
++                      ),
++                    ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
++
++                    const SizedBox(height: 40),
++
++                    // College field
++                    _DetailsField(
++                      label: 'College / University',
++                      hint: 'Where did you study?',
++                      icon: Icons.school_outlined,
++                      initialValue: formData.college,
++                      onChanged: viewModel.updateCollege,
++                      delay: 150.ms,
++                    ),
++
++                    const SizedBox(height: 24),
++
++                    // Work field (optional)
++                    _DetailsField(
++                      label: 'Work / Company (optional)',
++                      hint: 'Where do you work?',
++                      icon: Icons.work_outline_rounded,
++                      initialValue: formData.work,
++                      onChanged: viewModel.updateWork,
++                      delay: 220.ms,
++                    ),
++                  ],
++                ),
++              ),
++            ),
++
++            // Pinned bottom button
++            Padding(
++              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
++              child: Opacity(
++                opacity:
++                    (formData.college?.trim().isNotEmpty ?? false) ? 1.0 : 0.4,
++                child: Button(
++                  text: 'Continue',
++                  onTap: (formData.college?.trim().isNotEmpty ?? false)
++                      ? () =>
++                          context.pushRoute(AppRoutes.onboardingPreferredGender)
++                      : () {},
++                ),
++              ),
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Styled text field tile
++// ---------------------------------------------------------------------------
++
++class _DetailsField extends StatelessWidget {
++  final String label;
++  final String hint;
++  final IconData icon;
++  final String? initialValue;
++  final ValueChanged<String>? onChanged;
++  final Duration delay;
++
++  const _DetailsField({
++    required this.label,
++    required this.hint,
++    required this.icon,
++    required this.delay,
++    this.initialValue,
++    this.onChanged,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    final colors = Theme.of(context).colorScheme;
++    return TextFormField(
++      initialValue: initialValue,
++      onChanged: onChanged,
++      style: TextStyle(color: colors.onSurface),
++      decoration: InputDecoration(
++        labelText: label,
++        hintText: hint,
++        prefixIcon: Icon(icon, size: 20, color: AppColors.primaryRaspberry),
++        filled: true,
++        fillColor: AppColors.surfacePlum,
++        enabledBorder: OutlineInputBorder(
++          borderRadius: BorderRadius.circular(12),
++          borderSide: BorderSide(color: AppColors.surfacePlumLight),
++        ),
++        focusedBorder: OutlineInputBorder(
++          borderRadius: BorderRadius.circular(12),
++          borderSide: BorderSide(color: AppColors.primaryRaspberry, width: 1.5),
++        ),
++        labelStyle: TextStyle(color: colors.onSurface.withValues(alpha: 0.6)),
++        hintStyle: TextStyle(color: colors.onSurface.withValues(alpha: 0.35)),
++      ),
++    ).animate(delay: delay).fadeIn(duration: 350.ms).slideY(begin: 0.08);
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart b/lib/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart
+index 8a96e9f..b0940d5 100644
+--- a/lib/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart
++++ b/lib/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart
+@@ -112,10 +112,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
+         child: Column(
+           children: [
+             ProgressBar(
+-              currentStep: formData.currentStep,
+-              totalSteps: 3,
++              currentStep:
++                  (formData.messages.where((m) => m.isFromUser).length + 1)
++                      .clamp(1, 6),
++              totalSteps: 6,
+             ),
+-            const SizedBox(height: 8),
++            const SizedBox(height: 16),
++            Padding(
++              padding: const EdgeInsets.symmetric(horizontal: 24.0),
++              child: Text(
++                "Just be yourself. The more authentic you are, the better we can find your perfect matches.",
++                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
++                      color: Theme.of(context).colorScheme.onSurfaceVariant,
++                      height: 1.4,
++                    ),
++                textAlign: TextAlign.center,
++              ),
++            ),
++            const SizedBox(height: 16),
+             Expanded(
+               child: Column(
+                 children: [
+diff --git a/lib/presentation/screens/onboarding/profile_setup/viewmodels/profile_setup_viewmodel.dart b/lib/presentation/screens/onboarding/profile_setup/viewmodels/profile_setup_viewmodel.dart
+index 00b265e..073e121 100644
+--- a/lib/presentation/screens/onboarding/profile_setup/viewmodels/profile_setup_viewmodel.dart
++++ b/lib/presentation/screens/onboarding/profile_setup/viewmodels/profile_setup_viewmodel.dart
+@@ -1,48 +1,36 @@
+ import 'dart:async';
+ import 'package:flutter/foundation.dart';
+ import 'package:riverpod_annotation/riverpod_annotation.dart';
+-import '../../data/repository/onboarding_repository.dart';
++import 'package:firebase_auth/firebase_auth.dart';
++import 'package:jiffy/core/services/chat_streaming_service.dart';
+ import '../models/profile_setup_form_data.dart';
+ 
+ part 'profile_setup_viewmodel.g.dart';
+ 
+ @riverpod
+ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+-  Timer? _typingTimer;
+-  final List<String> _currentQuestions = [];
+-  final List<String> _currentAnswers = [];
+-  int _currentQuestionIndex = 0;
++  StreamSubscription<String>? _streamSubscription;
+   bool _isInitialized = false;
+-  bool _onboardingComplete = false;
+ 
+   @override
+   ProfileSetupFormData build() {
+     ref.onDispose(() {
+-      _typingTimer?.cancel();
+-      _typingTimer = null;
++      _streamSubscription?.cancel();
+     });
+ 
+-    // Initialize onboarding when viewmodel is created (using microtask for testability)
++    // Initialize onboarding when viewmodel is created
+     Future.microtask(() {
+       if (!_isInitialized) {
+         _initializeOnboarding();
+       }
+     });
+ 
+-    // Show initial welcome message
+-    final initialMessage = ChatMessage(
+-      text:
+-          "Hey there! 👋 I'm here to help create your perfect profile. Let me get to know you better...",
+-      isFromUser: false,
+-      timestamp: DateTime.now(),
+-    );
+-
+-    return ProfileSetupFormData(
+-      messages: [initialMessage],
+-      suggestedResponses: const [],
++    return const ProfileSetupFormData(
++      messages: [],
++      suggestedResponses: [],
+       currentQuestion: null,
+-      currentStep: 2, // Step 2 of 3
+-      isTyping: true, // Show typing while initializing
++      currentStep: 2,
++      isTyping: true,
+       showCompletionDialog: false,
+     );
+   }
+@@ -51,79 +39,30 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+     if (_isInitialized) return;
+     _isInitialized = true;
+ 
+-    try {
+-      debugPrint('🔄 Initializing onboarding...');
+-
+-      final repository = ref.read(onboardingRepositoryProvider);
+-
+-      // Get predefined answers from user's existing profile data
+-      // These should come from earlier onboarding steps (basics, preferences, etc.)
+-      final predefinedAnswers = await _getPredefinedAnswers();
+-
+-      if (predefinedAnswers.isEmpty) {
+-        debugPrint(
+-            '⚠️ No predefined answers found - using minimal fallback data');
+-        // Fallback: Add minimal required data if user data is not available
+-        // In production, this should rarely happen as predefined answers come from
+-        // earlier onboarding steps (basics, preferences, etc.)
+-        predefinedAnswers['name'] = 'User';
+-      }
+-
+-      debugPrint(
+-          '📝 Using predefined answers: ${predefinedAnswers.keys.toList()}');
+-      final questions =
+-          await repository.initializeOnboarding(predefinedAnswers);
+-
+-      debugPrint('✅ Received ${questions.length} onboarding questions');
+-
+-      // Store questions and reset tracking
+-      _currentQuestions.clear();
+-      _currentQuestions.addAll(questions);
+-      _currentQuestionIndex = 0;
+-      _currentAnswers.clear();
++    // Get the user's display name or fallback
++    final user = FirebaseAuth.instance.currentUser;
++    final userName = user?.displayName?.split(' ').first ?? 'there';
+ 
+-      // Show first question as AI message
+-      if (questions.isNotEmpty) {
+-        final firstQuestion = ChatMessage(
+-          text: questions[0],
+-          isFromUser: false,
+-          timestamp: DateTime.now(),
+-        );
+-
+-        state = state.copyWith(
+-          messages: [...state.messages, firstQuestion],
+-          isTyping: false,
+-          currentQuestion: questions[0],
+-          suggestedResponses: const [], // No suggested responses for AI-generated questions
+-        );
+-      }
+-    } catch (e, stackTrace) {
+-      debugPrint('❌ Error initializing onboarding: $e');
+-      debugPrint('Stack trace: $stackTrace');
+-
+-      // Fallback to error message
+-      final errorMessage = ChatMessage(
+-        text:
+-            "Sorry, I'm having trouble connecting right now. Please try again later.",
+-        isFromUser: false,
+-        timestamp: DateTime.now(),
+-      );
++    final firstMessage = ChatMessage(
++      text:
++          "Hey $userName, we want to know you a bit better so that we can find you relevant matches, so tell me whats the craziest thing you have done lately?",
++      isFromUser: false,
++      timestamp: DateTime.now(),
++    );
+ 
+-      state = state.copyWith(
+-        messages: [...state.messages, errorMessage],
+-        isTyping: false,
+-        suggestedResponses: const [],
+-      );
+-    }
++    // Inject the first app prompt and unlock input immediately
++    state = state.copyWith(
++      messages: [firstMessage],
++      isTyping: false,
++    );
+   }
+ 
+   void addUserMessage(String text) {
+-    if (text.trim().isEmpty || _onboardingComplete) return;
+-
+-    // Don't accept answers if we don't have questions yet
+-    if (!_isInitialized || _currentQuestions.isEmpty) {
++    debugPrint(
++        '💬 [ProfileSetupViewModel] addUserMessage called with: "$text"');
++    if (text.trim().isEmpty || state.isTyping) {
+       debugPrint(
+-          '⚠️ Cannot accept answer: initialized=$_isInitialized, questions=${_currentQuestions.length}');
++          '⚠️ [ProfileSetupViewModel] Message blocked. isEmpty: ${text.trim().isEmpty}, isTyping: ${state.isTyping}');
+       return;
+     }
+ 
+@@ -133,141 +72,20 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+       timestamp: DateTime.now(),
+     );
+ 
+-    // Add answer to current batch
+-    _currentAnswers.add(text.trim());
+-
++    final nextMessages = [...state.messages, userMessage];
++    debugPrint(
++        '🔄 [ProfileSetupViewModel] Updating state with new user message');
+     state = state.copyWith(
+-      messages: [...state.messages, userMessage],
++      messages: nextMessages,
+       userInput: () => null,
+       clearUserInput: true,
+     );
+ 
+-    // Move to next question in current batch
+-    _currentQuestionIndex++;
+-
+-    // Check if we've answered all questions in current batch
+-    if (_currentQuestions.isEmpty) {
+-      debugPrint('⚠️ No questions available yet - waiting for initialization');
+-      return;
+-    }
+-
+-    if (_currentQuestionIndex >= _currentQuestions.length) {
+-      // All questions in this batch answered, submit and get next batch
+-      _submitAnswersAndGetNextBatch();
+-    } else {
+-      // Show next question from current batch
+-      _showNextQuestion();
+-    }
+-  }
+-
+-  void selectSuggestedResponse(String response) {
+-    addUserMessage(response);
+-  }
+-
+-  void updateUserInput(String? input) {
+-    state = state.copyWith(userInput: () => input);
+-  }
+-
+-  void _showNextQuestion() {
+-    if (_currentQuestionIndex < _currentQuestions.length) {
+-      final nextQuestion = _currentQuestions[_currentQuestionIndex];
+-
+-      // Set typing indicator
+-      state = state.copyWith(isTyping: true);
+-
+-      // Show next question after short delay
+-      _typingTimer?.cancel();
+-      _typingTimer = Timer(const Duration(milliseconds: 800), () {
+-        final questionMessage = ChatMessage(
+-          text: nextQuestion,
+-          isFromUser: false,
+-          timestamp: DateTime.now(),
+-        );
+-
+-        state = state.copyWith(
+-          messages: [...state.messages, questionMessage],
+-          isTyping: false,
+-          currentQuestion: nextQuestion,
+-          suggestedResponses: const [], // No suggested responses for AI-generated questions
+-        );
+-      });
+-    }
+-  }
+-
+-  Future<void> _submitAnswersAndGetNextBatch() async {
+-    if (_onboardingComplete) return;
+-
+-    // Guard: Don't submit if we don't have questions or answers
+-    if (_currentQuestions.isEmpty || _currentAnswers.isEmpty) {
++    // Hard cap the conversation at 6 user answers to prevent infinite loop
++    final userMessageCount = nextMessages.where((m) => m.isFromUser).length;
++    if (userMessageCount >= 6) {
+       debugPrint(
+-          '⚠️ Cannot submit: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
+-      return;
+-    }
+-
+-    // Ensure questions and answers arrays match in length
+-    if (_currentQuestions.length != _currentAnswers.length) {
+-      debugPrint(
+-          '⚠️ Mismatch: questions=${_currentQuestions.length}, answers=${_currentAnswers.length}');
+-      // Only submit the matching pairs
+-      final minLength = _currentQuestions.length < _currentAnswers.length
+-          ? _currentQuestions.length
+-          : _currentAnswers.length;
+-      _currentQuestions.removeRange(minLength, _currentQuestions.length);
+-      _currentAnswers.removeRange(minLength, _currentAnswers.length);
+-    }
+-
+-    state = state.copyWith(isTyping: true);
+-
+-    try {
+-      debugPrint('🔄 Submitting batch of ${_currentAnswers.length} answers...');
+-      debugPrint('📝 Questions: ${_currentQuestions.join(", ")}');
+-      debugPrint('📝 Answers: ${_currentAnswers.join(", ")}');
+-      final repository = ref.read(onboardingRepositoryProvider);
+-
+-      // Submit current batch of answers
+-      final result =
+-          await repository.submitAnswers(_currentQuestions, _currentAnswers);
+-
+-      final nextQuestions = result['nextQuestions'] as List<String>? ?? [];
+-      final isComplete = result['isComplete'] as bool? ??
+-          false; // Default to false (more questions might come)
+-
+-      debugPrint(
+-          '✅ Answers submitted. Next questions: ${nextQuestions.length}, isComplete: $isComplete');
+-
+-      // Check if we got next batch of questions
+-      if (nextQuestions.isNotEmpty && !isComplete) {
+-        debugPrint(
+-            '✅ Starting next batch with ${nextQuestions.length} questions');
+-
+-        // Start new batch
+-        _currentQuestions.clear();
+-        _currentQuestions.addAll(nextQuestions);
+-        _currentAnswers.clear();
+-        _currentQuestionIndex = 0;
+-
+-        // Show first question of next batch after short delay
+-        _typingTimer?.cancel();
+-        _typingTimer = Timer(const Duration(milliseconds: 500), () {
+-          final nextQuestion = ChatMessage(
+-            text: nextQuestions[0],
+-            isFromUser: false,
+-            timestamp: DateTime.now(),
+-          );
+-
+-          state = state.copyWith(
+-            messages: [...state.messages, nextQuestion],
+-            isTyping: false,
+-            currentQuestion: nextQuestions[0],
+-            suggestedResponses: const [], // No suggested responses for AI-generated questions
+-          );
+-        });
+-        return;
+-      }
+-
+-      // No more questions, onboarding complete
+-      debugPrint('✅ Onboarding complete');
+-      _onboardingComplete = true;
++          '✅ [ProfileSetupViewModel] Conversation cap reached. Ending onboarding natively.');
+ 
+       final completionMessage = ChatMessage(
+         text:
+@@ -278,48 +96,78 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+ 
+       state = state.copyWith(
+         messages: [...state.messages, completionMessage],
+-        isTyping: false,
+-        suggestedResponses: const [],
+-        currentQuestion: null,
+-        showCompletionDialog: true, // Show dialog with "Next" button
++        showCompletionDialog: true,
+       );
+-    } catch (e, stackTrace) {
+-      debugPrint('❌ Error submitting answers: $e');
+-      debugPrint('Stack trace: $stackTrace');
++    } else {
++      _startAssistantStream();
++    }
++  }
+ 
+-      final errorMessage = ChatMessage(
+-        text:
+-            "Sorry, something went wrong saving your responses. Please try again.",
+-        isFromUser: false,
+-        timestamp: DateTime.now(),
+-      );
++  void _startAssistantStream() {
++    debugPrint('🚀 [ProfileSetupViewModel] _startAssistantStream initiated');
++    // 1. Prepare history mapped to role/content JSON expectations
++    final history = state.messages
++        .map((msg) => {
++              'role': msg.isFromUser ? 'user' : 'assistant',
++              'content': msg.text,
++            })
++        .toList();
++
++    // 2. Lock input and set typing indicator natively
++    state = state.copyWith(
++      isTyping: true, // Lock input while receiving stream
++    );
+ 
+-      state = state.copyWith(
+-        messages: [...state.messages, errorMessage],
+-        isTyping: false,
+-        suggestedResponses: const [],
+-      );
+-    }
++    // 3. Initialize SSE Stream request
++    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
++    final chatService = ref.read(chatStreamingServiceProvider);
++
++    _streamSubscription?.cancel();
++    _streamSubscription =
++        chatService.streamQuestions(uid: uid, history: history).listen(
++      (chunk) {
++        final currentMessages = List<ChatMessage>.from(state.messages);
++
++        // If the last message was the user's, this is the first assistant token.
++        // We will instantiate the assistant bubble now!
++        if (currentMessages.isEmpty || currentMessages.last.isFromUser) {
++          currentMessages.add(ChatMessage(
++            text: chunk,
++            isFromUser: false,
++            timestamp: DateTime.now(),
++          ));
++        } else {
++          // Trailing assistant message exists, append chunk
++          final lastMsg = currentMessages.last;
++          currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
++            text: lastMsg.text + chunk,
++          );
++        }
++
++        // Setting state rapidly updates the UI to reflect new tokens
++        state = state.copyWith(messages: currentMessages);
++      },
++      onDone: () {
++        debugPrint('✅ [ProfileSetupViewModel] Stream completed natively');
++        // [DONE] payload resolves the stream, unlock input.
++        state = state.copyWith(isTyping: false);
++      },
++      onError: (e) {
++        debugPrint('❌ [ProfileSetupViewModel] Streaming error SSE: $e');
++        state = state.copyWith(isTyping: false);
++      },
++    );
+   }
+ 
+-  /// Get predefined answers from user's existing profile data
+-  /// These should come from earlier onboarding steps (basics, preferences, etc.)
+-  /// Returns empty map if no data is available (fallback will be used in caller)
+-  Future<Map<String, String>> _getPredefinedAnswers() async {
+-    try {
+-      // TODO: Fetch user data from API and extract predefined answers
+-      // This should include: name, gender, preferredGender, relationshipGoals, etc.
+-      // from earlier onboarding screens
+-      return <String, String>{};
+-    } catch (e) {
+-      debugPrint('⚠️ Error fetching predefined answers: $e');
+-      return <String, String>{};
+-    }
++  void selectSuggestedResponse(String response) {
++    addUserMessage(response);
++  }
++
++  void updateUserInput(String? input) {
++    state = state.copyWith(userInput: () => input);
+   }
+ 
+   void nextStep() {
+-    // Navigate to next step (permissions screen)
+-    // This will be handled by navigation logic
+     debugPrint('🚀 Navigating to next step (permissions)');
+   }
+ 
+@@ -328,7 +176,6 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
+   }
+ 
+   void skip() {
+-    // Skip to next step
+     nextStep();
+   }
+ }
+diff --git a/lib/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart b/lib/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart
+index 5309156..55d1aaf 100644
+--- a/lib/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart
++++ b/lib/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart
+@@ -102,8 +102,11 @@ class _ChatInputFieldState extends State<ChatInputField> {
+                     ),
+                   ),
+                 ),
++                minLines: 1,
++                maxLines: 5,
++                keyboardType: TextInputType.multiline,
++                textInputAction: TextInputAction.newline,
+                 onSubmitted: (_) => _handleSend(),
+-                textInputAction: TextInputAction.send,
+               ),
+             ),
+             const SizedBox(width: 8),
+diff --git a/lib/presentation/screens/onboarding/profile_setup/widgets/chat_message_list.dart b/lib/presentation/screens/onboarding/profile_setup/widgets/chat_message_list.dart
+index 83bf897..e8c41c1 100644
+--- a/lib/presentation/screens/onboarding/profile_setup/widgets/chat_message_list.dart
++++ b/lib/presentation/screens/onboarding/profile_setup/widgets/chat_message_list.dart
+@@ -18,7 +18,8 @@ class ChatMessageList extends StatelessWidget {
+       crossAxisAlignment: CrossAxisAlignment.stretch,
+       children: [
+         ...messages.map((message) => _ChatMessageItem(message: message)),
+-        if (isTyping) _TypingIndicator(),
++        if (isTyping && (messages.isEmpty || messages.last.isFromUser))
++          _TypingIndicator(),
+       ],
+     );
+   }
+diff --git a/lib/presentation/screens/onboarding/pulse_check/models/chip_category.dart b/lib/presentation/screens/onboarding/pulse_check/models/chip_category.dart
+new file mode 100644
+index 0000000..95e198f
+--- /dev/null
++++ b/lib/presentation/screens/onboarding/pulse_check/models/chip_category.dart
+@@ -0,0 +1,41 @@
++/// Represents a single selectable chip option within a category.
++class ChipOption {
++  final String id;
++  final String label;
++
++  const ChipOption({required this.id, required this.label});
++
++  factory ChipOption.fromJson(Map<String, dynamic> json) {
++    return ChipOption(
++      id: json['id'] as String,
++      label: json['label'] as String,
++    );
++  }
++}
++
++/// Represents a category of chips fetched from /api/chips.
++class ChipCategory {
++  final String id;
++  final String title;
++  final String subtitle;
++  final List<ChipOption> options;
++
++  const ChipCategory({
++    required this.id,
++    required this.title,
++    required this.subtitle,
++    required this.options,
++  });
++
++  factory ChipCategory.fromJson(Map<String, dynamic> json) {
++    final optionsList = (json['options'] as List<dynamic>)
++        .map((o) => ChipOption.fromJson(o as Map<String, dynamic>))
++        .toList();
++    return ChipCategory(
++      id: json['id'] as String,
++      title: json['title'] as String,
++      subtitle: json['subtitle'] as String,
++      options: optionsList,
++    );
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/pulse_check/pulse_check_screen.dart b/lib/presentation/screens/onboarding/pulse_check/pulse_check_screen.dart
+new file mode 100644
+index 0000000..5f45eea
+--- /dev/null
++++ b/lib/presentation/screens/onboarding/pulse_check/pulse_check_screen.dart
+@@ -0,0 +1,360 @@
++import 'package:flutter/material.dart';
++import 'package:flutter_animate/flutter_animate.dart';
++import 'package:flutter_riverpod/flutter_riverpod.dart';
++import 'package:jiffy/core/navigation/app_routes.dart';
++import 'package:jiffy/core/navigation/navigation_service.dart';
++import 'package:jiffy/core/theme/app_colors.dart';
++import 'package:jiffy/presentation/widgets/button.dart';
++import 'viewmodels/pulse_check_viewmodel.dart';
++
++class PulseCheckScreen extends ConsumerWidget {
++  const PulseCheckScreen({super.key});
++
++  @override
++  Widget build(BuildContext context, WidgetRef ref) {
++    final state = ref.watch(pulseCheckViewModelProvider);
++    final viewModel = ref.read(pulseCheckViewModelProvider.notifier);
++    final colors = Theme.of(context).colorScheme;
++    final textTheme = Theme.of(context).textTheme;
++
++    return Scaffold(
++      appBar: AppBar(
++        leading: const BackButton(),
++        title: const Text('Pulse Check'),
++        actions: [
++          TextButton(
++            onPressed: () =>
++                context.pushRoute(AppRoutes.onboardingCoPilotIntro),
++            child: Text(
++              'Skip',
++              style: TextStyle(
++                color: AppColors.primaryRaspberry,
++                fontWeight: FontWeight.w600,
++                fontSize: 15,
++              ),
++            ),
++          ),
++        ],
++        backgroundColor: Colors.transparent,
++        elevation: 0,
++      ),
++      body: SafeArea(
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.stretch,
++          children: [
++            // Scrollable content
++            Expanded(
++              child: SingleChildScrollView(
++                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
++                child: Column(
++                  crossAxisAlignment: CrossAxisAlignment.start,
++                  children: [
++                    // Heading: "Select your aura."
++                    RichText(
++                      text: TextSpan(
++                        style: textTheme.displaySmall?.copyWith(
++                          color: colors.onSurface,
++                          fontWeight: FontWeight.bold,
++                          height: 1.2,
++                        ),
++                        children: const [
++                          TextSpan(text: 'Select your '),
++                          TextSpan(
++                            text: 'aura.',
++                            style: TextStyle(
++                              color: AppColors.primaryRaspberry,
++                              fontStyle: FontStyle.italic,
++                            ),
++                          ),
++                        ],
++                      ),
++                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
++
++                    const SizedBox(height: 8),
++
++                    Text(
++                      'Pick at least one from each section.',
++                      style: textTheme.bodyLarge?.copyWith(
++                        color: colors.onSurface.withValues(alpha: 0.6),
++                      ),
++                    ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
++
++                    const SizedBox(height: 32),
++
++                    // Categories
++                    if (state.isLoadingCategories)
++                      const Center(
++                        child: Padding(
++                          padding: EdgeInsets.all(40),
++                          child: CircularProgressIndicator(),
++                        ),
++                      )
++                    else if (state.error != null && state.categories.isEmpty)
++                      _ErrorRetry(
++                        message: state.error!,
++                        onRetry: viewModel.fetchCategories,
++                      )
++                    else
++                      ...state.categories.asMap().entries.map((entry) {
++                        final i = entry.key;
++                        final category = entry.value;
++                        return _CategorySection(
++                          category: category,
++                          selectedIds: state.selectedOptionIds,
++                          onToggle: viewModel.toggleOption,
++                          animationDelay: Duration(milliseconds: 100 + i * 80),
++                        );
++                      }),
++                  ],
++                ),
++              ),
++            ),
++
++            // Selected count + CTA
++            Padding(
++              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
++              child: Column(
++                children: [
++                  // Counter chip
++                  AnimatedSwitcher(
++                    duration: 200.ms,
++                    child: state.selectedOptionIds.isNotEmpty
++                        ? Padding(
++                            key: ValueKey(state.selectedOptionIds.length),
++                            padding: const EdgeInsets.only(bottom: 12),
++                            child: Text(
++                              state.canProceed
++                                  ? '${state.selectedOptionIds.length} selected ✓'
++                                  : '${state.selectedOptionIds.length} selected — pick one from each section',
++                              style: TextStyle(
++                                color: state.canProceed
++                                    ? AppColors.primaryRaspberry
++                                    : colors.onSurface.withValues(alpha: 0.5),
++                                fontSize: 13,
++                                fontWeight: FontWeight.w500,
++                              ),
++                            ),
++                          )
++                        : const SizedBox.shrink(),
++                  ),
++
++                  // DOUBLE DOWN button
++                  Opacity(
++                    opacity: state.canProceed ? 1.0 : 0.4,
++                    child: Button(
++                      text: 'Double Down',
++                      isLoading: state.isSaving,
++                      onTap: state.canProceed
++                          ? () async {
++                              await viewModel.saveSelections();
++                              if (context.mounted) {
++                                context.pushRoute(
++                                    AppRoutes.onboardingCoPilotIntro);
++                              }
++                            }
++                          : () {},
++                    ),
++                  ),
++
++                  const SizedBox(height: 12),
++
++                  // Page dots
++                  Row(
++                    mainAxisAlignment: MainAxisAlignment.center,
++                    children: List<Widget>.generate(2, (i) {
++                      final isActive = i == 0;
++                      return AnimatedContainer(
++                        duration: 250.ms,
++                        margin: const EdgeInsets.symmetric(horizontal: 3),
++                        width: isActive ? 20 : 6,
++                        height: 6,
++                        decoration: BoxDecoration(
++                          color: isActive
++                              ? AppColors.primaryRaspberry
++                              : colors.onSurface.withValues(alpha: 0.25),
++                          borderRadius: BorderRadius.circular(3),
++                        ),
++                      );
++                    }),
++                  ),
++                ],
++              ),
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Category section widget
++// ---------------------------------------------------------------------------
++
++class _CategorySection extends StatelessWidget {
++  final dynamic category; // ChipCategory
++  final Set<String> selectedIds;
++  final void Function(String) onToggle;
++  final Duration animationDelay;
++
++  const _CategorySection({
++    required this.category,
++    required this.selectedIds,
++    required this.onToggle,
++    required this.animationDelay,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    final textTheme = Theme.of(context).textTheme;
++
++    return Padding(
++      padding: const EdgeInsets.only(bottom: 28),
++      child: Column(
++        crossAxisAlignment: CrossAxisAlignment.start,
++        children: [
++          // Section header with pink left border
++          Row(
++            children: [
++              Container(
++                width: 3,
++                height: 18,
++                decoration: BoxDecoration(
++                  color: AppColors.primaryRaspberry,
++                  borderRadius: BorderRadius.circular(2),
++                ),
++              ),
++              const SizedBox(width: 10),
++              Text(
++                category.title.toUpperCase(),
++                style: textTheme.labelLarge?.copyWith(
++                  color: Theme.of(context).colorScheme.onSurface,
++                  fontWeight: FontWeight.w700,
++                  letterSpacing: 1.2,
++                  fontSize: 12,
++                ),
++              ),
++            ],
++          ).animate(delay: animationDelay).fadeIn(duration: 300.ms),
++
++          const SizedBox(height: 14),
++
++          // Chips wrap
++          Wrap(
++            spacing: 8,
++            runSpacing: 8,
++            children: category.options.map<Widget>((option) {
++              final isSelected = selectedIds.contains(option.id);
++              return _ChipTile(
++                label: option.label,
++                isSelected: isSelected,
++                onTap: () => onToggle(option.id),
++                delay: animationDelay + 60.ms,
++              );
++            }).toList(),
++          ),
++        ],
++      ),
++    );
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Individual chip tile
++// ---------------------------------------------------------------------------
++
++class _ChipTile extends StatelessWidget {
++  final String label;
++  final bool isSelected;
++  final VoidCallback onTap;
++  final Duration delay;
++
++  const _ChipTile({
++    required this.label,
++    required this.isSelected,
++    required this.onTap,
++    required this.delay,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    return GestureDetector(
++      onTap: onTap,
++      child: AnimatedContainer(
++        duration: const Duration(milliseconds: 180),
++        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
++        decoration: BoxDecoration(
++          color:
++              isSelected ? AppColors.primaryRaspberry : AppColors.surfacePlum,
++          borderRadius: BorderRadius.circular(24),
++          border: Border.all(
++            color: isSelected
++                ? AppColors.primaryRaspberry
++                : AppColors.surfacePlumLight,
++            width: 1.5,
++          ),
++          boxShadow: isSelected
++              ? [
++                  BoxShadow(
++                    color: AppColors.primaryRaspberry.withValues(alpha: 0.3),
++                    blurRadius: 8,
++                    offset: const Offset(0, 2),
++                  ),
++                ]
++              : null,
++        ),
++        child: Text(
++          label,
++          style: TextStyle(
++            color: Colors.white,
++            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
++            fontSize: 14,
++          ),
++        ),
++      ).animate(delay: delay).fadeIn(duration: 300.ms).scale(
++            begin: const Offset(0.92, 0.92),
++            end: const Offset(1, 1),
++            duration: 250.ms,
++          ),
++    );
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Error + Retry widget
++// ---------------------------------------------------------------------------
++
++class _ErrorRetry extends StatelessWidget {
++  final String message;
++  final VoidCallback onRetry;
++
++  const _ErrorRetry({required this.message, required this.onRetry});
++
++  @override
++  Widget build(BuildContext context) {
++    return Center(
++      child: Padding(
++        padding: const EdgeInsets.all(32),
++        child: Column(
++          children: [
++            Text(
++              message,
++              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
++                    color: Theme.of(context)
++                        .colorScheme
++                        .onSurface
++                        .withValues(alpha: 0.6),
++                  ),
++              textAlign: TextAlign.center,
++            ),
++            const SizedBox(height: 16),
++            TextButton(
++              onPressed: onRetry,
++              child: const Text('Try again'),
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/pulse_check/viewmodels/pulse_check_viewmodel.dart b/lib/presentation/screens/onboarding/pulse_check/viewmodels/pulse_check_viewmodel.dart
+new file mode 100644
+index 0000000..0632b32
+--- /dev/null
++++ b/lib/presentation/screens/onboarding/pulse_check/viewmodels/pulse_check_viewmodel.dart
+@@ -0,0 +1,125 @@
++import 'package:riverpod_annotation/riverpod_annotation.dart';
++import 'package:jiffy/core/network/dio_provider.dart';
++import 'package:jiffy/core/auth/auth_repository.dart';
++import 'package:jiffy/presentation/screens/onboarding/pulse_check/models/chip_category.dart';
++
++part 'pulse_check_viewmodel.g.dart';
++
++class PulseCheckState {
++  final List<ChipCategory> categories;
++  final Set<String> selectedOptionIds;
++  final bool isLoadingCategories;
++  final bool isSaving;
++  final String? error;
++
++  const PulseCheckState({
++    this.categories = const [],
++    this.selectedOptionIds = const {},
++    this.isLoadingCategories = false,
++    this.isSaving = false,
++    this.error,
++  });
++
++  bool get canProceed =>
++      categories.isNotEmpty &&
++      categories.every(
++        (cat) => cat.options.any((o) => selectedOptionIds.contains(o.id)),
++      );
++
++  PulseCheckState copyWith({
++    List<ChipCategory>? categories,
++    Set<String>? selectedOptionIds,
++    bool? isLoadingCategories,
++    bool? isSaving,
++    String? Function()? error,
++  }) {
++    return PulseCheckState(
++      categories: categories ?? this.categories,
++      selectedOptionIds: selectedOptionIds ?? this.selectedOptionIds,
++      isLoadingCategories: isLoadingCategories ?? this.isLoadingCategories,
++      isSaving: isSaving ?? this.isSaving,
++      error: error != null ? error() : this.error,
++    );
++  }
++}
++
++@riverpod
++class PulseCheckViewModel extends _$PulseCheckViewModel {
++  @override
++  PulseCheckState build() {
++    // Kick off the chip fetch on creation
++    Future.microtask(() => fetchCategories());
++    return const PulseCheckState(isLoadingCategories: true);
++  }
++
++  Future<void> fetchCategories() async {
++    state = state.copyWith(isLoadingCategories: true, error: () => null);
++    try {
++      final dio = ref.read(dioProvider);
++      // Chips API is public — no auth header needed, use absolute URL
++      final response = await dio.get(
++        'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com/api/chips',
++      );
++      final List<dynamic> data = response.data as List<dynamic>;
++      final categories = data
++          .map((e) => ChipCategory.fromJson(e as Map<String, dynamic>))
++          .toList();
++      state = state.copyWith(
++        categories: categories,
++        isLoadingCategories: false,
++      );
++    } catch (e) {
++      state = state.copyWith(
++        isLoadingCategories: false,
++        error: () => 'Could not load options. Please try again.',
++      );
++    }
++  }
++
++  void toggleOption(String optionId) {
++    final updated = Set<String>.from(state.selectedOptionIds);
++    if (updated.contains(optionId)) {
++      updated.remove(optionId);
++    } else {
++      updated.add(optionId);
++    }
++    state = state.copyWith(selectedOptionIds: updated, error: () => null);
++  }
++
++  Future<bool> saveSelections() async {
++    if (!state.canProceed || state.isSaving) return false;
++
++    state = state.copyWith(isSaving: true, error: () => null);
++    try {
++      final dio = ref.read(dioProvider);
++      final authRepo = ref.read(authRepositoryProvider);
++      final user = authRepo.currentUser;
++      if (user == null) throw Exception('User not authenticated');
++
++      // Build the payload: list of selected option ids grouped by category
++      final Map<String, List<String>> chipsByCategory = {};
++      for (final category in state.categories) {
++        final selected = category.options
++            .where((o) => state.selectedOptionIds.contains(o.id))
++            .map((o) => o.id)
++            .toList();
++        if (selected.isNotEmpty) {
++          chipsByCategory[category.id] = selected;
++        }
++      }
++
++      await dio.post(
++        '/api/users/chips',
++        data: {'chips': chipsByCategory},
++        queryParameters: {'uid': user.uid},
++      );
++
++      state = state.copyWith(isSaving: false);
++      return true;
++    } catch (e) {
++      // Non-fatal: navigate forward even if save fails
++      state = state.copyWith(isSaving: false);
++      return true;
++    }
++  }
++}
+diff --git a/lib/presentation/screens/onboarding/referral/referral_screen.dart b/lib/presentation/screens/onboarding/referral/referral_screen.dart
+index 6f6e518..7b04b2c 100644
+--- a/lib/presentation/screens/onboarding/referral/referral_screen.dart
++++ b/lib/presentation/screens/onboarding/referral/referral_screen.dart
+@@ -28,95 +28,103 @@ class ReferralScreen extends ConsumerWidget {
+         elevation: 0,
+       ),
+       body: SafeArea(
+-        child: Padding(
+-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+-          child: Column(
+-            crossAxisAlignment: CrossAxisAlignment.stretch,
+-            children: [
+-              // Assuming 1 out of 5 steps because basics is step 2-3 mostly
+-              const ProgressBar(currentStep: 1, totalSteps: 5),
+-              const SizedBox(height: 32),
+-              
+-              Text(
+-                'Got an invite?',
+-                style: textTheme.displayMedium?.copyWith(
+-                  color: Colors.white,
+-                  fontWeight: FontWeight.bold,
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.stretch,
++          children: [
++            // Scrollable top content
++            Expanded(
++              child: SingleChildScrollView(
++                padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 0),
++                child: Column(
++                  crossAxisAlignment: CrossAxisAlignment.stretch,
++                  children: [
++                    const ProgressBar(currentStep: 1, totalSteps: 5),
++                    const SizedBox(height: 32),
++                    Text(
++                      'Got an invite?',
++                      style: textTheme.displayMedium?.copyWith(
++                        color: Colors.white,
++                        fontWeight: FontWeight.bold,
++                      ),
++                      textAlign: TextAlign.center,
++                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
++                    const SizedBox(height: 12),
++                    Text(
++                      'Enter your friend\'s referral code to unlock exclusive rewards.',
++                      style: textTheme.bodyLarge?.copyWith(
++                        color: colors.onSurface.withValues(alpha: 0.7),
++                      ),
++                      textAlign: TextAlign.center,
++                    ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
++                    const SizedBox(height: 40),
++                    ThemedInput(
++                      label: 'Referral Code (Optional)',
++                      placeholder: 'ENTER CODE',
++                      initialValue: state.code,
++                      onChanged: (val) =>
++                          viewModel.updateCode(val.toUpperCase()),
++                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
++                    if (state.error != null) ...[
++                      const SizedBox(height: 8),
++                      Text(
++                        state.error!,
++                        style: TextStyle(
++                          color: Theme.of(context).colorScheme.error,
++                          fontSize: 14,
++                        ),
++                        textAlign: TextAlign.center,
++                      ).animate().fadeIn(),
++                    ],
++                  ],
+                 ),
+-                textAlign: TextAlign.center,
+-              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
+-              
+-              const SizedBox(height: 12),
+-              
+-              Text(
+-                'Enter your friend\'s referral code to unlock exclusive rewards.',
+-                style: textTheme.bodyLarge?.copyWith(
+-                  color: colors.onSurface.withValues(alpha: 0.7),
+-                ),
+-                textAlign: TextAlign.center,
+-              ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
+-              
+-              const SizedBox(height: 40),
+-              
+-              ThemedInput(
+-                label: 'Referral Code (Optional)',
+-                placeholder: 'ENTER CODE',
+-                initialValue: state.code,
+-                onChanged: (val) => viewModel.updateCode(val.toUpperCase()),
+-              ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+-              
+-              if (state.error != null) ...[
+-                const SizedBox(height: 8),
+-                Text(
+-                  state.error!,
+-                  style: TextStyle(
+-                    color: Theme.of(context).colorScheme.error,
+-                    fontSize: 14,
+-                  ),
+-                  textAlign: TextAlign.center,
+-                ).animate().fadeIn(),
+-              ],
+-              
+-              const SizedBox(height: 32),
+-              
+-              if (state.isLoading)
+-                const Center(child: CircularProgressIndicator())
+-              else ...[
+-                Button(
+-                  text: 'Apply & Continue',
+-                  onTap: state.code.trim().isEmpty
+-                      ? () {}
+-                      : () async {
+-                          final success = await viewModel.submitCode();
+-                          if (success && context.mounted) {
+-                            ScaffoldMessenger.of(context).showSnackBar(
+-                              const SnackBar(
+-                                content: Text('Referral code applied successfully!'),
+-                                backgroundColor: Colors.green,
+-                                duration: Duration(seconds: 2),
+-                              ),
+-                            );
+-                            context.pushRoute(
+-                              AppRoutes.onboardingBasics,
+-                              queryParameters: {'hideBackButton': 'true'},
+-                            );
+-                          }
+-                        },
+-                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+-                
+-                const SizedBox(height: 16),
+-                
+-                Button(
+-                  text: 'Skip for now',
+-                  type: ButtonType.ghost,
+-                  onTap: () {
+-                    context.pushRoute(AppRoutes.onboardingBasics);
+-                  },
+-                ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
+-              ],
+-              const Spacer(),
+-            ],
+-          ),
++              ),
++            ),
++
++            // Pinned bottom buttons
++            Padding(
++              padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 24.0),
++              child: state.isLoading
++                  ? const Center(child: CircularProgressIndicator())
++                  : Column(
++                      crossAxisAlignment: CrossAxisAlignment.stretch,
++                      mainAxisSize: MainAxisSize.min,
++                      children: [
++                        Button(
++                          text: 'Apply & Continue',
++                          onTap: state.code.trim().isEmpty
++                              ? () {}
++                              : () async {
++                                  final success = await viewModel.submitCode();
++                                  if (success && context.mounted) {
++                                    ScaffoldMessenger.of(context).showSnackBar(
++                                      const SnackBar(
++                                        content: Text(
++                                            'Referral code applied successfully!'),
++                                        backgroundColor: Colors.green,
++                                        duration: Duration(seconds: 2),
++                                      ),
++                                    );
++                                    context.pushRoute(
++                                      AppRoutes.onboardingBasics,
++                                      queryParameters: {
++                                        'hideBackButton': 'true'
++                                      },
++                                    );
++                                  }
++                                },
++                        ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
++                        const SizedBox(height: 16),
++                        Button(
++                          text: 'Skip for now',
++                          type: ButtonType.ghost,
++                          onTap: () {
++                            context.pushRoute(AppRoutes.onboardingBasics);
++                          },
++                        ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
++                      ],
++                    ),
++            ),
++          ],
+         ),
+       ),
+     );
+diff --git a/pubspec.lock b/pubspec.lock
+index 368e893..98aeb67 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -828,10 +828,10 @@ packages:
+     dependency: transitive
+     description:
+       name: meta
+-      sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c
++      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
+       url: "https://pub.dev"
+     source: hosted
+-    version: "1.16.0"
++    version: "1.17.0"
+   mime:
+     dependency: transitive
+     description:
+@@ -1281,26 +1281,26 @@ packages:
+     dependency: transitive
+     description:
+       name: test
+-      sha256: "65e29d831719be0591f7b3b1a32a3cda258ec98c58c7b25f7b84241bc31215bb"
++      sha256: "75906bf273541b676716d1ca7627a17e4c4070a3a16272b7a3dc7da3b9f3f6b7"
+       url: "https://pub.dev"
+     source: hosted
+-    version: "1.26.2"
++    version: "1.26.3"
+   test_api:
+     dependency: transitive
+     description:
+       name: test_api
+-      sha256: "522f00f556e73044315fa4585ec3270f1808a4b186c936e612cab0b565ff1e00"
++      sha256: ab2726c1a94d3176a45960b6234466ec367179b87dd74f1611adb1f3b5fb9d55
+       url: "https://pub.dev"
+     source: hosted
+-    version: "0.7.6"
++    version: "0.7.7"
+   test_core:
+     dependency: transitive
+     description:
+       name: test_core
+-      sha256: "80bf5a02b60af04b09e14f6fe68b921aad119493e26e490deaca5993fef1b05a"
++      sha256: "0cc24b5ff94b38d2ae73e1eb43cc302b77964fbf67abad1e296025b78deb53d0"
+       url: "https://pub.dev"
+     source: hosted
+-    version: "0.6.11"
++    version: "0.6.12"
+   timing:
+     dependency: transitive
+     description:

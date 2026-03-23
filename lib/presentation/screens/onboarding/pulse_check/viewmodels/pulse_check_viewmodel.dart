@@ -56,9 +56,8 @@ class PulseCheckViewModel extends _$PulseCheckViewModel {
     state = state.copyWith(isLoadingCategories: true, error: () => null);
     try {
       final dio = ref.read(dioProvider);
-      // Chips API is public — no auth header needed, use absolute URL
       final response = await dio.get(
-        'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com/api/chips',
+        '/api/chips',
       );
       final List<dynamic> data = response.data as List<dynamic>;
       final categories = data
