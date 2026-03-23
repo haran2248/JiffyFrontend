@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/presentation/widgets/button.dart';
+import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/preferences_viewmodel.dart';
 import 'models/relationship_goal.dart';
 
@@ -23,6 +24,7 @@ class RelationshipGoalsScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            const ProgressBar(currentStep: 4, totalSteps: 5),
             const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
@@ -165,7 +167,7 @@ class RelationshipGoalsScreen extends ConsumerWidget {
                   onTap: () async {
                     final success = await viewModel.saveRelationshipGoal();
                     if (success && context.mounted) {
-                      context.push(AppRoutes.onboardingCoPilotIntro);
+                      context.push(AppRoutes.onboardingPulseCheck);
                     }
                   },
                   isLoading: state.isLoading,

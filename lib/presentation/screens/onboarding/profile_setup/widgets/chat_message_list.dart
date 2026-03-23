@@ -18,7 +18,8 @@ class ChatMessageList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...messages.map((message) => _ChatMessageItem(message: message)),
-        if (isTyping) _TypingIndicator(),
+        if (isTyping && (messages.isEmpty || messages.last.isFromUser))
+          _TypingIndicator(),
       ],
     );
   }

@@ -13,7 +13,10 @@ class AppRoutes {
   // Onboarding flow
   static const String onboardingBasics = '/onboarding/basics';
   static const String onboardingReferral = '/onboarding/referral';
+  static const String onboardingPulseCheck = '/onboarding/pulse-check';
   static const String onboardingCoPilotIntro = '/onboarding/co-pilot-intro';
+  static const String onboardingProfessionalDetails =
+      '/onboarding/professional-details';
   static const String onboardingProfileSetup = '/onboarding/profile-setup';
   static const String onboardingPermissions = '/onboarding/permissions';
   static const String phoneVerification = '/onboarding/phone-verification';
@@ -46,7 +49,9 @@ class AppRoutes {
 class RouteNames {
   static const String basics = 'basics';
   static const String onboardingReferral = 'referral';
+  static const String pulseCheck = 'pulse-check';
   static const String coPilotIntro = 'co-pilot-intro';
+  static const String professionalDetails = 'professional-details';
   static const String profileSetup = 'profile-setup';
   static const String permissions = 'permissions';
   static const String home = 'home';

@@ -24,7 +24,7 @@ class PhotoUploadSection extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            "Add your photo to get started",
+            "Add your cutest photo here",
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

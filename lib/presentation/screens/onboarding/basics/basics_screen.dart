@@ -36,7 +36,7 @@ class BasicsScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            ProgressBar(currentStep: 2, totalSteps: 4),
+            ProgressBar(currentStep: 1, totalSteps: 5),
             const SizedBox(height: 32),
             Expanded(
               child: SingleChildScrollView(
@@ -93,12 +93,8 @@ class BasicsScreen extends ConsumerWidget {
                     : VitalsStep(
                         selectedDateOfBirth: formData.dateOfBirth,
                         selectedGender: formData.gender,
-                        selectedCollege: formData.college,
-                        selectedWork: formData.work,
                         onDateOfBirthChanged: viewModel.updateDateOfBirth,
                         onGenderChanged: viewModel.updateGender,
-                        onCollegeChanged: viewModel.updateCollege,
-                        onWorkChanged: viewModel.updateWork,
                       ),
               ),
             ),
@@ -113,8 +109,8 @@ class BasicsScreen extends ConsumerWidget {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            context
-                                .pushRoute(AppRoutes.onboardingPreferredGender);
+                            context.pushRoute(
+                                AppRoutes.onboardingProfessionalDetails);
                           }
                         }
                       : () {},

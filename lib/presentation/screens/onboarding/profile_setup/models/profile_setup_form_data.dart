@@ -30,6 +30,7 @@ class ProfileSetupFormData {
   final int currentStep;
   final String? userInput;
   final bool showCompletionDialog;
+  final bool isCompleting;
 
   const ProfileSetupFormData({
     this.messages = const [],
@@ -39,6 +40,7 @@ class ProfileSetupFormData {
     this.currentStep = 1,
     this.userInput,
     this.showCompletionDialog = false,
+    this.isCompleting = false,
   });
 
   ProfileSetupFormData copyWith({
@@ -50,6 +52,7 @@ class ProfileSetupFormData {
     String? Function()? userInput,
     bool clearUserInput = false,
     bool? showCompletionDialog,
+    bool? isCompleting,
   }) {
     return ProfileSetupFormData(
       messages: messages ?? this.messages,
@@ -61,6 +64,7 @@ class ProfileSetupFormData {
           ? null
           : (userInput != null ? userInput() : this.userInput),
       showCompletionDialog: showCompletionDialog ?? (this.showCompletionDialog),
+      isCompleting: isCompleting ?? this.isCompleting,
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/presentation/widgets/button.dart';
+import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/preferences_viewmodel.dart';
 import 'models/gender_preference.dart';
 
@@ -23,6 +24,7 @@ class PreferredGenderScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            const ProgressBar(currentStep: 3, totalSteps: 5),
             const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
@@ -61,7 +63,7 @@ class PreferredGenderScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
-                                    ? Theme.of(context).primaryColor
+                                    ? Theme.of(context).colorScheme.primary
                                     : Colors.white12,
                                 width: isSelected ? 2 : 1,
                               ),
@@ -86,7 +88,9 @@ class PreferredGenderScreen extends ConsumerWidget {
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: isSelected
-                                          ? Theme.of(context).primaryColor
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
                                           : Colors.white24,
                                       width: 2,
                                     ),
@@ -100,7 +104,8 @@ class PreferredGenderScreen extends ConsumerWidget {
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               color: Theme.of(context)
-                                                  .primaryColor,
+                                                  .colorScheme
+                                                  .primary,
                                             ),
                                           ),
                                         )
