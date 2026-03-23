@@ -148,8 +148,8 @@ class PulseCheckScreen extends ConsumerWidget {
                       isLoading: state.isSaving,
                       onTap: state.canProceed
                           ? () async {
-                              await viewModel.saveSelections();
-                              if (context.mounted) {
+                              final success = await viewModel.saveSelections();
+                              if (success && context.mounted) {
                                 context.pushRoute(
                                     AppRoutes.onboardingCoPilotIntro);
                               }
