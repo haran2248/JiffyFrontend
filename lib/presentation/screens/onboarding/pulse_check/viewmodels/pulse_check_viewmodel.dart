@@ -100,16 +100,16 @@ class PulseCheckViewModel extends _$PulseCheckViewModel {
       for (final category in state.categories) {
         final selected = category.options
             .where((o) => state.selectedOptionIds.contains(o.id))
-            .map((o) => o.id)
+            .map((o) => o.label)
             .toList();
         if (selected.isNotEmpty) {
-          chipsByCategory[category.id] = selected;
+          chipsByCategory[category.title] = selected;
         }
       }
 
       await dio.post(
-        '/api/users/chips',
-        data: {'chips': chipsByCategory},
+        '/api/users/chipSelections',
+        data: chipsByCategory,
         queryParameters: {'uid': user.uid},
       );
 
