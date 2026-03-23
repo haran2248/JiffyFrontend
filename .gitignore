@@ -89,3 +89,6 @@ firebase.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
 android/app/google-services.json
+
+# Local patch files
+diff.patch
