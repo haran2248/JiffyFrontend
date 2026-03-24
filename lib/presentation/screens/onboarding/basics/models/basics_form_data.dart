@@ -3,8 +3,10 @@ class BasicsFormData {
   final DateTime? dateOfBirth;
   final String? gender;
   final String? photoUrl;
-  final String? college;
-  final String? work;
+  final String? university;
+  final String? graduationYear;
+  final String? companyName;
+  final String? titleCompany;
   final int currentStep;
   final bool isSaving;
   final String? error;
@@ -14,8 +16,10 @@ class BasicsFormData {
     this.dateOfBirth,
     this.gender,
     this.photoUrl,
-    this.college,
-    this.work,
+    this.university,
+    this.graduationYear,
+    this.companyName,
+    this.titleCompany,
     this.currentStep = 1,
     this.isSaving = false,
     this.error,
@@ -26,8 +30,10 @@ class BasicsFormData {
     DateTime? dateOfBirth,
     String? gender,
     String? photoUrl,
-    String? college,
-    String? work,
+    String? university,
+    String? graduationYear,
+    String? companyName,
+    String? titleCompany,
     int? currentStep,
     bool? isSaving,
     String? Function()? error,
@@ -37,8 +43,10 @@ class BasicsFormData {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       photoUrl: photoUrl ?? this.photoUrl,
-      college: college ?? this.college,
-      work: work ?? this.work,
+      university: university ?? this.university,
+      graduationYear: graduationYear ?? this.graduationYear,
+      companyName: companyName ?? this.companyName,
+      titleCompany: titleCompany ?? this.titleCompany,
       currentStep: currentStep ?? this.currentStep,
       isSaving: isSaving ?? this.isSaving,
       error: error != null ? error() : this.error,

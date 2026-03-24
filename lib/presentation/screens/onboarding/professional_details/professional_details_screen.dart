@@ -51,7 +51,7 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      'College is required — work is optional.',
+                      'University and Graduation Year are required.',
                       style: textTheme.bodyLarge?.copyWith(
                         color: colors.onSurface.withValues(alpha: 0.6),
                       ),
@@ -59,14 +59,27 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
 
                     const SizedBox(height: 40),
 
-                    // College field
+                    // University field
                     _DetailsField(
                       label: 'College / University',
                       hint: 'Where did you study?',
                       icon: Icons.school_outlined,
-                      initialValue: formData.college,
-                      onChanged: viewModel.updateCollege,
+                      initialValue: formData.university,
+                      onChanged: viewModel.updateUniversity,
                       delay: 150.ms,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Graduation Year field
+                    _DetailsField(
+                      label: 'Graduation Year',
+                      hint: 'e.g. 2025',
+                      icon: Icons.calendar_today_outlined,
+                      keyboardType: TextInputType.number,
+                      initialValue: formData.graduationYear,
+                      onChanged: viewModel.updateGraduationYear,
+                      delay: 180.ms,
                     ),
 
                     const SizedBox(height: 24),
@@ -74,11 +87,23 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                     // Work field (optional)
                     _DetailsField(
                       label: 'Work / Company (optional)',
-                      hint: 'Where do you work?',
+                      hint: 'e.g. Google, Jiffy',
                       icon: Icons.work_outline_rounded,
-                      initialValue: formData.work,
-                      onChanged: viewModel.updateWork,
+                      initialValue: formData.companyName,
+                      onChanged: viewModel.updateCompanyName,
                       delay: 220.ms,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Job Title field (optional)
+                    _DetailsField(
+                      label: 'Job Title (optional)',
+                      hint: 'e.g. Software Engineer',
+                      icon: Icons.assignment_ind_outlined,
+                      initialValue: formData.titleCompany,
+                      onChanged: viewModel.updateTitleCompany,
+                      delay: 250.ms,
                     ),
                   ],
                 ),
@@ -129,6 +154,7 @@ class _DetailsField extends StatelessWidget {
   final String? initialValue;
   final ValueChanged<String>? onChanged;
   final Duration delay;
+  final TextInputType keyboardType;
 
   const _DetailsField({
     required this.label,
@@ -137,6 +163,7 @@ class _DetailsField extends StatelessWidget {
     required this.delay,
     this.initialValue,
     this.onChanged,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -145,6 +172,7 @@ class _DetailsField extends StatelessWidget {
     return TextFormField(
       initialValue: initialValue,
       onChanged: onChanged,
+      keyboardType: keyboardType,
       style: TextStyle(color: colors.onSurface),
       decoration: InputDecoration(
         labelText: label,

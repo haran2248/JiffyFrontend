@@ -28,12 +28,20 @@ class BasicsViewModel extends _$BasicsViewModel {
     state = state.copyWith(photoUrl: url, error: () => null);
   }
 
-  void updateCollege(String? value) {
-    state = state.copyWith(college: value, error: () => null);
+  void updateUniversity(String? value) {
+    state = state.copyWith(university: value, error: () => null);
   }
 
-  void updateWork(String? value) {
-    state = state.copyWith(work: value, error: () => null);
+  void updateGraduationYear(String? value) {
+    state = state.copyWith(graduationYear: value, error: () => null);
+  }
+
+  void updateCompanyName(String? value) {
+    state = state.copyWith(companyName: value, error: () => null);
+  }
+
+  void updateTitleCompany(String? value) {
+    state = state.copyWith(titleCompany: value, error: () => null);
   }
 
   Future<bool> saveBasics() async {
@@ -78,7 +86,12 @@ class BasicsViewModel extends _$BasicsViewModel {
     state = state.copyWith(isSaving: true, error: () => null);
     try {
       final repo = ref.read(onboardingRepositoryProvider);
-      await repo.saveProfessionalDetails(state.college, state.work);
+      await repo.saveProfessionalDetails(
+        state.university,
+        state.graduationYear,
+        state.companyName,
+        state.titleCompany,
+      );
 
       state = state.copyWith(isSaving: false);
       return true;
@@ -115,7 +128,8 @@ class BasicsViewModel extends _$BasicsViewModel {
       state.gender!.isNotEmpty;
 
   bool get isStep3Valid =>
-      state.college != null && state.college!.trim().isNotEmpty;
+      (state.university?.trim().isNotEmpty ?? false) &&
+      (state.graduationYear?.trim().isNotEmpty ?? false);
 
   bool get isFormValid => isStep1Valid && isStep2Valid && isStep3Valid;
 }

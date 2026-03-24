@@ -57,7 +57,8 @@ class OnboardingRepository {
 
   /// Saves professional details (college, company).
   /// Endpoint: POST /professionalDetails
-  Future<void> saveProfessionalDetails(String? college, String? company) async {
+  Future<void> saveProfessionalDetails(String? university,
+      String? graduationYear, String? companyName, String? titleCompany) async {
     try {
       final user = _authRepo.currentUser;
       if (user == null) throw Exception("User not authenticated");
@@ -66,8 +67,10 @@ class OnboardingRepository {
       final response = await _dio.post(
         '/api/users/professionalDetails',
         data: {
-          'college': college,
-          'work': company,
+          'university': university,
+          'graduationYear': graduationYear,
+          'companyName': companyName,
+          'titleCompany': titleCompany,
         },
         queryParameters: {'uid': uid},
       );
