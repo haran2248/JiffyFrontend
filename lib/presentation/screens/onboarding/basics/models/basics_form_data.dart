@@ -6,6 +6,8 @@ class BasicsFormData {
   final String? college;
   final String? work;
   final int currentStep;
+  final bool isSaving;
+  final String? error;
 
   const BasicsFormData({
     this.firstName,
@@ -15,6 +17,8 @@ class BasicsFormData {
     this.college,
     this.work,
     this.currentStep = 1,
+    this.isSaving = false,
+    this.error,
   });
 
   BasicsFormData copyWith({
@@ -25,6 +29,8 @@ class BasicsFormData {
     String? college,
     String? work,
     int? currentStep,
+    bool? isSaving,
+    String? Function()? error,
   }) {
     return BasicsFormData(
       firstName: firstName ?? this.firstName,
@@ -34,6 +40,8 @@ class BasicsFormData {
       college: college ?? this.college,
       work: work ?? this.work,
       currentStep: currentStep ?? this.currentStep,
+      isSaving: isSaving ?? this.isSaving,
+      error: error != null ? error() : this.error,
     );
   }
 

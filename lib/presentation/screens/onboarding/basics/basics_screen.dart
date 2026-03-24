@@ -102,15 +102,24 @@ class BasicsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(24),
                 child: Button(
                   text: "Continue",
+                  isLoading: formData.isSaving,
                   onTap: (formData.currentStep == 1
                           ? viewModel.isStep1Valid
                           : viewModel.isStep2Valid)
-                      ? () {
+                      ? () async {
                           if (formData.currentStep == 1) {
                             viewModel.nextStep();
                           } else {
-                            context.pushRoute(
-                                AppRoutes.onboardingProfessionalDetails);
+                            final success = await viewModel.saveBasics();
+                            if (success && context.mounted) {
+                              context.pushRoute(
+                                  AppRoutes.onboardingProfessionalDetails);
+                            } else if (context.mounted &&
+                                formData.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(formData.error!)),
+                              );
+                            }
                           }
                         }
                       : () {},

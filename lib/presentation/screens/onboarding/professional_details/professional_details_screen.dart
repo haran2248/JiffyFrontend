@@ -89,13 +89,24 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Opacity(
-                opacity:
-                    (formData.college?.trim().isNotEmpty ?? false) ? 1.0 : 0.4,
+                opacity: viewModel.isStep3Valid ? 1.0 : 0.4,
                 child: Button(
                   text: 'Continue',
-                  onTap: (formData.college?.trim().isNotEmpty ?? false)
-                      ? () =>
-                          context.pushRoute(AppRoutes.onboardingPreferredGender)
+                  isLoading: formData.isSaving,
+                  onTap: viewModel.isStep3Valid
+                      ? () async {
+                          final success =
+                              await viewModel.saveProfessionalDetails();
+                          if (success && context.mounted) {
+                            context
+                                .pushRoute(AppRoutes.onboardingPreferredGender);
+                          } else if (context.mounted &&
+                              formData.error != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(formData.error!)),
+                            );
+                          }
+                        }
                       : () {},
                 ),
               ),
