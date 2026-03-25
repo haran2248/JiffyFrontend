@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:jiffy/core/services/service_providers.dart';
-import 'package:jiffy/presentation/widgets/chat_bubble.dart';
-import 'package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart';
-import 'viewmodels/chat_viewmodel.dart';
-import 'widgets/chat_action_chip.dart';
-import 'widgets/typing_indicator.dart';
-import 'models/chat_state.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:firebase_auth/firebase_auth.dart";
+import "package:jiffy/core/services/service_providers.dart";
+import "package:jiffy/presentation/widgets/chat_bubble.dart";
+import "package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart";
+import "viewmodels/chat_viewmodel.dart";
+import "widgets/chat_action_chip.dart";
+import "widgets/typing_indicator.dart";
+import "models/chat_state.dart";
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String otherUserId;
@@ -150,16 +150,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildMessagesList(ChatState chatState) {
-    // ChatState contains messages and isAiTyping
     final messages = chatState.messages;
     final isAiTyping = chatState.isAiTyping;
+    final streamingAiMessage = chatState.streamingAiMessage;
 
-    // Messages are sorted ASC (oldest first)
-    // ListView(reverse: true) needs them in DESC (newest at index 0)
+    // Streaming bubble takes slot 0; dots indicator only when no streaming yet
+    final hasStreamingBubble = streamingAiMessage != null;
+    final hasTypingDots = isAiTyping && !hasStreamingBubble;
+
+    // Messages are sorted ASC (oldest first); ListView(reverse:true) needs DESC
     final displayMessages = List.of(messages.reversed);
 
-    // Calculate item count: messages + typing indicator if active
-    final itemCount = displayMessages.length + (isAiTyping ? 1 : 0);
+    // Extra leading slot for either the streaming bubble or the typing dots
+    final extraSlot = hasStreamingBubble || hasTypingDots ? 1 : 0;
+    final itemCount = displayMessages.length + extraSlot;
 
     return ListView.builder(
       controller: _scrollController,
@@ -167,8 +171,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        // If typing indicator is active, show it as the first item (index 0 in reversed list)
-        if (isAiTyping && index == 0) {
+        // Slot 0: render streaming bubble or typing dots
+        if (extraSlot == 1 && index == 0) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
@@ -183,14 +187,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const TypingIndicator(),
+                if (hasStreamingBubble && streamingAiMessage.isNotEmpty)
+                  ChatBubble(
+                    text: streamingAiMessage,
+                    isMe: false,
+                  )
+                else
+                  const TypingIndicator(),
               ],
             ),
           );
         }
 
-        // Adjust index if typing indicator is shown
-        final msgIndex = isAiTyping ? index - 1 : index;
+        final msgIndex = extraSlot == 1 ? index - 1 : index;
         final msg = displayMessages[msgIndex];
 
         final isSender = msg.senderId != widget.otherUserId;
@@ -218,13 +227,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Error Icon (Left of message for sender if error)
                   if (isSender && msg.hasError)
                     Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: GestureDetector(
                         onTap: () {
-                          // Retry sending
                           ref
                               .read(chatViewModelProvider(widget.otherUserId)
                                   .notifier)
@@ -237,11 +244,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       ),
                     ),
-
-                  // Message Bubble
                   Flexible(
                     child: Opacity(
-                      // Slightly fade pending messages to indicate they're not yet confirmed
                       opacity: isPending ? 0.7 : 1.0,
                       child: ChatBubble(
                         text: msg.message,
