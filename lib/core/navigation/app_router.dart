@@ -14,6 +14,7 @@ import 'package:jiffy/presentation/screens/onboarding/permissions/permissions_sc
 import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setup_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/preferences/preferred_gender_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/preferences/relationship_goals_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/waitlist/waitlist_screen.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import '../../presentation/screens/chat/chat_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
@@ -207,6 +208,14 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const PermissionsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingWaitlist,
+        name: RouteNames.waitlist,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const WaitlistScreen(),
         ),
       ),
 

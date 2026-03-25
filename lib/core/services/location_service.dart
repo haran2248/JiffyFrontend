@@ -52,12 +52,13 @@ class LocationService {
   }
 
   /// Update user location on the backend.
-  /// Returns true if successful, false otherwise.
-  Future<bool> updateLocation(double latitude, double longitude) async {
+  /// Returns the response data if successful, null otherwise.
+  Future<Map<String, dynamic>?> updateLocation(
+      double latitude, double longitude) async {
     final user = _authRepository.currentUser;
     if (user == null) {
       debugPrint("[LocationService] No authenticated user");
-      return false;
+      return null;
     }
 
     try {
@@ -81,7 +82,7 @@ class LocationService {
       debugPrint("[LocationService] Response data: ${response.data}");
       debugPrint("[LocationService] Location updated successfully");
       _lastUpdateTime = DateTime.now();
-      return true;
+      return response.data as Map<String, dynamic>?;
     } on DioException catch (e) {
       debugPrint("[LocationService] DioException updating location:");
       debugPrint("[LocationService]   Type: ${e.type}");
@@ -89,11 +90,11 @@ class LocationService {
       debugPrint(
           "[LocationService]   Response: ${e.response?.statusCode} - ${e.response?.data}");
       debugPrint("[LocationService]   Error: ${e.error}");
-      return false;
+      return null;
     } catch (e, stackTrace) {
       debugPrint("[LocationService] Unexpected error updating location: $e");
       debugPrint("[LocationService] Stack trace: $stackTrace");
-      return false;
+      return null;
     }
   }
 
@@ -124,10 +125,11 @@ class LocationService {
 
   /// Force update location regardless of time elapsed.
   /// Use this after permission is granted during onboarding.
-  Future<void> forceUpdateLocation() async {
+  Future<Map<String, dynamic>?> forceUpdateLocation() async {
     final position = await getCurrentPosition();
     if (position != null) {
-      await updateLocation(position.latitude, position.longitude);
+      return await updateLocation(position.latitude, position.longitude);
     }
+    return null;
   }
 }

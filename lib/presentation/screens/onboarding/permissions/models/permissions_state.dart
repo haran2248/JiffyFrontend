@@ -3,12 +3,14 @@ class PermissionsState {
   final bool notificationsGranted;
   final bool photoLibraryGranted;
   final bool cameraGranted;
+  final bool isWaitlisted;
 
   const PermissionsState({
     this.locationGranted = false,
     this.notificationsGranted = false,
     this.photoLibraryGranted = false,
     this.cameraGranted = false,
+    this.isWaitlisted = false,
   });
 
   PermissionsState copyWith({
@@ -16,12 +18,14 @@ class PermissionsState {
     bool? notificationsGranted,
     bool? photoLibraryGranted,
     bool? cameraGranted,
+    bool? isWaitlisted,
   }) {
     return PermissionsState(
       locationGranted: locationGranted ?? this.locationGranted,
       notificationsGranted: notificationsGranted ?? this.notificationsGranted,
       photoLibraryGranted: photoLibraryGranted ?? this.photoLibraryGranted,
       cameraGranted: cameraGranted ?? this.cameraGranted,
+      isWaitlisted: isWaitlisted ?? this.isWaitlisted,
     );
   }
 
@@ -33,12 +37,14 @@ class PermissionsState {
           locationGranted == other.locationGranted &&
           notificationsGranted == other.notificationsGranted &&
           photoLibraryGranted == other.photoLibraryGranted &&
-          cameraGranted == other.cameraGranted;
+          cameraGranted == other.cameraGranted &&
+          isWaitlisted == other.isWaitlisted;
 
   @override
   int get hashCode =>
       locationGranted.hashCode ^
       notificationsGranted.hashCode ^
       photoLibraryGranted.hashCode ^
-      cameraGranted.hashCode;
+      cameraGranted.hashCode ^
+      isWaitlisted.hashCode;
 }

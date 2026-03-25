@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart' show debugPrint;
+import 'package:jiffy/core/services/waitlist_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
@@ -13,13 +14,16 @@ part 'profile_service.g.dart';
 @riverpod
 ProfileService profileService(Ref ref) {
   final dio = ref.watch(dioProvider);
-  return ProfileService(dio: dio);
+  return ProfileService(dio: dio, ref: ref);
 }
 
 class ProfileService {
   final Dio _dio;
+  final Ref _ref;
 
-  ProfileService({required Dio dio}) : _dio = dio;
+  ProfileService({required Dio dio, required Ref ref})
+      : _dio = dio,
+        _ref = ref;
 
   /// Check if user has completed onboarding
   ///
@@ -91,6 +95,26 @@ class ProfileService {
         debugPrint(
             'ProfileService: No user data found - new user, needs basics');
         return 'basics';
+      }
+
+      // ZERO: Check if user is waitlisted
+      final isWaitlistedInProfile = data['isWaitlisted'] == true;
+      bool isWaitlisted = isWaitlistedInProfile;
+
+      // If not marked in profile, check the dedicated waitlist status endpoint
+      // as a fallback/verification
+      if (!isWaitlisted) {
+        final waitlistStatus = await _ref
+            .read(waitlistServiceProvider.notifier)
+            .checkWaitlistStatus(userId);
+        if (waitlistStatus) {
+          isWaitlisted = true;
+        }
+      }
+
+      if (isWaitlisted) {
+        debugPrint('ProfileService: User is waitlisted, routing to waitlist');
+        return 'waitlist';
       }
 
       // FIRST: Check onboardingStatus - if COMPLETED, user is fully onboarded
@@ -384,6 +408,7 @@ class ProfileService {
         traits: traits,
         conversationStyle: conversationStyle,
         onboardingStatus: onboardingStatus,
+        isWaitlisted: userData['isWaitlisted'] == true,
       );
     } catch (e) {
       debugPrint("ProfileService: Error fetching user profile: $e");

@@ -4,6 +4,8 @@ import '../models/permissions_state.dart';
 import '../../../../../core/services/permission_service.dart';
 import '../../../../../core/services/notification_service.dart';
 import '../../../../../core/services/service_providers.dart';
+import '../../../../../core/services/waitlist_service.dart';
+import '../../../../../core/auth/auth_viewmodel.dart';
 
 part 'permissions_viewmodel.g.dart';
 
@@ -36,10 +38,36 @@ class PermissionsViewModel extends _$PermissionsViewModel {
     if (granted) {
       try {
         final locationService = ref.read(locationServiceProvider);
+        final responseData = await locationService.forceUpdateLocation();
         debugPrint(
-            '[PermissionsViewModel] Forcing location update after permission grant');
-        await locationService.forceUpdateLocation();
-        debugPrint('[PermissionsViewModel] Location update complete');
+            '[PermissionsViewModel] Location update complete. Data: $responseData');
+
+        // Waitlist Check: Location Eligibility from backend response
+        final isLocationEnabled = responseData?['isLocationEnabled'] == true;
+
+        if (!isLocationEnabled) {
+          final waitlistService = ref.read(waitlistServiceProvider.notifier);
+          final authState = ref.read(authViewModelProvider);
+          final isCollege = waitlistService.isCollegeEmail(authState.email);
+
+          // If they are not a college student (by email) AND location is not enabled,
+          // they are waitlisted.
+          if (!isCollege) {
+            final currentState = state.value ?? const PermissionsState();
+
+            // Notify backend about waitlist status
+            final authState = ref.read(authViewModelProvider);
+            if (authState.userId != null) {
+              await ref
+                  .read(waitlistServiceProvider.notifier)
+                  .notifyWaitlisted(authState.userId!);
+            }
+
+            state = AsyncData(currentState.copyWith(
+                isWaitlisted: true, locationGranted: true));
+            return;
+          }
+        }
       } catch (e) {
         debugPrint('[PermissionsViewModel] Error updating location: $e');
         // Don't fail permission grant if location update fails

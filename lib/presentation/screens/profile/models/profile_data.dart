@@ -52,6 +52,7 @@ class ProfileData {
       conversationStyle; // e.g., "Playful wit, balancing deep & thoughtful chats"
   final String? conversationStarter; // Prompt text
   final String? onboardingStatus; // E.g., 'COMPLETED'
+  final bool isWaitlisted;
 
   const ProfileData({
     required this.id,
@@ -70,7 +71,11 @@ class ProfileData {
     this.conversationStyle,
     this.conversationStarter,
     this.onboardingStatus,
+    this.isWaitlisted = false,
   });
+
+  /// User Nomenclature Helper
+  bool getIsWaitlisted() => isWaitlisted;
 
   ProfileData copyWith({
     String? id,
@@ -89,6 +94,7 @@ class ProfileData {
     Object? conversationStyle = _sentinel,
     Object? conversationStarter = _sentinel,
     Object? onboardingStatus = _sentinel,
+    bool? isWaitlisted,
   }) {
     return ProfileData(
       id: id ?? this.id,
@@ -117,6 +123,7 @@ class ProfileData {
       onboardingStatus: identical(onboardingStatus, _sentinel)
           ? this.onboardingStatus
           : onboardingStatus as String?,
+      isWaitlisted: isWaitlisted ?? this.isWaitlisted,
     );
   }
 }

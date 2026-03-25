@@ -20,8 +20,11 @@ class PermissionsScreen extends ConsumerWidget {
       error: (_, __) => const PermissionsState(),
     );
     final viewModel = ref.read(permissionsViewModelProvider.notifier);
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Skip immediate waitlist redirection to allow full onboarding flow
+    // Redirection will happen after Pulse Check screen
 
     return Scaffold(
       appBar: AppBar(

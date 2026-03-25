@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/basic_details.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart';
+import 'package:jiffy/core/auth/auth_viewmodel.dart';
+import 'package:jiffy/core/services/waitlist_service.dart';
 import '../models/basics_form_data.dart';
 
 part 'basics_viewmodel.g.dart';
@@ -69,6 +71,33 @@ class BasicsViewModel extends _$BasicsViewModel {
         preferredGender: null, // Will be set in next step
       ));
 
+      // Eligibility check
+      final waitlistService = ref.read(waitlistServiceProvider.notifier);
+      final authState = ref.read(authViewModelProvider);
+
+      final isCollege = waitlistService.isCollegeEmail(authState.email);
+
+      // If under 18 or (over 25 AND not using a college email),
+      // we mark as potentially waitlisted.
+      // We'll give gmails over 25 a chance to provide university info in next step.
+      if (state.dateOfBirth != null) {
+        final age = state.age ?? 0;
+        if (age < 18) {
+          final authState = ref.read(authViewModelProvider);
+          if (authState.userId != null) {
+            await ref
+                .read(waitlistServiceProvider.notifier)
+                .notifyWaitlisted(authState.userId!);
+          }
+          state = state.copyWith(isSaving: false, isWaitlisted: true);
+          return true;
+        }
+
+        if (age > 25 && !isCollege) {
+          // They might still be a student, let them proceed to Step 3 (Professional Details)
+        }
+      }
+
       state = state.copyWith(isSaving: false);
       return true;
     } catch (e) {
@@ -94,6 +123,27 @@ class BasicsViewModel extends _$BasicsViewModel {
       );
 
       state = state.copyWith(isSaving: false);
+
+      // Eligibility check after professional details
+      final waitlistService = ref.read(waitlistServiceProvider.notifier);
+      final authState = ref.read(authViewModelProvider);
+
+      final isCollege = waitlistService.isCollegeEmail(authState.email);
+      final isAgeEligible = waitlistService.isAgeEligible(state.dateOfBirth);
+
+      // If they are over 25 and don't have a college email,
+      // they MUST have provided a university to be considered a "college student".
+      // Since we don't have a backend check for university yet, we use the email as primary source.
+      if (!isAgeEligible && !isCollege) {
+        final authSession = ref.read(authViewModelProvider);
+        if (authSession.userId != null) {
+          await ref
+              .read(waitlistServiceProvider.notifier)
+              .notifyWaitlisted(authSession.userId!);
+        }
+        state = state.copyWith(isWaitlisted: true);
+      }
+
       return true;
     } catch (e) {
       state = state.copyWith(
