@@ -187,7 +187,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (hasStreamingBubble)
+                if (hasStreamingBubble && streamingAiMessage.isNotEmpty)
                   ChatBubble(
                     text: streamingAiMessage,
                     isMe: false,
