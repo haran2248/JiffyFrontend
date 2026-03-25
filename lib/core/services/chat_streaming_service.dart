@@ -47,7 +47,7 @@ class ChatStreamingService {
         if (line.isEmpty) continue;
 
         if (line.startsWith("data:")) {
-          final data = line.substring(5);
+          final data = line.startsWith("data: ") ? line.substring(6) : line.substring(5);
 
           if (data.trim() == "[DONE]") {
             debugPrint("ChatStreamingService: [DONE] signal received");
