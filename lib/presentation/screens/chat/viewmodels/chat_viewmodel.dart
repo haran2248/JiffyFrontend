@@ -1,25 +1,36 @@
-import 'dart:async';
+import "dart:async";
 
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:jiffy/core/services/service_providers.dart';
-import '../chat_constants.dart';
-import '../data/chat_repository.dart';
-import '../models/chat_message.dart';
-import '../models/chat_state.dart';
+import "package:firebase_auth/firebase_auth.dart";
+import "package:flutter/foundation.dart";
+import "package:riverpod_annotation/riverpod_annotation.dart";
+import "package:jiffy/core/services/service_providers.dart";
+import "../chat_constants.dart";
+import "../data/chat_repository.dart";
+import "../models/chat_message.dart";
+import "../models/chat_state.dart";
 
-part 'chat_viewmodel.g.dart';
+part "chat_viewmodel.g.dart";
 
 @riverpod
 class ChatViewModel extends _$ChatViewModel {
   late final ChatRepository _repository;
   StreamSubscription<List<ChatMessage>>? _messagesSubscription;
 
+  /// Active AI streaming subscription — non-null while tokens are arriving.
+  StreamSubscription<String>? _streamSubscription;
+
+  /// Accumulated streaming text for the current AI response.
+  String _streamingMessage = "";
+
+  /// ID of the last confirmed Jiffy Bot message seen from Firestore.
+  /// Used to detect when the NEW AI response lands so we can clear the
+  /// streaming bubble and show the confirmed message in one state update.
+  String? _lastSeenAiMessageId;
+
   /// Pending messages not yet confirmed by Firestore
   final List<ChatMessageDisplay> _pendingMessages = [];
 
-  /// Whether AI is currently generating a response
+  /// Whether AI is currently generating a response (shows dots before first token)
   bool _isAiTyping = false;
 
   @override
@@ -32,13 +43,14 @@ class ChatViewModel extends _$ChatViewModel {
         _onMessagesReceived(messages);
       },
       onError: (error) {
-        debugPrint('ChatViewModel: Stream error: $error');
+        debugPrint("ChatViewModel: Stream error: $error");
       },
     );
 
-    // Cleanup subscription when disposed
+    // Cleanup subscriptions when disposed
     ref.onDispose(() {
       _messagesSubscription?.cancel();
+      _streamSubscription?.cancel();
     });
 
     return const ChatState(messages: [], isAiTyping: false);
@@ -52,12 +64,9 @@ class ChatViewModel extends _$ChatViewModel {
 
     // Reconcile pending messages: One-to-one matching
     // For each confirmed message, remove the FIRST matching pending message
-    // Match logic: Same message content and senderId
-    // We iterate backwards through confirmed messages to match naturally with pending queue
     final pendingToRemove = <ChatMessageDisplay>[];
 
     for (final confirmed in confirmedMessages) {
-      // Find the first matching pending message that hasn't been marked for removal
       try {
         final match = _pendingMessages.firstWhere((pending) {
           return !pendingToRemove.contains(pending) &&
@@ -66,23 +75,42 @@ class ChatViewModel extends _$ChatViewModel {
         });
         pendingToRemove.add(match);
       } catch (e) {
-        // No match found, that's fine (message wasn't pending or already handled)
+        // No match found — message wasn't pending or already handled
       }
     }
 
     // Remove matched pending messages
     _pendingMessages.removeWhere((p) => pendingToRemove.contains(p));
 
-    // If we received a NEW AI message (i.e. the latest message is from AI), stop typing
-    // We sort by timestamp to find the latest
+    // Stop typing indicator when the AI response arrives in Firestore.
+    // Only applies to the legacy typing-dots state; streaming mode manages its
+    // own _isAiTyping flag via the stream callbacks.
     if (_isAiTyping && firestoreMessages.isNotEmpty) {
       final sortedMessages = List<ChatMessage>.from(firestoreMessages)
-        ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Newest first
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
       final latestMessage = sortedMessages.first;
       if (latestMessage.senderId == ChatConstants.jiffyBotId) {
-        // We received the response!
         _isAiTyping = false;
+      }
+    }
+
+    // Detect a genuinely new Jiffy Bot message by comparing against the last
+    // known AI message ID. When one arrives while streaming is active, clear
+    // the streaming bubble in the same state update to avoid a duplicate frame.
+    final latestAiMessage = firestoreMessages
+        .where((m) => m.senderId == ChatConstants.jiffyBotId)
+        .fold<ChatMessage?>(null, (prev, curr) =>
+            prev == null || curr.timestamp.isAfter(prev.timestamp) ? curr : prev);
+
+    bool clearStreaming = false;
+    if (latestAiMessage != null && latestAiMessage.id != _lastSeenAiMessageId) {
+      _lastSeenAiMessageId = latestAiMessage.id;
+      if (state.streamingAiMessage != null) {
+        _streamSubscription?.cancel();
+        _streamSubscription = null;
+        _streamingMessage = "";
+        clearStreaming = true;
       }
     }
 
@@ -90,9 +118,10 @@ class ChatViewModel extends _$ChatViewModel {
     final allMessages = [...confirmedMessages, ..._pendingMessages];
     allMessages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-    state = ChatState(
+    state = state.copyWith(
       messages: allMessages,
       isAiTyping: _isAiTyping,
+      streamingAiMessage: clearStreaming ? () => null : null,
     );
   }
 
@@ -107,17 +136,16 @@ class ChatViewModel extends _$ChatViewModel {
     );
     _pendingMessages.add(pendingMsg);
 
-    // Update state immediately
+    // Update state immediately with the optimistic message
     _updateState();
 
     try {
       if (otherUserId == ChatConstants.jiffyBotId) {
-        // Show typing indicator
+        // Show dots until first token arrives
         _isAiTyping = true;
         _updateState();
 
-        // Send to AI API
-        await _sendToAiChat(currentUser.uid, text, pendingMsg);
+        await _streamAiChat(currentUser.uid, text, pendingMsg);
       } else {
         // Regular user-to-user chat: send directly to Firestore
         await _repository.sendMessage(otherUserId, text);
@@ -139,12 +167,10 @@ class ChatViewModel extends _$ChatViewModel {
   }
 
   void _handleSendError(ChatMessageDisplay pendingMsg) {
-    debugPrint('ChatViewModel: Error sending message');
+    debugPrint("ChatViewModel: Error sending message");
 
-    // Find message and mark as error
     final index = _pendingMessages.indexOf(pendingMsg);
     if (index != -1) {
-      // Create copy with error flag
       final errorMsg = ChatMessageDisplay(
         id: pendingMsg.id,
         senderId: pendingMsg.senderId,
@@ -153,33 +179,67 @@ class ChatViewModel extends _$ChatViewModel {
         timestamp: pendingMsg.timestamp,
         isRead: pendingMsg.isRead,
         type: pendingMsg.type,
-        isPending: true, // Still pending (retryable)
+        isPending: true,
         hasError: true,
       );
 
       _pendingMessages[index] = errorMsg;
-      _isAiTyping = false; // Stop typing if error
+      _isAiTyping = false;
       _updateState();
     }
   }
 
-  /// Send message to Jiffy AI via backend API.
-  Future<void> _sendToAiChat(
-      String userId, String text, ChatMessageDisplay pendingMsg) async {
-    try {
-      final aiChatService = ref.read(aiChatServiceProvider);
-      final success = await aiChatService.sendMessageToAI(
-        userId: userId,
-        text: text,
-      );
+  /// Streams the AI response token-by-token and updates [ChatState.streamingAiMessage]
+  /// as each chunk arrives. On completion, clears the streaming bubble and lets
+  /// the Firestore listener pick up the confirmed AI message.
+  Future<void> _streamAiChat(
+    String userId,
+    String text,
+    ChatMessageDisplay pendingMsg,
+  ) async {
+    final aiChatService = ref.read(aiChatServiceProvider);
+    _streamingMessage = "";
 
-      if (!success) {
-        _handleSendError(pendingMsg);
-      }
-      // Response will appear via Firestore stream
-    } catch (e) {
-      _handleSendError(pendingMsg);
-    }
+    // Transition from dots to empty streaming bubble immediately
+    _isAiTyping = false;
+    state = state.copyWith(
+      isAiTyping: false,
+      streamingAiMessage: () => "",
+    );
+
+    _streamSubscription?.cancel();
+    _streamSubscription = aiChatService
+        .streamMessageToAI(
+          userId: userId,
+          matchId: otherUserId,
+          text: text,
+        )
+        .listen(
+          (token) {
+            _streamingMessage += token;
+            state = state.copyWith(
+              streamingAiMessage: () => _streamingMessage,
+            );
+          },
+          onDone: () {
+            _streamingMessage = "";
+            state = state.copyWith(
+              streamingAiMessage: () => null,
+              isAiTyping: false,
+            );
+          },
+          onError: (Object e) {
+            debugPrint("ChatViewModel: AI stream error: $e");
+            _streamingMessage = "";
+            _isAiTyping = false;
+            state = state.copyWith(
+              streamingAiMessage: () => null,
+              isAiTyping: false,
+            );
+            _handleSendError(pendingMsg);
+          },
+          cancelOnError: true,
+        );
   }
 
   Future<void> markAsRead() async {
@@ -187,23 +247,19 @@ class ChatViewModel extends _$ChatViewModel {
   }
 
   Future<void> checkAndSendPrompt(String prompt) async {
-    // Only proceed if this is the Jiffy Bot
     if (otherUserId != ChatConstants.jiffyBotId) return;
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    // Check last message to avoid duplicates
-    // Use local state if available to save a read
     final messages = state.messages;
     if (messages.isNotEmpty) {
-      final lastMsg = messages.last; // Sorted ASC, so last is newest
+      final lastMsg = messages.last;
       if (lastMsg.message == prompt &&
           lastMsg.senderId == ChatConstants.jiffyBotId) {
         return;
       }
     } else {
-      // Fallback to fetch if local state empty (edge case)
       final lastMsg = await _repository.getLastMessage(otherUserId);
       if (lastMsg != null &&
           lastMsg.message == prompt &&
@@ -212,23 +268,17 @@ class ChatViewModel extends _$ChatViewModel {
       }
     }
 
-    // Send the prompt as a message FROM Jiffy AI (not from the user)
-    // This way it appears as Jiffy asking the user the question
     await _repository.sendSystemMessage(
-      currentUser.uid, // receiverID: the current user receives this prompt
+      currentUser.uid,
       prompt,
-      ChatConstants.jiffyBotId, // senderID: Jiffy AI is asking the question
+      ChatConstants.jiffyBotId,
     );
-    // The message will appear via the Firestore stream
-    // User can then type their answer, which will trigger a normal AI response
   }
 
   Future<void> retryMessage(ChatMessageDisplay message) async {
-    // Find the message in pending messages including those with errors
     final index = _pendingMessages.indexWhere((m) => m.id == message.id);
     if (index == -1) return;
 
-    // Reset error state
     final pendingMsg = _pendingMessages[index];
     final retryingMsg = ChatMessageDisplay(
       id: pendingMsg.id,
@@ -239,7 +289,7 @@ class ChatViewModel extends _$ChatViewModel {
       isRead: pendingMsg.isRead,
       type: pendingMsg.type,
       isPending: true,
-      hasError: false, // Reset error
+      hasError: false,
     );
 
     _pendingMessages[index] = retryingMsg;
@@ -250,13 +300,11 @@ class ChatViewModel extends _$ChatViewModel {
 
     try {
       if (otherUserId == ChatConstants.jiffyBotId) {
-        // Show typing indicator again
         _isAiTyping = true;
         _updateState();
 
-        await _sendToAiChat(currentUser.uid, retryingMsg.message, retryingMsg);
+        await _streamAiChat(currentUser.uid, retryingMsg.message, retryingMsg);
       } else {
-        // Regular chat retry
         await _repository.sendMessage(otherUserId, retryingMsg.message);
       }
     } catch (e) {
