@@ -104,13 +104,20 @@ class ChatViewModel extends _$ChatViewModel {
             prev == null || curr.timestamp.isAfter(prev.timestamp) ? curr : prev);
 
     bool clearStreaming = false;
-    if (latestAiMessage != null && latestAiMessage.id != _lastSeenAiMessageId) {
-      _lastSeenAiMessageId = latestAiMessage.id;
-      if (state.streamingAiMessage != null) {
-        _streamSubscription?.cancel();
-        _streamSubscription = null;
-        _streamingMessage = "";
-        clearStreaming = true;
+    if (latestAiMessage != null) {
+      if (_lastSeenAiMessageId == null) {
+        // First snapshot — just record the current AI message ID without
+        // treating it as a new arrival. This prevents historical messages
+        // from cancelling an in-flight stream on chat open.
+        _lastSeenAiMessageId = latestAiMessage.id;
+      } else if (latestAiMessage.id != _lastSeenAiMessageId) {
+        _lastSeenAiMessageId = latestAiMessage.id;
+        if (state.streamingAiMessage != null) {
+          _streamSubscription?.cancel();
+          _streamSubscription = null;
+          _streamingMessage = "";
+          clearStreaming = true;
+        }
       }
     }
 
@@ -223,10 +230,10 @@ class ChatViewModel extends _$ChatViewModel {
           },
           onDone: () {
             _streamingMessage = "";
-            state = state.copyWith(
-              streamingAiMessage: () => null,
-              isAiTyping: false,
-            );
+            _streamSubscription = null;
+            // Keep streamingAiMessage visible until _onMessagesReceived receives
+            // the confirmed Firestore message and clears it in one state update,
+            // avoiding a blank frame between stream end and Firestore arrival.
           },
           onError: (Object e) {
             debugPrint("ChatViewModel: AI stream error: $e");
