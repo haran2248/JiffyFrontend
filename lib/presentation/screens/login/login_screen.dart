@@ -285,6 +285,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 32),
 
               // Entry Restriction Notice
+              // TODO: This should be gated by region/feature flag later
               const LoginRestrictionNotice(),
 
               const Spacer(flex: 3),

@@ -82,7 +82,10 @@ class LocationService {
       debugPrint("[LocationService] Response data: ${response.data}");
       debugPrint("[LocationService] Location updated successfully");
       _lastUpdateTime = DateTime.now();
-      return response.data as Map<String, dynamic>?;
+      if (response.data is Map) {
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      return null;
     } on DioException catch (e) {
       debugPrint("[LocationService] DioException updating location:");
       debugPrint("[LocationService]   Type: ${e.type}");

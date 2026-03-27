@@ -29,7 +29,7 @@ class LoginRestrictionNotice extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'We are expanding city wise, Jiffy is now open only to college students and  users aged 18-25 in Bangalore.\n\nSign in with your college email if applicable.',
+              'We are expanding city-wise. Jiffy is currently open to college students and users aged 18-30 in Bangalore.\n\nSign in with your college email if applicable.',
               style: textTheme.bodyMedium?.copyWith(
                 color: colors.onSurface.withValues(alpha: 0.8),
                 height: 1.3,

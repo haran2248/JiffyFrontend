@@ -26,21 +26,7 @@ class PulseCheckScreen extends ConsumerWidget {
         title: const Text('Pulse Check'),
         actions: [
           TextButton(
-            onPressed: () {
-              // Unified Waitlist Check: check if any previous step marked user as waitlisted
-              final basicsWaitlisted =
-                  ref.read(basicsViewModelProvider).isWaitlisted;
-              final permissionsState =
-                  ref.read(permissionsViewModelProvider).value;
-              final permissionsWaitlisted =
-                  permissionsState?.isWaitlisted ?? false;
-
-              if (basicsWaitlisted || permissionsWaitlisted) {
-                context.goToRoute(AppRoutes.onboardingWaitlist);
-              } else {
-                context.pushRoute(AppRoutes.onboardingCoPilotIntro);
-              }
-            },
+            onPressed: () => _handleNavigation(context, ref),
             child: Text(
               'Skip',
               style: TextStyle(
@@ -165,23 +151,7 @@ class PulseCheckScreen extends ConsumerWidget {
                           ? () async {
                               final success = await viewModel.saveSelections();
                               if (success && context.mounted) {
-                                // Unified Waitlist Check: check if any previous step marked user as waitlisted
-                                final basicsWaitlisted = ref
-                                    .read(basicsViewModelProvider)
-                                    .isWaitlisted;
-                                final permissionsState = ref
-                                    .read(permissionsViewModelProvider)
-                                    .value;
-                                final permissionsWaitlisted =
-                                    permissionsState?.isWaitlisted ?? false;
-
-                                if (basicsWaitlisted || permissionsWaitlisted) {
-                                  context
-                                      .goToRoute(AppRoutes.onboardingWaitlist);
-                                } else {
-                                  context.pushRoute(
-                                      AppRoutes.onboardingCoPilotIntro);
-                                }
+                                _handleNavigation(context, ref);
                               }
                             }
                           : () {},
@@ -216,6 +186,19 @@ class PulseCheckScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _handleNavigation(BuildContext context, WidgetRef ref) {
+    // Unified Waitlist Check: check if any previous step marked user as waitlisted
+    final basicsWaitlisted = ref.read(basicsViewModelProvider).isWaitlisted;
+    final permissionsState = ref.read(permissionsViewModelProvider).value;
+    final permissionsWaitlisted = permissionsState?.isWaitlisted ?? false;
+
+    if (basicsWaitlisted || permissionsWaitlisted) {
+      context.goToRoute(AppRoutes.onboardingWaitlist);
+    } else {
+      context.pushRoute(AppRoutes.onboardingCoPilotIntro);
+    }
   }
 }
 

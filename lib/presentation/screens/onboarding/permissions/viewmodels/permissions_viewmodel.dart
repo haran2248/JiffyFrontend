@@ -56,7 +56,6 @@ class PermissionsViewModel extends _$PermissionsViewModel {
             final currentState = state.value ?? const PermissionsState();
 
             // Notify backend about waitlist status
-            final authState = ref.read(authViewModelProvider);
             if (authState.userId != null) {
               await ref
                   .read(waitlistServiceProvider.notifier)

@@ -14,13 +14,15 @@ class WaitlistService extends _$WaitlistService {
   Dio get _dio => ref.read(dioProvider);
 
   /// Notifies the backend that a user has been waitlisted.
-  Future<void> notifyWaitlisted(String userId) async {
+  Future<bool> notifyWaitlisted(String userId) async {
     try {
       await _dio.post('/api/waitlist', data: {'uid': userId});
       debugPrint(
           'WaitlistService: Notified backend of waitlist for user: $userId');
+      return true;
     } catch (e) {
       debugPrint('WaitlistService: Error notifying backend of waitlist: $e');
+      return false;
     }
   }
 
@@ -47,11 +49,25 @@ class WaitlistService extends _$WaitlistService {
   }
 
   /// Returns true if the email is likely a college email based on domain.
-  /// (Assumption: any non-gmail.com domain is a college email for now).
   bool isCollegeEmail(String? email) {
     if (email == null || email.isEmpty) return false;
     final lowerEmail = email.toLowerCase().trim();
-    return !lowerEmail.endsWith('@gmail.com');
+
+    // Explicitly exclude common consumer domains
+    final consumerDomains = {
+      'gmail.com',
+      'yahoo.com',
+      'outlook.com',
+      'hotmail.com',
+      'icloud.com'
+    };
+    final domain = lowerEmail.split('@').last;
+    if (consumerDomains.contains(domain)) return false;
+
+    // Check for academic TLDs
+    return domain.endsWith('.edu') ||
+        domain.endsWith('.ac.in') ||
+        domain.contains('.ac.');
   }
 
   /// Returns true if the user is in the eligible age range (18-25).

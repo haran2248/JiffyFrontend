@@ -9,10 +9,22 @@ import 'package:url_launcher/url_launcher.dart';
 class WaitlistScreen extends ConsumerWidget {
   const WaitlistScreen({super.key});
 
-  Future<void> _launchWhatsApp() async {
+  Future<void> _launchWhatsApp(BuildContext context) async {
     final url = Uri.parse('https://shorturl.at/YuKvo');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      // Could show a snackbar here if launch fails
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch WhatsApp')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -134,7 +146,7 @@ class WaitlistScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     GestureDetector(
-                      onTap: _launchWhatsApp,
+                      onTap: () => _launchWhatsApp(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 28, vertical: 14),

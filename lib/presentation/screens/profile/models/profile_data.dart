@@ -74,9 +74,6 @@ class ProfileData {
     this.isWaitlisted = false,
   });
 
-  /// User Nomenclature Helper
-  bool getIsWaitlisted() => isWaitlisted;
-
   ProfileData copyWith({
     String? id,
     String? userId,

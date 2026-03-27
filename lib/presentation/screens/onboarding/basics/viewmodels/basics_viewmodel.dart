@@ -72,10 +72,7 @@ class BasicsViewModel extends _$BasicsViewModel {
       ));
 
       // Eligibility check
-      final waitlistService = ref.read(waitlistServiceProvider.notifier);
       final authState = ref.read(authViewModelProvider);
-
-      final isCollege = waitlistService.isCollegeEmail(authState.email);
 
       // If under 18 or (over 30 AND not using a college email),
       // we mark as potentially waitlisted.
@@ -83,7 +80,6 @@ class BasicsViewModel extends _$BasicsViewModel {
       if (state.dateOfBirth != null) {
         final age = state.age ?? 0;
         if (age < 18) {
-          final authState = ref.read(authViewModelProvider);
           if (authState.userId != null) {
             await ref
                 .read(waitlistServiceProvider.notifier)
@@ -93,9 +89,8 @@ class BasicsViewModel extends _$BasicsViewModel {
           return true;
         }
 
-        if (age > 30 && !isCollege) {
-          // They might still be a student, let them proceed to Step 3 (Professional Details)
-        }
+        // Users over 30 without college email might still be students,
+        // let them proceed to Step 3 (Professional Details) to verify.
       }
 
       state = state.copyWith(isSaving: false);
@@ -135,11 +130,11 @@ class BasicsViewModel extends _$BasicsViewModel {
       // they MUST have provided a university to be considered a "college student".
       // Since we don't have a backend check for university yet, we use the email as primary source.
       if (!isAgeEligible && !isCollege) {
-        final authSession = ref.read(authViewModelProvider);
-        if (authSession.userId != null) {
+        final authState = ref.read(authViewModelProvider);
+        if (authState.userId != null) {
           await ref
               .read(waitlistServiceProvider.notifier)
-              .notifyWaitlisted(authSession.userId!);
+              .notifyWaitlisted(authState.userId!);
         }
         state = state.copyWith(isWaitlisted: true);
       }

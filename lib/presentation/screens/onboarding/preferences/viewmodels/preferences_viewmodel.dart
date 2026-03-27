@@ -3,8 +3,6 @@ import 'package:jiffy/presentation/screens/onboarding/data/models/basic_details.
 import 'package:jiffy/presentation/screens/onboarding/data/models/desired_qualities.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart';
 import 'package:jiffy/presentation/screens/onboarding/basics/viewmodels/basics_viewmodel.dart';
-import 'package:jiffy/core/services/waitlist_service.dart';
-import 'package:jiffy/core/auth/auth_viewmodel.dart';
 import '../models/preferences_state.dart';
 import '../models/gender_preference.dart';
 import '../models/relationship_goal.dart';
