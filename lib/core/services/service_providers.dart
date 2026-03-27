@@ -1,16 +1,16 @@
-import 'package:jiffy/core/network/dio_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:jiffy/core/auth/auth_repository.dart';
-import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
-import 'package:jiffy/presentation/screens/matches/data/matches_repository.dart';
-import 'ai_chat_service.dart';
-import 'home_service.dart';
-import 'permission_service.dart';
-import 'notification_service.dart';
-import 'photo_upload_service.dart';
-import 'location_service.dart';
+import "package:jiffy/core/auth/auth_repository.dart";
+import "package:jiffy/core/network/dio_provider.dart";
+import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
+import "package:jiffy/presentation/screens/stories/data/stories_repository.dart";
+import "package:riverpod_annotation/riverpod_annotation.dart";
+import "ai_chat_service.dart";
+import "home_service.dart";
+import "location_service.dart";
+import "notification_service.dart";
+import "permission_service.dart";
+import "photo_upload_service.dart";
 
-part 'service_providers.g.dart';
+part "service_providers.g.dart";
 
 @riverpod
 HomeService homeService(Ref ref) {

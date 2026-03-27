@@ -1,25 +1,35 @@
-import 'chat_message.dart';
+import "chat_message.dart";
 
 /// State class for chat UI that includes:
 /// - Messages from Firestore
 /// - Pending optimistic messages (shown immediately before Firestore confirms)
 /// - Typing indicator state for AI responses
+/// - Streaming AI message (partial text while tokens arrive)
 class ChatState {
   final List<ChatMessageDisplay> messages;
   final bool isAiTyping;
 
+  /// Non-null while an AI response is streaming token-by-token.
+  /// Replaces the typing indicator when present.
+  final String? streamingAiMessage;
+
   const ChatState({
     required this.messages,
     this.isAiTyping = false,
+    this.streamingAiMessage,
   });
 
   ChatState copyWith({
     List<ChatMessageDisplay>? messages,
     bool? isAiTyping,
+    String? Function()? streamingAiMessage,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isAiTyping: isAiTyping ?? this.isAiTyping,
+      streamingAiMessage: streamingAiMessage != null
+          ? streamingAiMessage()
+          : this.streamingAiMessage,
     );
   }
 }
@@ -48,7 +58,7 @@ class ChatMessageDisplay {
     required this.message,
     required this.timestamp,
     this.isRead = false,
-    this.type = 'text',
+    this.type = "text",
     this.isPending = false,
     this.hasError = false,
   });
@@ -63,8 +73,6 @@ class ChatMessageDisplay {
       timestamp: msg.timestamp,
       isRead: msg.isRead,
       type: msg.type,
-      isPending: false,
-      hasError: false,
     );
   }
 
@@ -75,13 +83,12 @@ class ChatMessageDisplay {
     required String message,
   }) {
     return ChatMessageDisplay(
-      id: 'pending_${DateTime.now().millisecondsSinceEpoch}',
+      id: "pending_${DateTime.now().millisecondsSinceEpoch}",
       senderId: senderId,
       receiverId: receiverId,
       message: message,
       timestamp: DateTime.now(),
       isPending: true,
-      hasError: false,
     );
   }
 }

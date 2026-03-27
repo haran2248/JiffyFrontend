@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:jiffy/core/network/errors/api_error.dart';
-import 'package:jiffy/core/services/api/coupon_api_endpoints.dart';
 
 part 'coupon_repository.g.dart';
 
@@ -21,7 +20,7 @@ class CouponRepository {
   Future<String> activateReferral(String code, String userId) async {
     try {
       final response = await _dio.post(
-        CouponApiEndpoints.activateReferral,
+        '/api/coupons/activate-referral',
         queryParameters: {
           'referralCode': code,
           'newUserId': userId,
@@ -40,7 +39,7 @@ class CouponRepository {
       throw ApiError.unknown(
         message: 'Failed to apply referral code.',
         originalError: e,
-        requestPath: CouponApiEndpoints.activateReferral,
+        requestPath: '/api/coupons/activate-referral',
       );
     }
   }
