@@ -63,6 +63,6 @@ class WaitlistService extends _$WaitlistService {
         (now.month == dob.month && now.day < dob.day)) {
       age--;
     }
-    return age >= 18 && age <= 25;
+    return age >= 18 && age <= 30;
   }
 }

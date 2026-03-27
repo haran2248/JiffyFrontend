@@ -114,7 +114,7 @@ class WaitlistScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       _EligibilityItem(
                         icon: Icons.person_outline,
-                        text: "18-25 year olds in Bangalore",
+                        text: "18-30 year olds in Bangalore",
                       ),
                     ],
                   ),

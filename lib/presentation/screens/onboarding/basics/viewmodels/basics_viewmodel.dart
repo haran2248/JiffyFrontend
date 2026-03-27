@@ -77,9 +77,9 @@ class BasicsViewModel extends _$BasicsViewModel {
 
       final isCollege = waitlistService.isCollegeEmail(authState.email);
 
-      // If under 18 or (over 25 AND not using a college email),
+      // If under 18 or (over 30 AND not using a college email),
       // we mark as potentially waitlisted.
-      // We'll give gmails over 25 a chance to provide university info in next step.
+      // We'll give gmails over 30 a chance to provide university info in next step.
       if (state.dateOfBirth != null) {
         final age = state.age ?? 0;
         if (age < 18) {
@@ -93,7 +93,7 @@ class BasicsViewModel extends _$BasicsViewModel {
           return true;
         }
 
-        if (age > 25 && !isCollege) {
+        if (age > 30 && !isCollege) {
           // They might still be a student, let them proceed to Step 3 (Professional Details)
         }
       }
