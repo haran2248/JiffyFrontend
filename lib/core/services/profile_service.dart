@@ -306,6 +306,7 @@ class ProfileService {
       final dobString = basicDetails?['birthDate'] as String?;
       final age = ProfileHelpers.calculateAge(dobString);
       final location = basicDetails?['location'] as String?;
+      final gender = basicDetails?['gender'] as String?;
       final onboardingStatusRaw = userData['onboardingStatus'];
       final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
 
@@ -392,6 +393,7 @@ class ProfileService {
         traits: traits,
         conversationStyle: conversationStyle,
         onboardingStatus: onboardingStatus,
+        gender: gender,
         isWaitlisted: userData['isWaitlisted'] == true,
       );
     } catch (e) {

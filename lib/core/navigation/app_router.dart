@@ -15,6 +15,7 @@ import 'package:jiffy/presentation/screens/onboarding/profile_setup/profile_setu
 import 'package:jiffy/presentation/screens/onboarding/preferences/preferred_gender_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/preferences/relationship_goals_screen.dart';
 import 'package:jiffy/presentation/screens/onboarding/waitlist/waitlist_screen.dart';
+import 'package:jiffy/presentation/screens/onboarding/community/community_screen.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import '../../presentation/screens/chat/chat_screen.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
@@ -216,6 +217,17 @@ GoRouter appRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const WaitlistScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.onboardingCommunity,
+        name: RouteNames.community,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const CommunityScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         ),
       ),
 

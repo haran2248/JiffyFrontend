@@ -11,6 +11,7 @@ class ProfileCuratedData {
   final List<String> interests;
   final String conversationStyleDescription;
   final String? aboutMe;
+  final String? gender;
 
   const ProfileCuratedData({
     required this.name,
@@ -21,6 +22,7 @@ class ProfileCuratedData {
     required this.interests,
     required this.conversationStyleDescription,
     this.aboutMe,
+    this.gender,
   });
 
   /// Creates a placeholder [ProfileCuratedData] for when the user has
@@ -38,6 +40,7 @@ class ProfileCuratedData {
       personalityTraits: const [],
       interests: const [],
       conversationStyleDescription: "",
+      gender: null,
     );
   }
 
@@ -57,6 +60,7 @@ class ProfileCuratedData {
     List<String>? interests,
     String? conversationStyleDescription,
     String? aboutMe,
+    String? gender,
   }) {
     return ProfileCuratedData(
       name: name ?? this.name,
@@ -68,6 +72,7 @@ class ProfileCuratedData {
       conversationStyleDescription:
           conversationStyleDescription ?? this.conversationStyleDescription,
       aboutMe: aboutMe ?? this.aboutMe,
+      gender: gender ?? this.gender,
     );
   }
 }

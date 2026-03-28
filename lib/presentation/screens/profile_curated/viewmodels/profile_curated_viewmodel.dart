@@ -75,7 +75,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
             name: fetchedData.name,
             age: fetchedData.age,
             avatarUrl: avatarUrl,
-          ),
+          ).copyWith(gender: fetchedData.gender),
           isLoading: false,
           isIncomplete: true,
         );
@@ -104,6 +104,7 @@ class ProfileCuratedViewModel extends _$ProfileCuratedViewModel {
         conversationStyleDescription:
             curatedProfile.conversationStyleDescription,
         aboutMe: curatedProfile.aboutMe,
+        gender: fetchedData.gender,
       );
 
       if (!ref.mounted) return;
