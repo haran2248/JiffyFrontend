@@ -19,10 +19,13 @@ class WaitlistScreen extends ConsumerWidget {
           );
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('WaitlistScreen: Error launching WhatsApp: $e');
+      debugPrint(stackTrace.toString());
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          const SnackBar(
+              content: Text('Something went wrong, please try again')),
         );
       }
     }
@@ -65,7 +68,7 @@ class WaitlistScreen extends ConsumerWidget {
                       width: 2,
                     ),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.hourglass_empty_rounded,
                     size: 64,
                     color: AppColors.primaryRaspberry,
@@ -119,12 +122,12 @@ class WaitlistScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _EligibilityItem(
+                      const _EligibilityItem(
                         icon: Icons.school_outlined,
                         text: "Bangalore College Students",
                       ),
                       const SizedBox(height: 8),
-                      _EligibilityItem(
+                      const _EligibilityItem(
                         icon: Icons.person_outline,
                         text: "18-30 year olds in Bangalore",
                       ),

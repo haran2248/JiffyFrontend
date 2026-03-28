@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'package:jiffy/presentation/screens/stories/story_image_compositor.dart';
@@ -970,20 +971,12 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFEC4899), // Bright pink
-                              Color(0xFFD946EF), // Magenta
-                              Color(0xFFA855F7), // Deep purple
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
+                          gradient: AppColors.pinkToPurpleGradient,
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFA855F7)
-                                  .withValues(alpha: 0.3),
+                              color:
+                                  AppColors.vividPurple.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),

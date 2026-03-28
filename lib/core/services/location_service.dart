@@ -152,8 +152,10 @@ class LocationService {
 
     if (data == null) return LocationUpdateResult.requestFailed;
 
-    final isLocationEnabled = data['isLocationEnabled'] == true;
-    return isLocationEnabled
+    final isLocationEnabled = data['isLocationEnabled'];
+    if (isLocationEnabled == null) return LocationUpdateResult.requestFailed;
+
+    return (isLocationEnabled as bool)
         ? LocationUpdateResult.eligible
         : LocationUpdateResult.ineligible;
   }

@@ -9,20 +9,31 @@ class AppColors {
   static const Color midnightPlum = Color(0xFF0D0B14); // Main Background
   static const Color noir = Color(0xFF1A1125); // Secondary Bg
   static const Color surfacePlum = Color(0xFF2A1B3D); // Cards/Inputs
-  static const Color surfacePlumLight = Color(0xFF3D2A5A); // Lighter variant for elevated surfaces
+  static const Color surfacePlumLight =
+      Color(0xFF3D2A5A); // Lighter variant for elevated surfaces
 
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0A8BF); // Soft Lavender Gray
-  static const Color textSecondaryLight = Color(0xFF6B6578); // Darker gray for light mode readability
+  static const Color textSecondaryLight =
+      Color(0xFF6B6578); // Darker gray for light mode readability
 
   // Accents
   static const Color deepPurple = Color(0xFF4A148C);
   static const Color errorRed = Color(0xFFCF6679);
+  static const Color brightPink = Color(0xFFEC4899);
+  static const Color magenta = Color(0xFFD946EF);
+  static const Color vividPurple = Color(0xFFA855F7);
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [primaryRaspberry, primaryViolet],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  static const LinearGradient pinkToPurpleGradient = LinearGradient(
+    colors: [brightPink, magenta, vividPurple],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
