@@ -4,6 +4,9 @@ import '../models/permissions_state.dart';
 import '../../../../../core/services/permission_service.dart';
 import '../../../../../core/services/notification_service.dart';
 import '../../../../../core/services/service_providers.dart';
+import '../../../../../core/services/waitlist_service.dart';
+import '../../../../../core/auth/auth_viewmodel.dart';
+import '../../../../../core/services/location_service.dart';
 
 part 'permissions_viewmodel.g.dart';
 
@@ -36,10 +39,37 @@ class PermissionsViewModel extends _$PermissionsViewModel {
     if (granted) {
       try {
         final locationService = ref.read(locationServiceProvider);
+        final result = await locationService.forceUpdateLocation();
         debugPrint(
-            '[PermissionsViewModel] Forcing location update after permission grant');
-        await locationService.forceUpdateLocation();
-        debugPrint('[PermissionsViewModel] Location update complete');
+            '[PermissionsViewModel] Location update complete. Result: $result');
+
+        // Waitlist Check: Location Eligibility
+        if (result == LocationUpdateResult.ineligible) {
+          final waitlistService = ref.read(waitlistServiceProvider.notifier);
+          final authState = ref.read(authViewModelProvider);
+          final isCollege = waitlistService.isCollegeEmail(authState.email);
+
+          // If they are not a college student (by email) AND location is ineligible,
+          // they are waitlisted.
+          if (!isCollege) {
+            final currentState = state.value ?? const PermissionsState();
+
+            // Notify backend about waitlist status
+            if (authState.userId != null) {
+              await ref
+                  .read(waitlistServiceProvider.notifier)
+                  .notifyWaitlisted(authState.userId!);
+            }
+
+            state = AsyncData(currentState.copyWith(
+                isWaitlisted: true, locationGranted: true));
+            return;
+          }
+        } else if (result == LocationUpdateResult.requestFailed) {
+          debugPrint(
+              '[PermissionsViewModel] Location update failed (network/backend error). '
+              'Proceeding without waitlisting to allow retry.');
+        }
       } catch (e) {
         debugPrint('[PermissionsViewModel] Error updating location: $e');
         // Don't fail permission grant if location update fails

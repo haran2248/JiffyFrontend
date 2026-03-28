@@ -42,6 +42,7 @@ class ProfileSelfData {
   final List<String> personalityTraits;
   final String conversationStyleTitle;
   final String conversationStyleDescription;
+  final String? gender;
 
   const ProfileSelfData({
     required this.id,
@@ -56,6 +57,7 @@ class ProfileSelfData {
     this.personalityTraits = const [],
     required this.conversationStyleTitle,
     required this.conversationStyleDescription,
+    this.gender,
   });
 
   ProfileSelfData copyWith({
@@ -71,6 +73,7 @@ class ProfileSelfData {
     List<String>? personalityTraits,
     String? conversationStyleTitle,
     String? conversationStyleDescription,
+    String? gender,
   }) {
     // using a local sentinel since we can't easily import the private one
     const sentinel = Object();
@@ -95,6 +98,7 @@ class ProfileSelfData {
           conversationStyleTitle ?? this.conversationStyleTitle,
       conversationStyleDescription:
           conversationStyleDescription ?? this.conversationStyleDescription,
+      gender: gender ?? this.gender,
     );
   }
 

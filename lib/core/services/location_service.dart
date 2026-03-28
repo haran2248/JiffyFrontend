@@ -3,6 +3,18 @@ import "package:geolocator/geolocator.dart";
 import "package:dio/dio.dart";
 import "package:jiffy/core/auth/auth_repository.dart";
 
+/// Results for location update operations.
+enum LocationUpdateResult {
+  /// User is in an eligible region.
+  eligible,
+
+  /// User is in an ineligible region.
+  ineligible,
+
+  /// The request failed due to network or server error.
+  requestFailed,
+}
+
 /// Service for fetching and updating user location.
 ///
 /// Handles:
@@ -51,13 +63,15 @@ class LocationService {
     }
   }
 
-  /// Update user location on the backend.
-  /// Returns true if successful, false otherwise.
-  Future<bool> updateLocation(double latitude, double longitude) async {
+  /// Update user location on backend
+  Future<Map<String, dynamic>?> _updateLocation(
+    double latitude,
+    double longitude,
+  ) async {
     final user = _authRepository.currentUser;
     if (user == null) {
       debugPrint("[LocationService] No authenticated user");
-      return false;
+      return null;
     }
 
     try {
@@ -81,7 +95,10 @@ class LocationService {
       debugPrint("[LocationService] Response data: ${response.data}");
       debugPrint("[LocationService] Location updated successfully");
       _lastUpdateTime = DateTime.now();
-      return true;
+      if (response.data is Map) {
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      return null;
     } on DioException catch (e) {
       debugPrint("[LocationService] DioException updating location:");
       debugPrint("[LocationService]   Type: ${e.type}");
@@ -89,11 +106,11 @@ class LocationService {
       debugPrint(
           "[LocationService]   Response: ${e.response?.statusCode} - ${e.response?.data}");
       debugPrint("[LocationService]   Error: ${e.error}");
-      return false;
+      return null;
     } catch (e, stackTrace) {
       debugPrint("[LocationService] Unexpected error updating location: $e");
       debugPrint("[LocationService] Stack trace: $stackTrace");
-      return false;
+      return null;
     }
   }
 
@@ -118,16 +135,28 @@ class LocationService {
 
     final position = await getCurrentPosition();
     if (position != null) {
-      await updateLocation(position.latitude, position.longitude);
+      await _updateLocation(position.latitude, position.longitude);
     }
   }
 
-  /// Force update location regardless of time elapsed.
-  /// Use this after permission is granted during onboarding.
-  Future<void> forceUpdateLocation() async {
+  /// Force a location update and return the raw response data.
+  /// Used during onboarding to check location eligibility.
+  Future<LocationUpdateResult> forceUpdateLocation() async {
     final position = await getCurrentPosition();
-    if (position != null) {
-      await updateLocation(position.latitude, position.longitude);
-    }
+    if (position == null) return LocationUpdateResult.requestFailed;
+
+    final data = await _updateLocation(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (data == null) return LocationUpdateResult.requestFailed;
+
+    final isLocationEnabled = data['isLocationEnabled'];
+    if (isLocationEnabled == null) return LocationUpdateResult.requestFailed;
+
+    return (isLocationEnabled as bool)
+        ? LocationUpdateResult.eligible
+        : LocationUpdateResult.ineligible;
   }
 }

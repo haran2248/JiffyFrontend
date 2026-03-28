@@ -25,6 +25,8 @@ class AppRoutes {
       '/onboarding/preferred-gender';
   static const String onboardingRelationshipGoals =
       '/onboarding/relationship-goals';
+  static const String onboardingWaitlist = '/onboarding/waitlist';
+  static const String onboardingCommunity = '/onboarding/community';
 
   // Main app screens (home is defined above in root section)
   static const String profileView = '/profile/:userId';
@@ -68,6 +70,8 @@ class RouteNames {
   static const String storyCreation = 'story-creation';
   static const String rewards = 'rewards';
   static const String designSystem = 'design-system';
+  static const String waitlist = 'waitlist';
+  static const String community = 'community';
 }
 
 /// Route parameters used in dynamic routes.

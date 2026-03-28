@@ -122,14 +122,17 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                       ? () async {
                           final success =
                               await viewModel.saveProfessionalDetails();
-                          if (success && context.mounted) {
-                            context
-                                .pushRoute(AppRoutes.onboardingPreferredGender);
-                          } else if (context.mounted &&
-                              formData.error != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(formData.error!)),
-                            );
+                          if (context.mounted) {
+                            final currentFormData =
+                                ref.read(basicsViewModelProvider);
+                            if (success) {
+                              context.pushRoute(
+                                  AppRoutes.onboardingPreferredGender);
+                            } else if (currentFormData.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(currentFormData.error!)),
+                              );
+                            }
                           }
                         }
                       : () {},

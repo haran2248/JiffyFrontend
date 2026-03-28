@@ -30,6 +30,7 @@ class AuthState {
   final String? photoUrl;
   final bool isGoogleLoading;
   final bool isAppleLoading;
+  final bool isSigningOut;
   final String? errorMessage;
 
   const AuthState({
@@ -40,6 +41,7 @@ class AuthState {
     this.photoUrl,
     this.isGoogleLoading = false,
     this.isAppleLoading = false,
+    this.isSigningOut = false,
     this.errorMessage,
   });
 
@@ -75,6 +77,7 @@ class AuthState {
         photoUrl: photoUrl,
         isGoogleLoading: isLoading,
         isAppleLoading: false,
+        isSigningOut: false,
         errorMessage: null,
       );
 
@@ -87,6 +90,7 @@ class AuthState {
         photoUrl: photoUrl,
         isGoogleLoading: false,
         isAppleLoading: isLoading,
+        isSigningOut: false,
         errorMessage: null,
       );
 
@@ -99,6 +103,7 @@ class AuthState {
         photoUrl: photoUrl,
         isGoogleLoading: false,
         isAppleLoading: false,
+        isSigningOut: false,
         errorMessage: message,
       );
 
@@ -114,6 +119,7 @@ class AuthState {
     String? photoUrl,
     bool? isGoogleLoading,
     bool? isAppleLoading,
+    bool? isSigningOut,
     Object? errorMessage = _unset,
   }) {
     return AuthState(
@@ -124,6 +130,7 @@ class AuthState {
       photoUrl: photoUrl ?? this.photoUrl,
       isGoogleLoading: isGoogleLoading ?? this.isGoogleLoading,
       isAppleLoading: isAppleLoading ?? this.isAppleLoading,
+      isSigningOut: isSigningOut ?? this.isSigningOut,
       errorMessage:
           errorMessage == _unset ? this.errorMessage : errorMessage as String?,
     );
@@ -132,5 +139,5 @@ class AuthState {
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isUnauthenticated => status == AuthStatus.unauthenticated;
   bool get isUnknown => status == AuthStatus.unknown;
-  bool get isLoading => isGoogleLoading || isAppleLoading;
+  bool get isLoading => isGoogleLoading || isAppleLoading || isSigningOut;
 }

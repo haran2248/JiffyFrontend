@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/network/errors/api_error.dart';
 import 'package:jiffy/core/services/service_providers.dart';
+import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'package:jiffy/presentation/screens/stories/story_image_compositor.dart';
@@ -754,182 +755,241 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.initialOverlay != null
-                    ? 'Edit Text Overlay'
-                    : 'Add Text Overlay',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Text input field
-          TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              hintText: 'Enter text to overlay on image',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.primary),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: colorScheme.primary, width: 2),
-              ),
-            ),
-            maxLength: 100,
-            maxLines: 3,
-            autofocus: true,
-            style: TextStyle(color: colorScheme.onSurface),
-          ),
-          const SizedBox(height: 16),
-
-          // Font size selector
-          Text(
-            'Size',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _SizeButton(
-                label: 'Small',
-                fontSize: TextOverlayFontSize.small,
-                isSelected: _fontSize == TextOverlayFontSize.small,
-                onTap: () =>
-                    setState(() => _fontSize = TextOverlayFontSize.small),
-              ),
-              _SizeButton(
-                label: 'Medium',
-                fontSize: TextOverlayFontSize.medium,
-                isSelected: _fontSize == TextOverlayFontSize.medium,
-                onTap: () =>
-                    setState(() => _fontSize = TextOverlayFontSize.medium),
-              ),
-              _SizeButton(
-                label: 'Large',
-                fontSize: TextOverlayFontSize.large,
-                isSelected: _fontSize == TextOverlayFontSize.large,
-                onTap: () =>
-                    setState(() => _fontSize = TextOverlayFontSize.large),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Alignment selector
-          Text(
-            'Alignment',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _AlignmentButton(
-                icon: Icons.format_align_left,
-                alignment: TextOverlayAlignment.left,
-                isSelected: _alignment == TextOverlayAlignment.left,
-                onTap: () =>
-                    setState(() => _alignment = TextOverlayAlignment.left),
-              ),
-              _AlignmentButton(
-                icon: Icons.format_align_center,
-                alignment: TextOverlayAlignment.center,
-                isSelected: _alignment == TextOverlayAlignment.center,
-                onTap: () =>
-                    setState(() => _alignment = TextOverlayAlignment.center),
-              ),
-              _AlignmentButton(
-                icon: Icons.format_align_right,
-                alignment: TextOverlayAlignment.right,
-                isSelected: _alignment == TextOverlayAlignment.right,
-                onTap: () =>
-                    setState(() => _alignment = TextOverlayAlignment.right),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Color picker
-          Text(
-            'Color',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: StoryOverlayColors.allColors.map((color) {
-              final isSelected = _selectedColor == color;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedColor = color),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: isSelected
-                        ? Border.all(
-                            color: colorScheme.primary,
-                            width: 3,
-                          )
-                        : Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                  ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.initialOverlay != null
+                      ? 'Edit Text Overlay'
+                      : 'Add Text Overlay',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-          // Action buttons
-          Row(
-            children: [
-              if (widget.onDelete != null)
+            // Text input field
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Enter text to overlay on image',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colorScheme.primary),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                ),
+              ),
+              maxLength: 100,
+              maxLines: 3,
+              autofocus: true,
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 16),
+
+            // Font size selector
+            Text(
+              'Size',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _SizeButton(
+                  label: 'Small',
+                  fontSize: TextOverlayFontSize.small,
+                  isSelected: _fontSize == TextOverlayFontSize.small,
+                  onTap: () =>
+                      setState(() => _fontSize = TextOverlayFontSize.small),
+                ),
+                _SizeButton(
+                  label: 'Medium',
+                  fontSize: TextOverlayFontSize.medium,
+                  isSelected: _fontSize == TextOverlayFontSize.medium,
+                  onTap: () =>
+                      setState(() => _fontSize = TextOverlayFontSize.medium),
+                ),
+                _SizeButton(
+                  label: 'Large',
+                  fontSize: TextOverlayFontSize.large,
+                  isSelected: _fontSize == TextOverlayFontSize.large,
+                  onTap: () =>
+                      setState(() => _fontSize = TextOverlayFontSize.large),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Alignment selector
+            Text(
+              'Alignment',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _AlignmentButton(
+                  icon: Icons.format_align_left,
+                  alignment: TextOverlayAlignment.left,
+                  isSelected: _alignment == TextOverlayAlignment.left,
+                  onTap: () =>
+                      setState(() => _alignment = TextOverlayAlignment.left),
+                ),
+                _AlignmentButton(
+                  icon: Icons.format_align_center,
+                  alignment: TextOverlayAlignment.center,
+                  isSelected: _alignment == TextOverlayAlignment.center,
+                  onTap: () =>
+                      setState(() => _alignment = TextOverlayAlignment.center),
+                ),
+                _AlignmentButton(
+                  icon: Icons.format_align_right,
+                  alignment: TextOverlayAlignment.right,
+                  isSelected: _alignment == TextOverlayAlignment.right,
+                  onTap: () =>
+                      setState(() => _alignment = TextOverlayAlignment.right),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Color picker
+            Text(
+              'Color',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: StoryOverlayColors.allColors.map((color) {
+                final isSelected = _selectedColor == color;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedColor = color),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(
+                              color: colorScheme.primary,
+                              width: 3,
+                            )
+                          : Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              children: [
+                if (widget.onDelete != null)
+                  Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: widget.onDelete,
+                        borderRadius: BorderRadius.circular(30),
+                        splashColor: colorScheme.error.withValues(alpha: 0.2),
+                        highlightColor:
+                            colorScheme.error.withValues(alpha: 0.1),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(
+                              color: colorScheme.error,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Delete',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: colorScheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (widget.onDelete != null) const SizedBox(width: 12),
                 Expanded(
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: widget.onDelete,
+                      onTap: () {
+                        if (_controller.text.trim().isEmpty) {
+                          Navigator.of(context).pop();
+                          return;
+                        }
+
+                        final overlay = TextOverlay(
+                          id: widget.initialOverlay?.id ??
+                              DateTime.now().millisecondsSinceEpoch.toString(),
+                          text: _controller.text.trim(),
+                          x: widget.initialOverlay?.x ?? 50.0,
+                          y: widget.initialOverlay?.y ?? 40.0,
+                          color: _selectedColor,
+                          alignment: _alignment,
+                          fontSize: _fontSize,
+                        );
+                        widget.onSave(overlay);
+                        Navigator.of(context).pop();
+                      },
                       borderRadius: BorderRadius.circular(30),
-                      splashColor: colorScheme.error.withValues(alpha: 0.2),
-                      highlightColor: colorScheme.error.withValues(alpha: 0.1),
+                      splashColor: Colors.white.withValues(alpha: 0.2),
+                      highlightColor: Colors.white.withValues(alpha: 0.1),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          border: Border.all(
-                            color: colorScheme.error,
-                            width: 1.5,
-                          ),
+                          gradient: AppColors.pinkToPurpleGradient,
                           borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppColors.vividPurple.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Center(
                           child: Text(
-                            'Delete',
+                            widget.initialOverlay != null ? 'Save' : 'Add',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
                                 ?.copyWith(
-                                  color: colorScheme.error,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -938,73 +998,11 @@ class _TextOverlayEditorState extends State<_TextOverlayEditor> {
                     ),
                   ),
                 ),
-              if (widget.onDelete != null) const SizedBox(width: 12),
-              Expanded(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      if (_controller.text.trim().isEmpty) {
-                        Navigator.of(context).pop();
-                        return;
-                      }
-
-                      final overlay = TextOverlay(
-                        id: widget.initialOverlay?.id ??
-                            DateTime.now().millisecondsSinceEpoch.toString(),
-                        text: _controller.text.trim(),
-                        x: widget.initialOverlay?.x ?? 50.0,
-                        y: widget.initialOverlay?.y ?? 40.0,
-                        color: _selectedColor,
-                        alignment: _alignment,
-                        fontSize: _fontSize,
-                      );
-                      widget.onSave(overlay);
-                      Navigator.of(context).pop();
-                    },
-                    borderRadius: BorderRadius.circular(30),
-                    splashColor: Colors.white.withValues(alpha: 0.2),
-                    highlightColor: Colors.white.withValues(alpha: 0.1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFFEC4899), // Bright pink
-                            Color(0xFFD946EF), // Magenta
-                            Color(0xFFA855F7), // Deep purple
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                const Color(0xFFA855F7).withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          widget.initialOverlay != null ? 'Save' : 'Add',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

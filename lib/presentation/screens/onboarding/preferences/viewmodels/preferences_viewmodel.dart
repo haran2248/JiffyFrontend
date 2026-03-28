@@ -82,7 +82,6 @@ class PreferencesViewModel extends _$PreferencesViewModel {
       // Let's us the enum name or title. Using title for now based on DTO.
       await repo.saveDesiredQualities(
           DesiredQualities(lookingFor: state.selectedGoal!.title));
-
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

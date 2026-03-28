@@ -52,6 +52,8 @@ class ProfileData {
       conversationStyle; // e.g., "Playful wit, balancing deep & thoughtful chats"
   final String? conversationStarter; // Prompt text
   final String? onboardingStatus; // E.g., 'COMPLETED'
+  final String? gender; // E.g., 'Woman', 'Man'
+  final bool isWaitlisted;
 
   const ProfileData({
     required this.id,
@@ -70,6 +72,8 @@ class ProfileData {
     this.conversationStyle,
     this.conversationStarter,
     this.onboardingStatus,
+    this.gender,
+    this.isWaitlisted = false,
   });
 
   ProfileData copyWith({
@@ -89,6 +93,8 @@ class ProfileData {
     Object? conversationStyle = _sentinel,
     Object? conversationStarter = _sentinel,
     Object? onboardingStatus = _sentinel,
+    String? gender,
+    bool? isWaitlisted,
   }) {
     return ProfileData(
       id: id ?? this.id,
@@ -117,6 +123,8 @@ class ProfileData {
       onboardingStatus: identical(onboardingStatus, _sentinel)
           ? this.onboardingStatus
           : onboardingStatus as String?,
+      gender: gender ?? this.gender,
+      isWaitlisted: isWaitlisted ?? this.isWaitlisted,
     );
   }
 }

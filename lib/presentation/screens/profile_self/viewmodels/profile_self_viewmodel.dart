@@ -96,6 +96,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
             : "Not yet analyzed",
         conversationStyleDescription: fetchedData.conversationStyle ?? '',
         personalityTraits: fetchedData.traits,
+        gender: fetchedData.gender,
       );
 
       // Check verification status

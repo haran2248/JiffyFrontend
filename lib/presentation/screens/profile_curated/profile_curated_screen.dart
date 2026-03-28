@@ -67,8 +67,12 @@ class ProfileCuratedScreen extends ConsumerWidget {
                 if (!state.isIncomplete) {
                   viewModel.onFinalizeProfile();
                 }
-                // Navigate to home screen
-                context.goToRoute(AppRoutes.home);
+                // Navigate to community screen ONLY for women
+                if (state.data?.gender == 'Woman') {
+                  context.goToRoute(AppRoutes.onboardingCommunity);
+                } else {
+                  context.goToRoute(AppRoutes.home);
+                }
               },
               isLoading: state.isLoading,
               label: state.isIncomplete ? "Continue to Home" : null,

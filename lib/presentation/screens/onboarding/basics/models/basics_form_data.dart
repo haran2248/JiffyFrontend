@@ -9,6 +9,7 @@ class BasicsFormData {
   final String? titleCompany;
   final int currentStep;
   final bool isSaving;
+  final bool isWaitlisted;
   final String? error;
 
   const BasicsFormData({
@@ -22,6 +23,7 @@ class BasicsFormData {
     this.titleCompany,
     this.currentStep = 1,
     this.isSaving = false,
+    this.isWaitlisted = false,
     this.error,
   });
 
@@ -36,6 +38,7 @@ class BasicsFormData {
     String? titleCompany,
     int? currentStep,
     bool? isSaving,
+    bool? isWaitlisted,
     String? Function()? error,
   }) {
     return BasicsFormData(
@@ -49,6 +52,7 @@ class BasicsFormData {
       titleCompany: titleCompany ?? this.titleCompany,
       currentStep: currentStep ?? this.currentStep,
       isSaving: isSaving ?? this.isSaving,
+      isWaitlisted: isWaitlisted ?? this.isWaitlisted,
       error: error != null ? error() : this.error,
     );
   }

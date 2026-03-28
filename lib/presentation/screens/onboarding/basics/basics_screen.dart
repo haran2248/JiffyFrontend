@@ -111,14 +111,18 @@ class BasicsScreen extends ConsumerWidget {
                             viewModel.nextStep();
                           } else {
                             final success = await viewModel.saveBasics();
-                            if (success && context.mounted) {
-                              context.pushRoute(
-                                  AppRoutes.onboardingProfessionalDetails);
-                            } else if (context.mounted &&
-                                formData.error != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(formData.error!)),
-                              );
+                            if (context.mounted) {
+                              final currentFormData =
+                                  ref.read(basicsViewModelProvider);
+                              if (success) {
+                                context.pushRoute(
+                                    AppRoutes.onboardingProfessionalDetails);
+                              } else if (currentFormData.error != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(currentFormData.error!)),
+                                );
+                              }
                             }
                           }
                         }

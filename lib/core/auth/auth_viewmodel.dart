@@ -169,13 +169,14 @@ class AuthViewModel extends _$AuthViewModel {
 
   /// Sign out the current user.
   Future<void> signOut() async {
-    state = state.copyWith(isGoogleLoading: true, isAppleLoading: true);
+    state = state.copyWith(isSigningOut: true);
 
     try {
       final repository = ref.read(authRepositoryProvider);
       await repository.signOut();
       // State will be updated by the auth state listener
     } catch (e) {
+      state = state.copyWith(isSigningOut: false);
       state = state.copyWithError('Sign-out failed. Please try again.');
       debugPrint('Sign-out error: $e');
     }

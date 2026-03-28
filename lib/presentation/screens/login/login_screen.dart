@@ -19,6 +19,7 @@ import '../../../core/services/profile_service.dart';
 import '../../../core/services/service_providers.dart';
 import 'widgets/login_branding_widget.dart';
 import 'widgets/login_error_message_widget.dart';
+import 'widgets/login_restriction_notice_widget.dart';
 import 'widgets/login_terms_text_widget.dart';
 import 'widgets/social_sign_in_button_widget.dart';
 
@@ -64,7 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final apiError = (e is DioException && e.error is ApiError)
             ? e.error as ApiError
             : (e is ApiError ? e : null);
-            
+
         if (apiError?.isAuthError == true) {
           // Only sign out on auth errors (invalid/expired session)
           debugPrint('LoginScreen: Signing out due to invalid session');
@@ -73,12 +74,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return false; // Stay on login screen
         } else {
           // Sign out so the user isn't permanently trapped on the loading spinner
-          debugPrint('LoginScreen: Transient error, signing out to allow fresh retry');
+          debugPrint(
+              'LoginScreen: Transient error, signing out to allow fresh retry');
           await authRepo.signOut();
-          
-          final message = apiError?.message ?? 'An unexpected error occurred. Please try again.';
+
+          final message = apiError?.message ??
+              'An unexpected error occurred. Please try again.';
           ref.read(authViewModelProvider.notifier).setError(message);
-          
+
           _hasNavigated = false;
           return false;
         }
@@ -144,6 +147,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               'LoginScreen: User needs to see co-pilot intro first (status: $onboardingStatus)');
           context.goToRoute(AppRoutes.onboardingCoPilotIntro);
         }
+      } else if (step == 'waitlist') {
+        debugPrint('LoginScreen: User is waitlisted, going to waitlist screen');
+        context.goToRoute(AppRoutes.onboardingWaitlist);
       } else {
         // Unknown step, default to basics
         debugPrint('LoginScreen: Unknown step "$step", defaulting to basics');
@@ -275,6 +281,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
               // Branding section (logo + tagline)
               const LoginBranding(),
+
+              const SizedBox(height: 32),
+
+              // Entry Restriction Notice
+              // TODO: This should be gated by region/feature flag later
+              const LoginRestrictionNotice(),
 
               const Spacer(flex: 3),
 

@@ -93,6 +93,14 @@ class ProfileService {
         return 'basics';
       }
 
+      // ZERO: Check if user is waitlisted
+      final isWaitlisted = data['isWaitlisted'] == true;
+
+      if (isWaitlisted) {
+        debugPrint('ProfileService: User is waitlisted, routing to waitlist');
+        return 'waitlist';
+      }
+
       // FIRST: Check onboardingStatus - if COMPLETED, user is fully onboarded
       // This is the most reliable indicator and should be checked first
       final onboardingStatusRaw = data['onboardingStatus'];
@@ -298,6 +306,7 @@ class ProfileService {
       final dobString = basicDetails?['birthDate'] as String?;
       final age = ProfileHelpers.calculateAge(dobString);
       final location = basicDetails?['location'] as String?;
+      final gender = basicDetails?['gender'] as String?;
       final onboardingStatusRaw = userData['onboardingStatus'];
       final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
 
@@ -384,6 +393,8 @@ class ProfileService {
         traits: traits,
         conversationStyle: conversationStyle,
         onboardingStatus: onboardingStatus,
+        gender: gender,
+        isWaitlisted: userData['isWaitlisted'] == true,
       );
     } catch (e) {
       debugPrint("ProfileService: Error fetching user profile: $e");

@@ -13,6 +13,7 @@ import "package:jiffy/presentation/screens/profile_self/widgets/profile_verifica
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
 import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
 import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
+import "package:url_launcher/url_launcher.dart";
 
 /// Profile Self Screen (Editable View)
 ///
@@ -59,6 +60,40 @@ class ProfileSelfScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Community Join Button
+          if (state.data?.gender != null)
+            IconButton(
+              icon: Icon(
+                Icons.groups_rounded,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              tooltip: state.data?.gender == 'Woman'
+                  ? 'Join Women-only Community'
+                  : 'Join Community',
+              onPressed: () async {
+                final url = state.data?.gender == 'Woman'
+                    ? 'https://wa.openinapp.co/40248'
+                    : 'https://shorturl.at/YuKvo';
+                final uri = Uri.parse(url);
+                try {
+                  if (!await launchUrl(uri,
+                      mode: LaunchMode.externalApplication)) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Could not open WhatsApp')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}')),
+                    );
+                  }
+                }
+              },
+            ),
           // Rewards & Referrals
           IconButton(
             icon: Icon(
