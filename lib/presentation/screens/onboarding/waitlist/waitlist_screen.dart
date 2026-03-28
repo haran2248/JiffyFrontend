@@ -165,17 +165,12 @@ class WaitlistScreen extends ConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SvgPicture.network(
-                              'https://www.vectorlogo.zone/logos/whatsapp/whatsapp-icon.svg',
+                            SvgPicture.asset(
+                              'assets/icons/whatsapp-icon.svg',
                               width: 24,
                               height: 24,
                               colorFilter: const ColorFilter.mode(
                                   Colors.white, BlendMode.srcIn),
-                              placeholderBuilder: (context) => const Icon(
-                                Icons.chat_bubble_outline,
-                                color: Colors.white,
-                                size: 20,
-                              ),
                             ),
                             const SizedBox(width: 12),
                             Text(
@@ -195,19 +190,7 @@ class WaitlistScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
 
                 // Back to Login
-                TextButton(
-                  onPressed: () async {
-                    await ref.read(authViewModelProvider.notifier).signOut();
-                  },
-                  child: Text(
-                    "Back to Login, Sign with college email if applicable",
-                    style: TextStyle(
-                      color: colors.onSurface.withValues(alpha: 0.5),
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 1000.ms),
+                const _SignOutButton(),
 
                 const SizedBox(height: 16),
               ],
@@ -241,5 +224,42 @@ class _EligibilityItem extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _SignOutButton extends ConsumerWidget {
+  const _SignOutButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final authState = ref.watch(authViewModelProvider);
+    final isSigningOut = authState.isSigningOut;
+
+    return TextButton(
+      onPressed: isSigningOut
+          ? null
+          : () async {
+              await ref.read(authViewModelProvider.notifier).signOut();
+            },
+      child: isSigningOut
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : Text(
+              "Back to Login, Sign in with college email if applicable",
+              style: TextStyle(
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontSize: 14,
+                decoration: TextDecoration.underline,
+              ),
+              textAlign: TextAlign.center,
+            ),
+    ).animate().fadeIn(delay: 1000.ms);
   }
 }

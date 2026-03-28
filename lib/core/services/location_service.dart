@@ -3,6 +3,18 @@ import "package:geolocator/geolocator.dart";
 import "package:dio/dio.dart";
 import "package:jiffy/core/auth/auth_repository.dart";
 
+/// Results for location update operations.
+enum LocationUpdateResult {
+  /// User is in an eligible region.
+  eligible,
+
+  /// User is in an ineligible region.
+  ineligible,
+
+  /// The request failed due to network or server error.
+  requestFailed,
+}
+
 /// Service for fetching and updating user location.
 ///
 /// Handles:
@@ -51,10 +63,11 @@ class LocationService {
     }
   }
 
-  /// Update user location on the backend.
-  /// Returns the response data if successful, null otherwise.
-  Future<Map<String, dynamic>?> updateLocation(
-      double latitude, double longitude) async {
+  /// Update user location on backend
+  Future<Map<String, dynamic>?> _updateLocation(
+    double latitude,
+    double longitude,
+  ) async {
     final user = _authRepository.currentUser;
     if (user == null) {
       debugPrint("[LocationService] No authenticated user");
@@ -122,17 +135,26 @@ class LocationService {
 
     final position = await getCurrentPosition();
     if (position != null) {
-      await updateLocation(position.latitude, position.longitude);
+      await _updateLocation(position.latitude, position.longitude);
     }
   }
 
-  /// Force update location regardless of time elapsed.
-  /// Use this after permission is granted during onboarding.
-  Future<Map<String, dynamic>?> forceUpdateLocation() async {
+  /// Force a location update and return the raw response data.
+  /// Used during onboarding to check location eligibility.
+  Future<LocationUpdateResult> forceUpdateLocation() async {
     final position = await getCurrentPosition();
-    if (position != null) {
-      return await updateLocation(position.latitude, position.longitude);
-    }
-    return null;
+    if (position == null) return LocationUpdateResult.requestFailed;
+
+    final data = await _updateLocation(
+      position.latitude,
+      position.longitude,
+    );
+
+    if (data == null) return LocationUpdateResult.requestFailed;
+
+    final isLocationEnabled = data['isLocationEnabled'] == true;
+    return isLocationEnabled
+        ? LocationUpdateResult.eligible
+        : LocationUpdateResult.ineligible;
   }
 }

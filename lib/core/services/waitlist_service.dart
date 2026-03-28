@@ -67,10 +67,14 @@ class WaitlistService extends _$WaitlistService {
     // Check for academic TLDs
     return domain.endsWith('.edu') ||
         domain.endsWith('.ac.in') ||
-        domain.contains('.ac.');
+        domain.endsWith('.ac.uk') ||
+        domain.endsWith('.ac.nz') ||
+        domain.endsWith('.ac.za') ||
+        domain.endsWith('.ac.jp') ||
+        domain.endsWith('.edu.in');
   }
 
-  /// Returns true if the user is in the eligible age range (18-25).
+  /// Returns true if the user is in the eligible age range (18-30).
   bool isAgeEligible(DateTime? dob) {
     if (dob == null) return false;
     final now = DateTime.now();

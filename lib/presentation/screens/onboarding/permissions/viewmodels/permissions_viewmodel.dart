@@ -6,6 +6,7 @@ import '../../../../../core/services/notification_service.dart';
 import '../../../../../core/services/service_providers.dart';
 import '../../../../../core/services/waitlist_service.dart';
 import '../../../../../core/auth/auth_viewmodel.dart';
+import '../../../../../core/services/location_service.dart';
 
 part 'permissions_viewmodel.g.dart';
 
@@ -38,19 +39,17 @@ class PermissionsViewModel extends _$PermissionsViewModel {
     if (granted) {
       try {
         final locationService = ref.read(locationServiceProvider);
-        final responseData = await locationService.forceUpdateLocation();
+        final result = await locationService.forceUpdateLocation();
         debugPrint(
-            '[PermissionsViewModel] Location update complete. Data: $responseData');
+            '[PermissionsViewModel] Location update complete. Result: $result');
 
-        // Waitlist Check: Location Eligibility from backend response
-        final isLocationEnabled = responseData?['isLocationEnabled'] == true;
-
-        if (!isLocationEnabled) {
+        // Waitlist Check: Location Eligibility
+        if (result == LocationUpdateResult.ineligible) {
           final waitlistService = ref.read(waitlistServiceProvider.notifier);
           final authState = ref.read(authViewModelProvider);
           final isCollege = waitlistService.isCollegeEmail(authState.email);
 
-          // If they are not a college student (by email) AND location is not enabled,
+          // If they are not a college student (by email) AND location is ineligible,
           // they are waitlisted.
           if (!isCollege) {
             final currentState = state.value ?? const PermissionsState();
@@ -66,6 +65,10 @@ class PermissionsViewModel extends _$PermissionsViewModel {
                 isWaitlisted: true, locationGranted: true));
             return;
           }
+        } else if (result == LocationUpdateResult.requestFailed) {
+          debugPrint(
+              '[PermissionsViewModel] Location update failed (network/backend error). '
+              'Proceeding without waitlisting to allow retry.');
         }
       } catch (e) {
         debugPrint('[PermissionsViewModel] Error updating location: $e');
