@@ -111,7 +111,7 @@ class HomeViewModel extends _$HomeViewModel {
                       : null,
               imageUrls: candidate.imageUrl ?? [],
               bio: candidate.matchReason ?? '',
-              relationshipPreview: candidate.matchReason ?? '',
+              relationshipPreview: candidate.relationshipPreview,
               isTopPick: candidate.bucket == BucketType.topPick,
               distanceKm: candidate.distanceKm,
             );
