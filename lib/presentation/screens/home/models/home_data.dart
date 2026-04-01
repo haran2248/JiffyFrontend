@@ -42,7 +42,7 @@ class SuggestionCard {
       imageUrl; // Kept for backward compatibility, returns first image
   final List<String> imageUrls; // Full list of images
   final String bio; // Short bio text
-  final String relationshipPreview; // Full relationship preview text
+  final String? relationshipPreview; // Full relationship preview text — null until async enrichment completes
   final List<ComparisonInsight>
       comparisonInsights; // Profile comparison insights
   final List<String> interests; // e.g., ["Hiking", "Photography"]
@@ -57,7 +57,7 @@ class SuggestionCard {
     this.imageUrl,
     this.imageUrls = const [],
     required this.bio,
-    required this.relationshipPreview,
+    this.relationshipPreview,
     this.comparisonInsights = const [],
     this.interests = const [],
     this.isTopPick = false,
