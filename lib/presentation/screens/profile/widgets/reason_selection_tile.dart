@@ -51,12 +51,14 @@ class ReasonSelectionTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? colorScheme.secondary.withValues(alpha: 0.2)
+                ? (isDestructive
+                    ? colorScheme.error.withValues(alpha: 0.1)
+                    : colorScheme.secondary.withValues(alpha: 0.2))
                 : colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? colorScheme.secondary
+                  ? (isDestructive ? colorScheme.error : colorScheme.secondary)
                   : colorScheme.secondary.withValues(alpha: 0.3),
               width: 1.5,
             ),
@@ -67,7 +69,7 @@ class ReasonSelectionTile extends StatelessWidget {
                 _getIcon(reason.icon),
                 size: 18,
                 color: isSelected
-                    ? colorScheme.primary
+                    ? (isDestructive ? colorScheme.error : colorScheme.primary)
                     : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 10),
@@ -76,7 +78,7 @@ class ReasonSelectionTile extends StatelessWidget {
                   reason.label,
                   style: textTheme.bodyMedium?.copyWith(
                     color: isSelected
-                        ? colorScheme.primary
+                        ? (isDestructive ? colorScheme.error : colorScheme.primary)
                         : colorScheme.onSurface,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -87,7 +89,7 @@ class ReasonSelectionTile extends StatelessWidget {
                 Icon(
                   Icons.check_circle_rounded,
                   size: 16,
-                  color: colorScheme.primary,
+                  color: isDestructive ? colorScheme.error : colorScheme.primary,
                 ),
             ],
           ),

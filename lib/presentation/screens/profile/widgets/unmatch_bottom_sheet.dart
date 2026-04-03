@@ -173,6 +173,8 @@ class _UnmatchBottomSheetState extends ConsumerState<UnmatchBottomSheet> {
                                   if (text != null && mounted) {
                                     _otherController.text = text;
                                   }
+                                } else {
+                                  _otherController.clear();
                                 }
                               },
                             ),
@@ -191,7 +193,7 @@ class _UnmatchBottomSheetState extends ConsumerState<UnmatchBottomSheet> {
                     text: 'Yes, Unmatch',
                     type: ButtonType.primary,
                     isLoading: state.isLoading && state.unmatchReasons.isNotEmpty,
-                    onTap: state.isFormValid ? _handleUnmatch : () {},
+                    onTap: state.isFormValid && !state.isLoading ? _handleUnmatch : () {},
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -200,7 +202,7 @@ class _UnmatchBottomSheetState extends ConsumerState<UnmatchBottomSheet> {
                   child: Button(
                     text: 'Cancel',
                     type: ButtonType.ghost,
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: state.isLoading ? () {} : () => Navigator.of(context).pop(),
                   ),
                 ),
                 const SizedBox(height: 16),

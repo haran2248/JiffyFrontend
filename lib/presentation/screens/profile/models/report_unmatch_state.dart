@@ -18,7 +18,7 @@ class ReportUnmatchState {
     this.isSuccess = false,
   });
 
-  bool get isFormValid => selectedReasonKey != null;
+  bool get isFormValid => selectedReasonKey != null && selectedReasonKey!.isNotEmpty;
 
   ReportUnmatchState copyWith({
     bool? isLoading,

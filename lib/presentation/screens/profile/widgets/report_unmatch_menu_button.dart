@@ -55,6 +55,7 @@ class ReportUnmatchMenuButton extends StatelessWidget {
       ),
       color: colorScheme.surfaceContainerHigh,
       onSelected: (value) {
+        if (currentUserId.isEmpty) return;
         if (value == 0) {
           _showUnmatchSheet(context);
         } else if (value == 1) {

@@ -63,11 +63,11 @@ class _OtherReasonScreenState extends State<OtherReasonScreen> {
       ),
       // Button pinned above keyboard — no Spacer needed
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
+        padding: const EdgeInsets.fromLTRB(
           24,
           12,
           24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
+          24,
         ),
         child: AnimatedOpacity(
           opacity: _controller.text.trim().isNotEmpty ? 1.0 : 0.45,

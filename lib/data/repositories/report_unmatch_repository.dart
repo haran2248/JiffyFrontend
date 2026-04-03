@@ -57,11 +57,23 @@ class ReportUnmatchRepository {
 
   Future<Result<void, ApiError>> reportAndUnmatch(ReportRequest request) async {
     try {
+      // 1. Send the report
       await _dio.post(
         ReportUnmatchApiEndpoints.report,
         data: request.toJson(),
         cancelToken: _cancelRegistry.createToken(_tag),
       );
+
+      // 2. Automatically trigger unmatch so state on backend is consistent
+      final unmatchRequest = UnmatchRequest(
+        userId: request.reporterUserId,
+        matchedUserId: request.reportedUserId,
+        reasonKey: request.reasonKey,
+        details: request.details,
+      );
+      
+      await unmatch(unmatchRequest);
+
       return Result.success(null);
     } catch (e) {
       return Result.failure(_extractError(e));
@@ -91,7 +103,7 @@ class ReportUnmatchRepository {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 ReportUnmatchRepository reportUnmatchRepository(Ref ref) {
   return ReportUnmatchRepository(
     dio: ref.watch(dioProvider),

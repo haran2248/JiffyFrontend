@@ -171,6 +171,8 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                                   if (text != null && mounted) {
                                     _otherController.text = text;
                                   }
+                                } else {
+                                  _otherController.clear();
                                 }
                               },
                             ),
@@ -189,7 +191,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                     text: 'Submit Report & Unmatch',
                     type: ButtonType.primary,
                     isLoading: state.isLoading && state.reportReasons.isNotEmpty,
-                    onTap: state.isFormValid ? _handleReport : () {},
+                    onTap: state.isFormValid && !state.isLoading ? _handleReport : () {},
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -198,7 +200,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                   child: Button(
                     text: 'Cancel',
                     type: ButtonType.ghost,
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: state.isLoading ? () {} : () => Navigator.of(context).pop(),
                   ),
                 ),
                 const SizedBox(height: 16),

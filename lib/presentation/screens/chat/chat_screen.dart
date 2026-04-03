@@ -88,9 +88,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
-          if (widget.otherUserId != ChatConstants.jiffyBotId)
+          if (FirebaseAuth.instance.currentUser?.uid != null &&
+              FirebaseAuth.instance.currentUser!.uid.isNotEmpty &&
+              widget.otherUserId != ChatConstants.jiffyBotId)
             ReportUnmatchMenuButton(
-              currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+              currentUserId: FirebaseAuth.instance.currentUser!.uid,
               targetUserId: widget.otherUserId,
               targetUserName: widget.otherUserName,
             ),

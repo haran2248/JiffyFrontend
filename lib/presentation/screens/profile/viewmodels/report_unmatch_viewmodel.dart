@@ -10,8 +10,8 @@ part 'report_unmatch_viewmodel.g.dart';
 class ReportUnmatchViewModel extends _$ReportUnmatchViewModel {
   @override
   ReportUnmatchState build() {
-    // Capture the repo reference BEFORE onDispose — ref.read() is illegal inside lifecycle callbacks
-    final repository = ref.read(reportUnmatchRepositoryProvider);
+    // Watch the repository so the viewmodel is tied to the active instance
+    final repository = ref.watch(reportUnmatchRepositoryProvider);
     ref.onDispose(repository.cancelPendingRequests);
     return const ReportUnmatchState();
   }
@@ -65,6 +65,7 @@ class ReportUnmatchViewModel extends _$ReportUnmatchViewModel {
       userId: currentUserId,
       matchedUserId: matchedUserId,
       reasonKey: state.selectedReasonKey!,
+      details: details,
     );
 
     final result = await ref.read(reportUnmatchRepositoryProvider).unmatch(request);

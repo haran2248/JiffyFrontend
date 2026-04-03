@@ -1,19 +1,24 @@
 class UnmatchRequest {
   final String userId;
   final String matchedUserId;
+  final String? details;
   final String reasonKey;
 
   const UnmatchRequest({
     required this.userId,
     required this.matchedUserId,
     required this.reasonKey,
+    this.details,
   });
 
   Map<String, dynamic> toJson() {
+    final trimmedDetails = details?.trim();
     return {
       'userId': userId,
       'matchedUserId': matchedUserId,
       'reasonKey': reasonKey,
+      if (trimmedDetails != null && trimmedDetails.isNotEmpty)
+        'details': trimmedDetails,
     };
   }
 }
@@ -32,11 +37,13 @@ class ReportRequest {
   });
 
   Map<String, dynamic> toJson() {
+    final trimmedDetails = details?.trim();
     return {
       'reporterUserId': reporterUserId,
       'reportedUserId': reportedUserId,
       'reasonKey': reasonKey,
-      if (details != null && details!.isNotEmpty) 'details': details,
+      if (trimmedDetails != null && trimmedDetails.isNotEmpty)
+        'details': trimmedDetails,
     };
   }
 }

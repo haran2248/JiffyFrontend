@@ -19,14 +19,31 @@ class ReasonOption {
 
   factory ReasonOption.fromJson(Map<String, dynamic> json) {
     return ReasonOption(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      key: json['key'] as String,
-      label: json['label'] as String,
-      icon: json['icon'] as String,
-      ordinal: json['ordinal'] as int,
-      active: json['active'] as bool,
+      id: json['id']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      key: json['key']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      icon: json['icon']?.toString() ?? 'more',
+      ordinal: _toInt(json['ordinal']),
+      active: _toBool(json['active']),
     );
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static bool _toBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final lowercase = value.toLowerCase();
+      return lowercase == 'true' || lowercase == '1' || lowercase == 'yes';
+    }
+    return false;
   }
 
   Map<String, dynamic> toJson() {
