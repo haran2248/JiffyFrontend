@@ -154,31 +154,33 @@ class SuggestionCardWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Relationship Preview - highlighted (core feature)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Relationship Preview',
-                                style: textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.primary,
+                          // Relationship Preview — only shown once async enrichment completes
+                          if (suggestion.relationshipPreview != null) ...[
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Relationship Preview",
+                                  style: textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.primary,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                suggestion.relationshipPreview,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface,
-                                  height: 1.3,
+                                const SizedBox(height: 6),
+                                Text(
+                                  suggestion.relationshipPreview!,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurface,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                           // Interests (not comparison insights - those are shown in full profile)
                           if (suggestion.interests.isNotEmpty)
                             Wrap(

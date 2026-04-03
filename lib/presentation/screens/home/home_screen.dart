@@ -515,11 +515,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: null,
+                onPressed: () => context.goNamed(RouteNames.discover),
                 child: Text(
                   "See All",
                   style: textTheme.labelLarge?.copyWith(
-                    color: const Color(0xFFE040FB), // Accent color
+                    color: const Color(0xFFE040FB),
                   ),
                 ),
               ),
@@ -592,7 +592,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         final profileService = ref.read(profileServiceProvider);
                         final profileData = await profileService
                             .fetchUserProfile(suggestions[index].userId);
-                        navigator.pop(); // pop loading safely
+                        navigator.pop();
                         if (profileData != null && context.mounted) {
                           showModalBottomSheet(
                             context: context,
@@ -600,7 +600,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             useRootNavigator: true,
                             backgroundColor: Colors.transparent,
                             builder: (context) => ProfileViewScreen(
-                              profile: profileData,
+                              profile:
+                                  suggestions[index].relationshipPreview != null
+                                      ? profileData.copyWith(
+                                          relationshipPreview: suggestions[index]
+                                              .relationshipPreview,
+                                        )
+                                      : profileData,
                               isPreview: false,
                             ),
                           );
@@ -611,7 +617,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           );
                         }
                       } catch (e) {
-                        navigator.pop(); // pop loading safely
+                        navigator.pop();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

@@ -41,6 +41,7 @@ class SuggestionCandidate {
   final BucketType? bucket;
 
   final String? matchReason;
+  final String? relationshipPreview;
   final Map<String, dynamic>? scoreBreakdown;
 
   SuggestionCandidate({
@@ -60,6 +61,7 @@ class SuggestionCandidate {
     this.finalScore,
     this.bucket,
     this.matchReason,
+    this.relationshipPreview,
     this.scoreBreakdown,
   });
 
