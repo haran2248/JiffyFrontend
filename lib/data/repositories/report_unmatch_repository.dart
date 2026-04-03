@@ -72,7 +72,8 @@ class ReportUnmatchRepository {
         details: request.details,
       );
       
-      await unmatch(unmatchRequest);
+      final unmatchResult = await unmatch(unmatchRequest);
+      if (unmatchResult is Failure) return unmatchResult;
 
       return Result.success(null);
     } catch (e) {

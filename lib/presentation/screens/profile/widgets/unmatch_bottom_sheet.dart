@@ -59,13 +59,16 @@ class _UnmatchBottomSheetState extends ConsumerState<UnmatchBottomSheet> {
   }
 
   void _handleUnmatch() {
-    final details = _otherController.text.trim().isNotEmpty
-        ? _otherController.text.trim()
-        : null;
+    final state = ref.read(reportUnmatchViewModelProvider);
+    final isOther = state.selectedReasonKey?.toLowerCase().contains('other') ?? false;
+    final text = _otherController.text.trim();
+
+    if (isOther && text.isEmpty) return;
+
     ref.read(reportUnmatchViewModelProvider.notifier).submitUnmatch(
           currentUserId: widget.currentUserId,
           matchedUserId: widget.matchedUserId,
-          details: details,
+          details: text.isNotEmpty ? text : null,
         );
   }
 
@@ -162,19 +165,22 @@ class _UnmatchBottomSheetState extends ConsumerState<UnmatchBottomSheet> {
                               isSelected: state.selectedReasonKey == reason.key,
                               isDestructive: false,
                               onTap: () async {
-                                ref
-                                    .read(reportUnmatchViewModelProvider.notifier)
-                                    .selectReason(reason.key);
                                 if (reason.key.toLowerCase().contains('other')) {
                                   final text = await OtherReasonScreen.show(
                                     context,
                                     hint: 'Describe why you want to unmatch.',
                                   );
-                                  if (text != null && mounted) {
+                                  if (text != null && text.trim().isNotEmpty && mounted) {
                                     _otherController.text = text;
+                                    ref
+                                        .read(reportUnmatchViewModelProvider.notifier)
+                                        .selectReason(reason.key);
                                   }
                                 } else {
                                   _otherController.clear();
+                                  ref
+                                      .read(reportUnmatchViewModelProvider.notifier)
+                                      .selectReason(reason.key);
                                 }
                               },
                             ),
