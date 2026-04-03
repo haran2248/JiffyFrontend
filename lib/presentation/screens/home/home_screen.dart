@@ -600,10 +600,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             useRootNavigator: true,
                             backgroundColor: Colors.transparent,
                             builder: (context) => ProfileViewScreen(
-                              profile: profileData.copyWith(
-                                relationshipPreview:
-                                    suggestions[index].relationshipPreview,
-                              ),
+                              profile:
+                                  suggestions[index].relationshipPreview != null
+                                      ? profileData.copyWith(
+                                          relationshipPreview: suggestions[index]
+                                              .relationshipPreview,
+                                        )
+                                      : profileData,
                               isPreview: false,
                             ),
                           );
