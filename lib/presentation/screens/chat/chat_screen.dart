@@ -8,6 +8,8 @@ import "viewmodels/chat_viewmodel.dart";
 import "widgets/chat_action_chip.dart";
 import "widgets/typing_indicator.dart";
 import "models/chat_state.dart";
+import "package:jiffy/presentation/screens/profile/widgets/report_unmatch_menu_button.dart";
+import "chat_constants.dart";
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String otherUserId;
@@ -86,12 +88,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {
-              // TODO: Profile/Report actions
-            },
-          ),
+          if (widget.otherUserId != ChatConstants.jiffyBotId)
+            ReportUnmatchMenuButton(
+              currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+              targetUserId: widget.otherUserId,
+              targetUserName: widget.otherUserName,
+            ),
         ],
       ),
       body: Column(
