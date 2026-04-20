@@ -17,6 +17,8 @@ import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jiffy/presentation/screens/home/widgets/first_time_story_prompt_sheet.dart';
+import 'package:jiffy/presentation/screens/home/widgets/home_chip_row_widget.dart';
+import 'package:jiffy/presentation/screens/home/widgets/vibe_check_banner_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -87,6 +89,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
 
                         const SizedBox(height: 24),
+
+                        const HomeChipRowWidget(),
+                        const SizedBox(height: 12),
+                        const VibeCheckBannerWidget(),
+                        const SizedBox(height: 16),
 
                         _buildSuggestionsSection(
                           context,
