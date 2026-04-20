@@ -40,6 +40,10 @@ class AppRoutes {
   static const String rewards = '/rewards';
   // static const String settings = '/settings';
 
+  // Vibe Check (chip probe)
+  static const String vibeCheckBase = '/vibe-check';
+  static const String vibeCheck = '/vibe-check/:chipId';
+
   // Utility/debug screens
   static const String designSystem = '/design-system';
 }
@@ -72,6 +76,7 @@ class RouteNames {
   static const String designSystem = 'design-system';
   static const String waitlist = 'waitlist';
   static const String community = 'community';
+  static const String vibeCheck = 'vibe-check';
 }
 
 /// Route parameters used in dynamic routes.
@@ -81,6 +86,7 @@ class RouteParams {
   static const String userId = 'userId';
   static const String matchId = 'matchId';
   static const String messageId = 'messageId';
+  static const String chipId = 'chipId';
 }
 
 /// Query parameters used in routes.
