@@ -95,15 +95,15 @@ class PulseCheckViewModel extends _$PulseCheckViewModel {
       final user = authRepo.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      // Build the payload: list of selected option ids grouped by category
+      // Build the payload: chip IDs grouped by category slug
       final Map<String, List<String>> chipsByCategory = {};
       for (final category in state.categories) {
         final selected = category.options
             .where((o) => state.selectedOptionIds.contains(o.id))
-            .map((o) => o.label)
+            .map((o) => o.id)
             .toList();
         if (selected.isNotEmpty) {
-          chipsByCategory[category.title] = selected;
+          chipsByCategory[category.id] = selected;
         }
       }
 
