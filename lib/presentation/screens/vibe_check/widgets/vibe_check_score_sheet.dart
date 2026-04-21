@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
-import 'package:jiffy/presentation/screens/home/widgets/home_chip_row_widget.dart';
+import 'package:jiffy/presentation/screens/home/widgets/home_chip_row_widget.dart' show homeChipRowProvider;
 
 class VibeCheckScoreSheet extends ConsumerWidget {
   final int score;
@@ -84,7 +84,7 @@ class VibeCheckScoreSheet extends ConsumerWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () {
-                  ref.invalidate(homeChipDataProvider);
+                  ref.invalidate(homeChipRowProvider);
                   Navigator.of(context).pop();
                   context.go(AppRoutes.home);
                 },
@@ -106,7 +106,7 @@ class VibeCheckScoreSheet extends ConsumerWidget {
               width: double.infinity,
               child: TextButton(
                 onPressed: () {
-                  ref.invalidate(homeChipDataProvider);
+                  ref.invalidate(homeChipRowProvider);
                   Navigator.of(context).pop();
                 },
                 style: TextButton.styleFrom(
