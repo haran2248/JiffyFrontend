@@ -30,6 +30,7 @@ import 'package:jiffy/presentation/screens/stories/story_viewer_screen.dart';
 import 'package:jiffy/presentation/screens/stories/story_creation_screen.dart';
 import 'package:jiffy/presentation/screens/rewards/rewards_screen.dart';
 import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
+import 'package:jiffy/presentation/screens/vibe_check/vibe_check_screen.dart';
 import '../auth/auth_viewmodel.dart';
 import '../auth/auth_state.dart';
 import 'app_routes.dart';
@@ -469,6 +470,31 @@ GoRouter appRouter(Ref ref) {
             return FadeTransition(opacity: animation, child: child);
           },
         ),
+      ),
+
+      // Vibe Check (chip probe)
+      GoRoute(
+        path: AppRoutes.vibeCheck,
+        name: RouteNames.vibeCheck,
+        pageBuilder: (context, state) {
+          final chipId = state.pathParameters[RouteParams.chipId] ?? '';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: VibeCheckScreen(chipId: chipId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+          );
+        },
       ),
 
       // Utility screens
