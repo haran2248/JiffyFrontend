@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:jiffy/presentation/screens/home/widgets/home_chip_row_widget.dart';
 
 class VibeCheckBannerWidget extends ConsumerWidget {
@@ -9,14 +11,14 @@ class VibeCheckBannerWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chipDataAsync = ref.watch(homeChipDataProvider);
+    final chipDataAsync = ref.watch(homeChipRowProvider);
 
     return chipDataAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (chipData) {
         final unprobed = chipData.allChips
-            .where((id) => !chipData.probedChips.contains(id))
+            .where((id) => !chipData.isProbed(id))
             .toList();
 
         if (unprobed.isEmpty) return const SizedBox.shrink();
@@ -44,15 +46,12 @@ class _BannerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: colorScheme.primary, width: 4),
+        color: AppColors.surfacePlum,
+        borderRadius: BorderRadius.circular(24),
+        border: const Border(
+          left: BorderSide(color: AppColors.primaryRaspberry, width: 4),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -62,29 +61,33 @@ class _BannerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Prove your vibe',
-                  style: textTheme.titleSmall?.copyWith(
-                    color: colorScheme.onSurface,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '$unprobedCount chip${unprobedCount > 1 ? 's' : ''} waiting',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
           FilledButton(
-            onPressed: () => context
-                .push('${AppRoutes.vibeCheckBase}/$firstUnprobedChipId'),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('${AppRoutes.vibeCheckBase}/$firstUnprobedChipId');
+            },
             style: FilledButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: AppColors.primaryRaspberry,
+              foregroundColor: AppColors.textPrimary,
               padding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(
