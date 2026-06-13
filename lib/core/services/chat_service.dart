@@ -63,9 +63,8 @@ class ChatService {
   ) async {
     if (_dio == null) return;
     try {
-      final truncated = message.length > 100
-          ? '${message.substring(0, 100)}...'
-          : message;
+      final truncated =
+          message.length > 100 ? '${message.substring(0, 100)}...' : message;
       await _dio!.post(
         '/api/notification/send',
         data: {

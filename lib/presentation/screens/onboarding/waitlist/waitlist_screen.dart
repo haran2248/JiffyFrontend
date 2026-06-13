@@ -15,13 +15,12 @@ class WaitlistScreen extends ConsumerWidget {
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch WhatsApp')),
+            const SnackBar(content: Text('Something went wrong, please try again')),
           );
         }
       }
     } catch (e, stackTrace) {
-      debugPrint('WaitlistScreen: Error launching WhatsApp: $e');
-      debugPrint(stackTrace.toString());
+      debugPrint('Error launching WhatsApp: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -91,7 +90,7 @@ class WaitlistScreen extends ConsumerWidget {
 
                 // Description
                 Text(
-                  "Currently, Jiffy is growing one campus at a time. We've added you to our Bangalore waitlist.",
+                  "Jiffy is currently exclusive to users with strong Instagram credibility. We've added you to our waitlist.",
                   style: textTheme.bodyLarge?.copyWith(
                     color: colors.onSurface.withValues(alpha: 0.7),
                     height: 1.5,
@@ -123,13 +122,13 @@ class WaitlistScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       const _EligibilityItem(
-                        icon: Icons.school_outlined,
-                        text: "Bangalore College Students",
+                        icon: Icons.star_outline,
+                        text: "High Instagram Credibility",
                       ),
                       const SizedBox(height: 8),
                       const _EligibilityItem(
-                        icon: Icons.person_outline,
-                        text: "18-30 year olds in Bangalore",
+                        icon: Icons.people_outline,
+                        text: "1000+ Followers",
                       ),
                     ],
                   ),
@@ -255,7 +254,7 @@ class _SignOutButton extends ConsumerWidget {
               ),
             )
           : Text(
-              "Back to Login, Sign in with college email if applicable",
+              "Back to Login",
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.5),
                 fontSize: 14,
