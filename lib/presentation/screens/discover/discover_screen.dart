@@ -14,7 +14,6 @@ class DiscoverScreen extends ConsumerWidget {
     final homeState = ref.watch(homeViewModelProvider);
     final theme = Theme.of(context);
 
-    // In a real app we might want a dedicated provider, but reusing home data is fine for now
     final allSuggestions = homeState.data?.suggestions ?? [];
 
     final topPicks = allSuggestions.where((s) => s.isTopPick).toList();

@@ -17,6 +17,7 @@ class AppRoutes {
   static const String onboardingCoPilotIntro = '/onboarding/co-pilot-intro';
   static const String onboardingProfessionalDetails =
       '/onboarding/professional-details';
+  static const String onboardingInstagram = '/onboarding/instagram';
   static const String onboardingProfileSetup = '/onboarding/profile-setup';
   static const String onboardingPermissions = '/onboarding/permissions';
   static const String phoneVerification = '/onboarding/phone-verification';
@@ -54,6 +55,7 @@ class RouteNames {
   static const String pulseCheck = 'pulse-check';
   static const String coPilotIntro = 'co-pilot-intro';
   static const String professionalDetails = 'professional-details';
+  static const String instagram = 'instagram';
   static const String profileSetup = 'profile-setup';
   static const String permissions = 'permissions';
   static const String home = 'home';

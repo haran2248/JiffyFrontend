@@ -28,10 +28,12 @@ class DatePickerField extends StatelessWidget {
       initialDate: value ?? DateTime(now.year - 25),
       firstDate: min,
       lastDate: max,
+      locale: const Locale('en', 'GB'),
+      initialEntryMode: DatePickerEntryMode.input,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final colorScheme = Theme.of(context).colorScheme;
-        
+
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: isDark
@@ -47,8 +49,7 @@ class DatePickerField extends StatelessWidget {
                     surface: colorScheme.surface,
                     onSurface: colorScheme.onSurface,
                   ),
-            dialogTheme: DialogThemeData(
-                backgroundColor: colorScheme.surface),
+            dialogTheme: DialogThemeData(backgroundColor: colorScheme.surface),
           ),
           child: child!,
         );
@@ -61,21 +62,10 @@ class DatePickerField extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    return '$day/$month/$year';
   }
 
   @override

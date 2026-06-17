@@ -116,7 +116,7 @@ class BasicsScreen extends ConsumerWidget {
                                   ref.read(basicsViewModelProvider);
                               if (success) {
                                 context.pushRoute(
-                                    AppRoutes.onboardingProfessionalDetails);
+                                    AppRoutes.onboardingInstagram);
                               } else if (currentFormData.error != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

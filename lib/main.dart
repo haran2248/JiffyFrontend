@@ -8,6 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/notification_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 bool isFirebaseInitialized = false;
 
@@ -80,6 +81,15 @@ class _JiffyAppState extends ConsumerState<JiffyApp>
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: router,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('en', 'GB'),
+      ],
     );
   }
 }
