@@ -3,7 +3,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:jiffy/core/services/service_providers.dart";
 import "package:jiffy/presentation/widgets/chat_bubble.dart";
-import "package:jiffy/presentation/screens/onboarding/profile_setup/widgets/chat_input_field.dart";
+import "package:jiffy/presentation/widgets/chat_input_field.dart";
 import "viewmodels/chat_viewmodel.dart";
 import "widgets/chat_action_chip.dart";
 import "widgets/typing_indicator.dart";

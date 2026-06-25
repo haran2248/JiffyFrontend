@@ -41,6 +41,10 @@
 	<true/>
 	<key>NSBonjourServices</key>
 	<array/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Jiffy uses your microphone so you can speak your answers instead of typing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Jiffy uses speech recognition to convert your voice to text.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Jiffy needs access to your camera to let you take photos for your profile.</string>
 	<key>NSLocalNetworkUsageDescription</key>

@@ -45,7 +45,7 @@ class VoiceService {
       // Connect to Deepgram WebSocket. Nova-2 is the most powerful model, optimized for general speech.
       // We set interim_results=true to get real-time streaming text as the user speaks.
       final uri = Uri.parse(
-          'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&language=en-IN&model=nova-2&interim_results=true');
+          'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&language=en-IN&model=nova-2&interim_results=true&endpointing=false&no_delay=true');
       
       _channel = IOWebSocketChannel.connect(
         uri,
