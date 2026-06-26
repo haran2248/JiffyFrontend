@@ -148,15 +148,7 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
                 debugPrint(
                     '🏁 [ProfileSetupViewModel] Onboarding complete signal received');
 
-                final completionMessage = ChatMessage(
-                  text:
-                      "Perfect! I've got everything I need. Your profile is looking great! 🎉",
-                  isFromUser: false,
-                  timestamp: DateTime.now(),
-                );
-
                 state = state.copyWith(
-                  messages: [...state.messages, completionMessage],
                   showCompletionDialog: true,
                   isCompleting: false,
                   isTyping: false,

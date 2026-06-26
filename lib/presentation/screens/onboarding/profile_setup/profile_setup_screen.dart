@@ -59,28 +59,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_isCompletionDialogShowing) {
           _isCompletionDialogShowing = true;
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              title: const Text('Profile Setup Complete! 🎉'),
-              content: const Text(
-                "Perfect! I've got everything I need. Your profile is looking great!",
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    viewModel.dismissCompletionDialog();
-                    Navigator.of(context).pop();
-                    _isCompletionDialogShowing = false;
-                    // Navigate to next screen (permissions)
-                    context.goToRoute(AppRoutes.onboardingPermissions);
-                  },
-                  child: const Text('Next'),
-                ),
-              ],
-            ),
-          );
+          // Add a short delay so the user can read the final message before transitioning
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              viewModel.dismissCompletionDialog();
+              _isCompletionDialogShowing = false;
+              // Navigate to next screen (permissions)
+              context.goToRoute(AppRoutes.onboardingPermissions);
+            }
+          });
         }
       });
     }
