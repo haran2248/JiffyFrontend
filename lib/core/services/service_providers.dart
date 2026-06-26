@@ -9,8 +9,14 @@ import "location_service.dart";
 import "notification_service.dart";
 import "permission_service.dart";
 import "photo_upload_service.dart";
+import "voice_service.dart";
 
 part "service_providers.g.dart";
+
+@riverpod
+VoiceService voiceService(Ref ref) {
+  return VoiceService();
+}
 
 @riverpod
 HomeService homeService(Ref ref) {

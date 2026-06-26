@@ -63,6 +63,53 @@ class ChatStreamingService {
     }
   }
 
+  /// Streams the conversation turn directly using the new SSE flow.
+  /// Yields raw JSON string chunks.
+  Stream<String> streamConversationTurn({
+    required String uid,
+    required String message,
+  }) async* {
+    try {
+      debugPrint("ChatStreamingService: Connecting to /api/onboarding/turn");
+
+      final response = await _dio.post<ResponseBody>(
+        "/api/onboarding/turn",
+        data: {"uid": uid, "message": message},
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {"Content-Type": "application/json"},
+          receiveTimeout: const Duration(minutes: 2),
+          sendTimeout: const Duration(seconds: 15),
+        ),
+      );
+
+      debugPrint("ChatStreamingService: Stream connected");
+
+      final lines = response.data!.stream
+          .cast<List<int>>()
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      await for (final line in lines) {
+        if (line.isEmpty) continue;
+
+        if (line.startsWith("data:")) {
+          final data = line.substring(5).trim();
+
+          if (data == "[DONE]") {
+            debugPrint("ChatStreamingService: [DONE] signal received");
+            break;
+          }
+
+          yield data;
+        }
+      }
+    } catch (e, st) {
+      debugPrint("ChatStreamingService: Exception caught: $e\n$st");
+      rethrow;
+    }
+  }
+
   /// Sends the final conversation history to mark onboarding as complete.
   Future<void> completeOnboarding({
     required String uid,

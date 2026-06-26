@@ -9,11 +9,17 @@ import 'core/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 bool isFirebaseInitialized = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Failed to load .env file: $e');
+  }
 
   try {
     await Firebase.initializeApp();
