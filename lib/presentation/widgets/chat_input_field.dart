@@ -60,12 +60,7 @@ class _ChatInputFieldState extends ConsumerState<ChatInputField>
     // Set the base text to whatever is currently in the box
     _confirmedText = _controller.text.trim();
     
-    setState(() {
-      _isListeningUI = true;
-    });
-    _pulseController.repeat(reverse: true);
-
-    await voiceService.startListening(
+    final success = await voiceService.startListening(
       onResult: (text, isFinal) {
         if (!mounted || !_isListeningUI) return;
 
@@ -96,12 +91,21 @@ class _ChatInputFieldState extends ConsumerState<ChatInputField>
         }
       },
     );
+
+    if (success && mounted) {
+      setState(() {
+        _isListeningUI = true;
+      });
+      _pulseController.repeat(reverse: true);
+    }
   }
 
   void _stopListening() async {
     HapticFeedback.selectionClick();
     final voiceService = ref.read(voiceServiceProvider);
     await voiceService.stopListening();
+    
+    if (!mounted) return;
     
     _pulseController.stop();
     setState(() {
@@ -268,13 +272,18 @@ class _ChatInputFieldState extends ConsumerState<ChatInputField>
                                 ]
                               : null,
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: (widget.isEnabled || _isListeningUI)
-                            ? _handleAction
-                            : null,
-                        borderRadius: BorderRadius.circular(24),
+                    child: Tooltip(
+                      message: _isListeningUI ? 'Stop voice input' : (_hasText ? 'Send message' : 'Start voice input'),
+                      child: Semantics(
+                        button: true,
+                        label: _isListeningUI ? 'Stop voice input' : (_hasText ? 'Send message' : 'Start voice input'),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: (widget.isEnabled || _isListeningUI)
+                                ? _handleAction
+                                : null,
+                            borderRadius: BorderRadius.circular(24),
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 200),
                           transitionBuilder: (child, anim) =>
@@ -297,7 +306,9 @@ class _ChatInputFieldState extends ConsumerState<ChatInputField>
                       ),
                     ),
                   ),
-                );
+                ),
+              ),
+            );
               },
             ),
           ],

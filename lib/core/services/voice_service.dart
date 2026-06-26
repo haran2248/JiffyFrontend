@@ -30,14 +30,14 @@ class VoiceService {
     return true;
   }
 
-  Future<void> startListening({
+  Future<bool> startListening({
     required Function(String text, bool isFinal) onResult,
     required VoidCallback onDone,
   }) async {
-    if (_isListening) return;
+    if (_isListening) return false;
 
     final initSuccess = await initialize();
-    if (!initSuccess) return;
+    if (!initSuccess) return false;
 
     _isListening = true;
 
@@ -98,10 +98,13 @@ class VoiceService {
           _channel!.sink.add(data);
         }
       });
+
+      return true;
     } catch (e) {
       debugPrint("VoiceService start error: $e");
       _cleanup();
       onDone();
+      return false;
     }
   }
 

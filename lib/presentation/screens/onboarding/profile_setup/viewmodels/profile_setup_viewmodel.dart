@@ -54,6 +54,7 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
           '/api/users/getUser',
           queryParameters: {'uid': uid},
         );
+        if (!ref.mounted) return;
         final data = response.data as Map<String, dynamic>?;
         final basicDetails = data?['basicDetails'] as Map<String, dynamic>?;
         final fullName = basicDetails?['name'] as String?;
@@ -115,7 +116,12 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     );
 
     // Initialize SSE Stream request
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) {
+      debugPrint('⚠️ [ProfileSetupViewModel] No user logged in, stream failed closed.');
+      state = state.copyWith(isTyping: false);
+      return;
+    }
     final chatService = ref.read(chatStreamingServiceProvider);
 
     _streamSubscription?.cancel();
@@ -148,7 +154,15 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
                 debugPrint(
                     '🏁 [ProfileSetupViewModel] Onboarding complete signal received');
 
+                final completionMessage = ChatMessage(
+                  text:
+                      "Perfect! I've got everything I need. Your profile is looking great! 🎉",
+                  isFromUser: false,
+                  timestamp: DateTime.now(),
+                );
+
                 state = state.copyWith(
+                  messages: [...state.messages, completionMessage],
                   showCompletionDialog: true,
                   isCompleting: false,
                   isTyping: false,
