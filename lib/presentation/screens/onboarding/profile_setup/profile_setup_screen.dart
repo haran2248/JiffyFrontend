@@ -6,7 +6,8 @@ import 'package:jiffy/presentation/widgets/progress_bar.dart';
 import 'viewmodels/profile_setup_viewmodel.dart';
 import 'widgets/chat_message_list.dart';
 import 'widgets/suggested_responses.dart';
-import 'widgets/chat_input_field.dart';
+import 'package:jiffy/presentation/widgets/chat_input_field.dart';
+import 'package:jiffy/core/theme/app_theme.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});

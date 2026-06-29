@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jiffy/core/services/chat_streaming_service.dart';
+import 'package:jiffy/core/network/dio_provider.dart';
 import '../models/profile_setup_form_data.dart';
 
 part 'profile_setup_viewmodel.g.dart';
@@ -39,18 +42,38 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    // Get the user's display name or fallback
     final user = FirebaseAuth.instance.currentUser;
-    final userName = user?.displayName?.split(' ').first ?? 'there';
+    String userName = user?.displayName?.split(' ').first ?? 'there';
+
+    // Try to fetch the actual name the user entered in basicDetails
+    try {
+      final uid = user?.uid;
+      if (uid != null) {
+        final dio = ref.read(dioProvider);
+        final response = await dio.get(
+          '/api/users/getUser',
+          queryParameters: {'uid': uid},
+        );
+        if (!ref.mounted) return;
+        final data = response.data as Map<String, dynamic>?;
+        final basicDetails = data?['basicDetails'] as Map<String, dynamic>?;
+        final fullName = basicDetails?['name'] as String?;
+        if (fullName != null && fullName.isNotEmpty) {
+          userName = fullName.split(' ').first;
+        }
+      }
+    } catch (e) {
+      debugPrint('[ProfileSetupViewModel] Failed to fetch user name: $e');
+      // Fall back to displayName or 'there'
+    }
 
     final firstMessage = ChatMessage(
       text:
-          "Hey $userName, we want to know you a bit better so that we can find you relevant matches, so tell me whats the craziest thing you have done lately?",
+          "Hey $userName, we want to know you a bit better so that we can find you relevant matches. So tell me, what's taking your energy up lately?",
       isFromUser: false,
       timestamp: DateTime.now(),
     );
 
-    // Inject the first app prompt and unlock input immediately
     state = state.copyWith(
       messages: [firstMessage],
       isTyping: false,
@@ -81,98 +104,81 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
       clearUserInput: true,
     );
 
-    // Hard cap the conversation at 6 user answers to prevent infinite loop
-    final userMessageCount = nextMessages.where((m) => m.isFromUser).length;
-    if (userMessageCount >= 6) {
-      debugPrint(
-          '✅ [ProfileSetupViewModel] Conversation cap reached. Ending onboarding natively.');
-
-      final completionMessage = ChatMessage(
-        text:
-            "Perfect! I've got everything I need. Your profile is looking great! 🎉",
-        isFromUser: false,
-        timestamp: DateTime.now(),
-      );
-
-      // Notify backend that onboarding is complete
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
-      debugPrint(
-          '🏁 [ProfileSetupViewModel] Completion triggered for UID: $uid');
-      final chatService = ref.read(chatStreamingServiceProvider);
-      final history = nextMessages
-          .map((msg) => {
-                'role': msg.isFromUser ? 'user' : 'assistant',
-                'content': msg.text,
-              })
-          .toList();
-
-      state = state.copyWith(isCompleting: true);
-      try {
-        await chatService.completeOnboarding(uid: uid, history: history);
-        debugPrint(
-            '✅ [ProfileSetupViewModel] Onboarding marked complete on backend');
-      } catch (e) {
-        debugPrint('⚠️ [ProfileSetupViewModel] Completion call failed: $e');
-      }
-
-      state = state.copyWith(
-        messages: [...state.messages, completionMessage],
-        showCompletionDialog: true,
-        isCompleting: false,
-      );
-    } else {
-      _startAssistantStream();
-    }
+    _startAssistantStream(text.trim());
   }
 
-  void _startAssistantStream() {
+  void _startAssistantStream(String message) {
     debugPrint('🚀 [ProfileSetupViewModel] _startAssistantStream initiated');
-    // 1. Prepare history mapped to role/content JSON expectations
-    final history = state.messages
-        .map((msg) => {
-              'role': msg.isFromUser ? 'user' : 'assistant',
-              'content': msg.text,
-            })
-        .toList();
 
-    // 2. Lock input and set typing indicator natively
+    // Lock input and set typing indicator natively
     state = state.copyWith(
       isTyping: true, // Lock input while receiving stream
     );
 
-    // 3. Initialize SSE Stream request
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous_uid';
+    // Initialize SSE Stream request
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) {
+      debugPrint('⚠️ [ProfileSetupViewModel] No user logged in, stream failed closed.');
+      state = state.copyWith(isTyping: false);
+      return;
+    }
     final chatService = ref.read(chatStreamingServiceProvider);
 
     _streamSubscription?.cancel();
     _streamSubscription =
-        chatService.streamQuestions(uid: uid, history: history).listen(
-      (chunk) {
-        final currentMessages = List<ChatMessage>.from(state.messages);
+        chatService.streamConversationTurn(uid: uid, message: message).listen(
+      (chunkData) {
+        try {
+          final parsed = jsonDecode(chunkData);
+          if (parsed is Map<String, dynamic>) {
+            if (parsed.containsKey('chunk')) {
+              final textChunk = parsed['chunk'] as String;
+              final currentMessages = List<ChatMessage>.from(state.messages);
 
-        // If the last message was the user's, this is the first assistant token.
-        // We will instantiate the assistant bubble now!
-        if (currentMessages.isEmpty || currentMessages.last.isFromUser) {
-          currentMessages.add(ChatMessage(
-            text: chunk,
-            isFromUser: false,
-            timestamp: DateTime.now(),
-          ));
-        } else {
-          // Trailing assistant message exists, append chunk
-          final lastMsg = currentMessages.last;
-          currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
-            text: lastMsg.text + chunk,
-          );
+              if (currentMessages.isEmpty || currentMessages.last.isFromUser) {
+                currentMessages.add(ChatMessage(
+                  text: textChunk,
+                  isFromUser: false,
+                  timestamp: DateTime.now(),
+                ));
+              } else {
+                final lastMsg = currentMessages.last;
+                currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
+                  text: lastMsg.text + textChunk,
+                );
+              }
+              state = state.copyWith(messages: currentMessages);
+            } else if (parsed.containsKey('is_complete')) {
+              final isComplete = parsed['is_complete'] as bool? ?? false;
+              if (isComplete) {
+                debugPrint(
+                    '🏁 [ProfileSetupViewModel] Onboarding complete signal received');
+
+                final completionMessage = ChatMessage(
+                  text:
+                      "Perfect! I've got everything I need. Your profile is looking great! 🎉",
+                  isFromUser: false,
+                  timestamp: DateTime.now(),
+                );
+
+                state = state.copyWith(
+                  messages: [...state.messages, completionMessage],
+                  showCompletionDialog: true,
+                  isCompleting: false,
+                  isTyping: false,
+                );
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore invalid JSON or fallback if needed
         }
-
-        // Setting state rapidly updates the UI to reflect new tokens
-        state = state.copyWith(messages: currentMessages);
       },
       onDone: () {
         debugPrint('✅ [ProfileSetupViewModel] Stream completed natively');
-        // [DONE] payload resolves the stream, unlock input.
-        state = state.copyWith(isTyping: false);
+        if (state.isTyping && !state.showCompletionDialog) {
+          state = state.copyWith(isTyping: false);
+        }
       },
       onError: (e) {
         debugPrint('❌ [ProfileSetupViewModel] Streaming error SSE: $e');
