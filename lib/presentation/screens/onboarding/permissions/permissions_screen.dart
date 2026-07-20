@@ -2,17 +2,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
 import 'viewmodels/permissions_viewmodel.dart';
 import 'models/permissions_state.dart';
 import 'widgets/permission_card.dart';
 
-class PermissionsScreen extends ConsumerWidget {
+class PermissionsScreen extends ConsumerStatefulWidget {
   const PermissionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PermissionsScreen> createState() => _PermissionsScreenState();
+}
+
+class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-check permissions when user returns from Settings
+    if (state == AppLifecycleState.resumed) {
+      ref.read(permissionsViewModelProvider.notifier).refreshPermissions();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen for denied messages and show a SnackBar
+    ref.listen<AsyncValue<PermissionsState>>(
+      permissionsViewModelProvider,
+      (previous, next) {
+        final previousMessage = previous?.value?.deniedMessage;
+        final currentMessage = next.value?.deniedMessage;
+        final isPermanentlyDenied =
+            next.value?.isPermanentlyDenied ?? false;
+
+        // Only show SnackBar when the message changes (i.e. a new denial)
+        if (currentMessage != null && currentMessage != previousMessage) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(currentMessage),
+              duration: const Duration(seconds: 4),
+              action: isPermanentlyDenied
+                  ? SnackBarAction(
+                      label: 'Go to Settings',
+                      onPressed: () => openAppSettings(),
+                    )
+                  : null,
+            ),
+          );
+        }
+      },
+    );
+
     final stateAsync = ref.watch(permissionsViewModelProvider);
     final state = stateAsync.when(
       data: (data) => data,
@@ -70,7 +125,7 @@ class PermissionsScreen extends ConsumerWidget {
                     const SizedBox(height: 32),
                     PermissionCard(
                       icon: Icons.location_on_outlined,
-                      title: "Enable Location",
+                      title: "Location Access",
                       description:
                           "Discover matches nearby and see distances to profiles",
                       isGranted: state.locationGranted,

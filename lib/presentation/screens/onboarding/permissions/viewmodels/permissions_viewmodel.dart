@@ -32,19 +32,26 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   }
 
   Future<void> requestLocation() async {
-    final granted = await _permissionService.requestLocationPermission();
-    debugPrint('Location permission status: ${granted ? 'Granted' : 'Denied'}');
+    // Clear any previous denied message so repeated taps trigger a fresh SnackBar
+    final prevState = state.value ?? const PermissionsState();
+    if (prevState.deniedMessage != null) {
+      state = AsyncData(prevState.copyWith(clearDeniedMessage: true));
+    }
+
+    final result = await _permissionService.requestLocationPermission();
+    final granted = result == PermissionResult.granted;
+    debugPrint('Location permission result: $result');
 
     // If permission granted, immediately update location on backend
     if (granted) {
       try {
         final locationService = ref.read(locationServiceProvider);
-        final result = await locationService.forceUpdateLocation();
+        final locResult = await locationService.forceUpdateLocation();
         debugPrint(
-            '[PermissionsViewModel] Location update complete. Result: $result');
+            '[PermissionsViewModel] Location update complete. Result: $locResult');
 
         // Waitlist Check: Location Eligibility
-        if (result == LocationUpdateResult.ineligible) {
+        if (locResult == LocationUpdateResult.ineligible) {
           final waitlistService = ref.read(waitlistServiceProvider.notifier);
           final authState = ref.read(authViewModelProvider);
           final isCollege = waitlistService.isCollegeEmail(authState.email);
@@ -62,10 +69,12 @@ class PermissionsViewModel extends _$PermissionsViewModel {
             }
 
             state = AsyncData(currentState.copyWith(
-                isWaitlisted: true, locationGranted: true));
+                isWaitlisted: true,
+                locationGranted: true,
+                clearDeniedMessage: true));
             return;
           }
-        } else if (result == LocationUpdateResult.requestFailed) {
+        } else if (locResult == LocationUpdateResult.requestFailed) {
           debugPrint(
               '[PermissionsViewModel] Location update failed (network/backend error). '
               'Proceeding without waitlisting to allow retry.');
@@ -74,25 +83,55 @@ class PermissionsViewModel extends _$PermissionsViewModel {
         debugPrint('[PermissionsViewModel] Error updating location: $e');
         // Don't fail permission grant if location update fails
       }
+
+      final currentState = state.value ?? const PermissionsState();
+      state = AsyncData(currentState.copyWith(
+          locationGranted: true, clearDeniedMessage: true));
+      return;
     }
 
+    // Permission was denied
     final currentState = state.value ?? const PermissionsState();
-    state = AsyncData(currentState.copyWith(locationGranted: granted));
+    if (result == PermissionResult.permanentlyDenied) {
+      // iOS won't show the system dialog again. Inform the user and let
+      // them go to Settings voluntarily (Apple allows this for required features).
+      state = AsyncData(currentState.copyWith(
+        locationGranted: false,
+        isPermanentlyDenied: true,
+        deniedMessage:
+            'Location access is required for finding matches. Please enable it in Settings.',
+      ));
+    } else {
+      // First-time denial — show a simple toast
+      state = AsyncData(currentState.copyWith(
+        locationGranted: false,
+        deniedMessage:
+            'Location access is required for finding matches nearby.',
+      ));
+    }
   }
 
   Future<void> requestNotifications() async {
-    bool granted = false;
-    // Both permission_handler and firebase_messaging can request this.
-    // We use NotificationService for FCM specific settings.
-    try {
-      granted = await _notificationService.requestPermissions();
-    } catch (e) {
-      debugPrint('Firebase Notification request failed: $e');
-      // If Firebase fails, we fallback to native permission_handler to at least get the prompt
-      await _permissionService.requestNotificationPermission();
-      granted = await _permissionService.checkNotificationStatus();
+    // Clear previous message
+    final prevState = state.value ?? const PermissionsState();
+    if (prevState.deniedMessage != null) {
+      state = AsyncData(prevState.copyWith(clearDeniedMessage: true));
     }
 
+    PermissionResult result = PermissionResult.denied;
+    try {
+      // Use native permission handler to easily detect permanently denied status
+      result = await _permissionService.requestNotificationPermission();
+      
+      // If granted, let Firebase also do its setup (alert/badge/sound options)
+      if (result == PermissionResult.granted) {
+        await _notificationService.requestPermissions();
+      }
+    } catch (e) {
+      debugPrint('Notification request failed: $e');
+    }
+
+    final granted = result == PermissionResult.granted;
     debugPrint(
         'Notification permission status: ${granted ? 'Granted' : 'Denied'}');
 
@@ -106,10 +145,28 @@ class PermissionsViewModel extends _$PermissionsViewModel {
       } catch (e) {
         debugPrint('FCM token retrieval failed: $e');
       }
+      
+      final currentState = state.value ?? const PermissionsState();
+      state = AsyncData(currentState.copyWith(notificationsGranted: true));
+      return;
     }
 
+    // Permission was denied
     final currentState = state.value ?? const PermissionsState();
-    state = AsyncData(currentState.copyWith(notificationsGranted: granted));
+    if (result == PermissionResult.permanentlyDenied) {
+      state = AsyncData(currentState.copyWith(
+        notificationsGranted: false,
+        isPermanentlyDenied: true,
+        deniedMessage:
+            'Push notifications are disabled. Please enable them in Settings to stay updated on matches.',
+      ));
+    } else {
+      state = AsyncData(currentState.copyWith(
+        notificationsGranted: false,
+        deniedMessage:
+            'Enable notifications to never miss a match or message.',
+      ));
+    }
   }
 
   Future<void> requestPhotoLibrary() async {
@@ -122,10 +179,77 @@ class PermissionsViewModel extends _$PermissionsViewModel {
   }
 
   Future<void> requestCamera() async {
-    final granted = await _permissionService.requestCameraPermission();
+    // Clear previous message
+    final prevState = state.value ?? const PermissionsState();
+    if (prevState.deniedMessage != null) {
+      state = AsyncData(prevState.copyWith(clearDeniedMessage: true));
+    }
+
+    final result = await _permissionService.requestCameraPermission();
+    final granted = result == PermissionResult.granted;
     debugPrint('Camera permission status: ${granted ? 'Granted' : 'Denied'}');
+    
+    if (granted) {
+      final currentState = state.value ?? const PermissionsState();
+      state = AsyncData(currentState.copyWith(cameraGranted: true));
+      return;
+    }
+
+    // Permission was denied
     final currentState = state.value ?? const PermissionsState();
-    state = AsyncData(currentState.copyWith(cameraGranted: granted));
+    if (result == PermissionResult.permanentlyDenied) {
+      state = AsyncData(currentState.copyWith(
+        cameraGranted: false,
+        isPermanentlyDenied: true,
+        deniedMessage:
+            'Camera access is disabled. Please enable it in Settings to take photos for your profile.',
+      ));
+    } else {
+      state = AsyncData(currentState.copyWith(
+        cameraGranted: false,
+        deniedMessage:
+            'Camera access is needed to take a profile picture.',
+      ));
+    }
+  }
+
+  /// Re-check all permission statuses from the OS.
+  /// Called when the app resumes (e.g. user returns from Settings).
+  Future<void> refreshPermissions() async {
+    final locationStatus = await _permissionService.checkLocationStatus();
+    final notificationStatus =
+        await _permissionService.checkNotificationStatus();
+    final cameraStatus = await _permissionService.checkCameraStatus();
+
+    final currentState = state.value ?? const PermissionsState();
+
+    // Only update if something actually changed
+    if (currentState.locationGranted != locationStatus ||
+        currentState.notificationsGranted != notificationStatus ||
+        currentState.cameraGranted != cameraStatus) {
+      debugPrint(
+          '[PermissionsViewModel] Permissions refreshed — location: $locationStatus, '
+          'notifications: $notificationStatus, camera: $cameraStatus');
+
+      state = AsyncData(currentState.copyWith(
+        locationGranted: locationStatus,
+        notificationsGranted: notificationStatus,
+        cameraGranted: cameraStatus,
+        clearDeniedMessage: locationStatus || notificationStatus,
+        isPermanentlyDenied: (locationStatus && notificationStatus) ? false : null,
+      ));
+
+      // If location was just granted via Settings, update backend
+      if (locationStatus && !currentState.locationGranted) {
+        try {
+          final locationService = ref.read(locationServiceProvider);
+          await locationService.forceUpdateLocation();
+        } catch (e) {
+          debugPrint(
+              '[PermissionsViewModel] Error updating location after Settings: $e');
+        }
+      }
+    }
   }
 
   void skip() {

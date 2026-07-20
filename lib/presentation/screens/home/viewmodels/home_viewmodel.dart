@@ -99,17 +99,33 @@ class HomeViewModel extends _$HomeViewModel {
               age = int.tryParse(candidate.age) ?? 25;
             }
 
+            // Construct image URLs safely
+            final List<String> rawImageIds = [
+              candidate.firstImageId ?? candidate.imageId,
+              candidate.imageId2,
+              candidate.imageId3,
+              candidate.imageId4,
+            ].where((id) => id != null && id.isNotEmpty).cast<String>().toList();
+
+            final List<String> parsedImageUrls = [];
+            
+            if (rawImageIds.isNotEmpty) {
+              parsedImageUrls.addAll(rawImageIds.map(
+                  (id) => 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$id'));
+            } else if (candidate.imageUrl != null && candidate.imageUrl!.isNotEmpty) {
+              parsedImageUrls.addAll(candidate.imageUrl!.map((url) =>
+                  url.startsWith('http')
+                      ? url.split('?').first
+                      : 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$url'));
+            }
+
             return SuggestionCard(
               id: candidate.candidateUserId,
               userId: candidate.candidateUserId,
               name: candidate.name ?? _mockNameForId(candidate.candidateUserId),
               age: age,
-              // Legacy support: Use first image if available
-              imageUrl:
-                  (candidate.imageUrl != null && candidate.imageUrl!.isNotEmpty)
-                      ? candidate.imageUrl!.first
-                      : null,
-              imageUrls: candidate.imageUrl ?? [],
+              imageUrl: parsedImageUrls.isNotEmpty ? parsedImageUrls.first : null,
+              imageUrls: parsedImageUrls,
               bio: candidate.matchReason ?? '',
               relationshipPreview: candidate.relationshipPreview,
               isTopPick: candidate.bucket == BucketType.topPick,

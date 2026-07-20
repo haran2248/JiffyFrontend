@@ -81,7 +81,7 @@ class PermissionCard extends StatelessWidget {
                     icon: isGranted
                         ? const Icon(Icons.check, size: 18)
                         : const SizedBox.shrink(),
-                    label: Text(isGranted ? "Enabled" : "Enable"),
+                    label: Text(isGranted ? "Allowed" : "Continue"),
                   ),
                 ),
               ],

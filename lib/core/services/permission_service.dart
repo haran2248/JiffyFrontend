@@ -1,19 +1,41 @@
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// Result of a permission request, distinguishing between
+/// a first-time denial and a permanent denial (iOS won't show the dialog again).
+enum PermissionResult {
+  granted,
+  denied,
+  permanentlyDenied,
+}
+
 class PermissionService {
-  Future<bool> requestLocationPermission() async {
+  Future<PermissionResult> requestLocationPermission() async {
     final status = await Permission.locationWhenInUse.request();
-    return status.isGranted;
+    debugPrint(
+        '[PermissionService] Location permission status: ${status.toString()}');
+
+    if (status.isGranted) return PermissionResult.granted;
+    if (status.isPermanentlyDenied) return PermissionResult.permanentlyDenied;
+    return PermissionResult.denied;
   }
 
   Future<bool> checkLocationStatus() async {
     return await Permission.locationWhenInUse.isGranted;
   }
 
-  Future<bool> requestNotificationPermission() async {
+  Future<bool> isLocationPermanentlyDenied() async {
+    return await Permission.locationWhenInUse.isPermanentlyDenied;
+  }
+
+  Future<PermissionResult> requestNotificationPermission() async {
     final status = await Permission.notification.request();
-    return status.isGranted;
+    debugPrint(
+        '[PermissionService] Notification permission status: ${status.toString()}');
+
+    if (status.isGranted) return PermissionResult.granted;
+    if (status.isPermanentlyDenied) return PermissionResult.permanentlyDenied;
+    return PermissionResult.denied;
   }
 
   Future<bool> checkNotificationStatus() async {
@@ -21,17 +43,9 @@ class PermissionService {
   }
 
   Future<bool> requestPhotoLibraryPermission() async {
-    // Just request - let the system show the dialog. Only open settings if permanently denied.
     final status = await Permission.photos.request();
     debugPrint(
         '[PermissionService] Photo library permission status: ${status.toString()}');
-
-    // Only open settings if permanently denied
-    if (status.isPermanentlyDenied) {
-      debugPrint(
-          '[PermissionService] Photo library permanently denied, opening settings');
-      await openAppSettings();
-    }
 
     // On iOS, both granted and limited permissions allow image picking
     // Treat limited as granted for our purposes
@@ -45,20 +59,14 @@ class PermissionService {
     return status.isGranted || status.isLimited;
   }
 
-  Future<bool> requestCameraPermission() async {
-    // Just request - let the system show the dialog. Only open settings if permanently denied.
+  Future<PermissionResult> requestCameraPermission() async {
     final status = await Permission.camera.request();
     debugPrint(
         '[PermissionService] Camera permission status: ${status.toString()}');
 
-    // Only open settings if permanently denied
-    if (status.isPermanentlyDenied) {
-      debugPrint(
-          '[PermissionService] Camera permanently denied, opening settings');
-      await openAppSettings();
-    }
-
-    return status.isGranted;
+    if (status.isGranted) return PermissionResult.granted;
+    if (status.isPermanentlyDenied) return PermissionResult.permanentlyDenied;
+    return PermissionResult.denied;
   }
 
   Future<bool> checkCameraStatus() async {

@@ -17,6 +17,8 @@ class SuggestionCandidate {
   final String? name;
   final dynamic age; // Could be String or int from backend
   final String? imageId;
+  @JsonKey(name: 'firstImageId')
+  final String? firstImageId;
   @JsonKey(name: 'secondImageId')
   final String? imageId2;
   @JsonKey(name: 'thirdImageId')
@@ -49,6 +51,7 @@ class SuggestionCandidate {
     this.name,
     this.age,
     this.imageId,
+    this.firstImageId,
     this.imageId2,
     this.imageId3,
     this.imageId4,

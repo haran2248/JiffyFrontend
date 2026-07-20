@@ -13,7 +13,6 @@ import '../../../core/config/signin_toggle_provider.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/navigation/navigation_service.dart';
 import '../../../core/network/errors/api_error.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../core/services/phone_verification_service.dart';
 import '../../../core/services/profile_service.dart';
 import '../../../core/services/service_providers.dart';
