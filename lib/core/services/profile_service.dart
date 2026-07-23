@@ -307,8 +307,24 @@ class ProfileService {
       final age = ProfileHelpers.calculateAge(dobString);
       final location = basicDetails?['location'] as String?;
       final gender = basicDetails?['gender'] as String?;
+      final height = basicDetails?['height'] as String?;
+      final drinking = basicDetails?['drinking'] as String?;
+      final smoking = basicDetails?['smoking'] as String?;
+      final diet = basicDetails?['diet'] as String?;
+
       final onboardingStatusRaw = userData['onboardingStatus'];
       final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
+
+      // Parse professional details
+      final professionalDetails = userData['professionalDetails'] as Map<String, dynamic>?;
+      final college = professionalDetails?['university'] as String?;
+      final company = professionalDetails?['companyName'] as String?;
+      final jobTitle = professionalDetails?['titleCompany'] as String?;
+
+      // Parse preferences
+      final preferences = userData['preferences'] as Map<String, dynamic>?;
+      final relationshipGoals = preferences?['relationshipGoals'] as String?;
+      final preferredGender = preferences?['preferredGender'] as String?;
 
       // Parse photos
       final photos = <Photo>[];
@@ -387,6 +403,15 @@ class ProfileService {
         name: name,
         age: age,
         location: location,
+        college: college,
+        work: company,
+        jobTitle: jobTitle,
+        height: height,
+        drinking: drinking,
+        smoking: smoking,
+        diet: diet,
+        relationshipGoals: relationshipGoals,
+        preferredGender: preferredGender,
         photos: photos,
         bio: aboutMe,
         interests: interests,

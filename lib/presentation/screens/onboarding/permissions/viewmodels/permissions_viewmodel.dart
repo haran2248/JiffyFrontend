@@ -50,34 +50,11 @@ class PermissionsViewModel extends _$PermissionsViewModel {
         debugPrint(
             '[PermissionsViewModel] Location update complete. Result: $locResult');
 
-        // Waitlist Check: Location Eligibility
-        if (locResult == LocationUpdateResult.ineligible) {
-          final waitlistService = ref.read(waitlistServiceProvider.notifier);
-          final authState = ref.read(authViewModelProvider);
-          final isCollege = waitlistService.isCollegeEmail(authState.email);
-
-          // If they are not a college student (by email) AND location is ineligible,
-          // they are waitlisted.
-          if (!isCollege) {
-            final currentState = state.value ?? const PermissionsState();
-
-            // Notify backend about waitlist status
-            if (authState.userId != null) {
-              await ref
-                  .read(waitlistServiceProvider.notifier)
-                  .notifyWaitlisted(authState.userId!);
-            }
-
-            state = AsyncData(currentState.copyWith(
-                isWaitlisted: true,
-                locationGranted: true,
-                clearDeniedMessage: true));
-            return;
-          }
-        } else if (locResult == LocationUpdateResult.requestFailed) {
+        // Removed waitlist check from Permissions screen as it is handled by the Instagram onboarding screen.
+        if (locResult == LocationUpdateResult.requestFailed) {
           debugPrint(
               '[PermissionsViewModel] Location update failed (network/backend error). '
-              'Proceeding without waitlisting to allow retry.');
+              'Proceeding to allow retry.');
         }
       } catch (e) {
         debugPrint('[PermissionsViewModel] Error updating location: $e');

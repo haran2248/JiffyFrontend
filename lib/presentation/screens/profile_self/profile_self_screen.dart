@@ -7,6 +7,7 @@ import "package:jiffy/presentation/screens/profile_self/models/profile_self_stat
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_header_card.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_about_me.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_basic_details.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_verification_badge.dart";
@@ -405,45 +406,32 @@ class ProfileSelfScreen extends ConsumerWidget {
                   child: _buildVerifyProfileButton(context),
                 ),
               const SizedBox(height: 24),
+              // Basic Details section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ProfileSelfBasicDetails(
+                  data: data,
+                  onEdit: null, // Basic details are currently edited during onboarding or in settings, not directly here yet
+                ),
+              ),
+              const SizedBox(height: 16),
               // Personality Traits section (from curated profile)
               if (data.personalityTraits.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ProfileSelfInterests(
                     interests: data.personalityTraits,
-                    onEdit: () => _showEditTraitsDialog(
-                      context,
-                      viewModel,
-                      data.personalityTraits,
-                    ),
+                    onEdit: null,
                     title: "Personality Traits",
                   ),
                 ),
               if (data.personalityTraits.isNotEmpty) const SizedBox(height: 16),
-              // About Me section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ProfileSelfAboutMe(
-                  aboutMeText: data.aboutMe,
-                  onEdit: () => _showEditAboutMeDialog(
-                    context,
-                    viewModel,
-                    data.aboutMe,
-                  ),
-                  onBeginnerEdit: null,
-                ),
-              ),
-              const SizedBox(height: 16),
               // Interests section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ProfileSelfInterests(
                   interests: data.interests,
-                  onEdit: () => _showEditInterestsDialog(
-                    context,
-                    viewModel,
-                    data.interests,
-                  ),
+                  onEdit: null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -453,11 +441,7 @@ class ProfileSelfScreen extends ConsumerWidget {
                 child: ProfileSelfConversationStyle(
                   title: data.conversationStyleTitle,
                   description: data.conversationStyleDescription,
-                  onEdit: () => _showEditConversationStyleDialog(
-                    context,
-                    viewModel,
-                    data.conversationStyleDescription,
-                  ),
+                  onEdit: null,
                   onReviewPromptAnswers: null,
                 ),
               ),

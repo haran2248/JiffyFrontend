@@ -32,7 +32,6 @@ class Photo {
   }
 }
 
-/// Profile data model for profile view screen
 class ProfileData {
   final String id;
   final String userId;
@@ -41,6 +40,13 @@ class ProfileData {
   final String? location; // e.g., "New York, NY"
   final String? college;
   final String? work;
+  final String? jobTitle;
+  final String? height;
+  final String? drinking;
+  final String? smoking;
+  final String? diet;
+  final String? relationshipGoals;
+  final String? preferredGender;
   final List<Photo> photos; // Array of photos with URLs and captions
   final String bio;
   final String? relationshipPreview; // Full relationship preview text
@@ -63,6 +69,13 @@ class ProfileData {
     this.location,
     this.college,
     this.work,
+    this.jobTitle,
+    this.height,
+    this.drinking,
+    this.smoking,
+    this.diet,
+    this.relationshipGoals,
+    this.preferredGender,
     this.photos = const [],
     required this.bio,
     this.relationshipPreview,
@@ -84,6 +97,13 @@ class ProfileData {
     Object? location = _sentinel,
     Object? college = _sentinel,
     Object? work = _sentinel,
+    Object? jobTitle = _sentinel,
+    Object? height = _sentinel,
+    Object? drinking = _sentinel,
+    Object? smoking = _sentinel,
+    Object? diet = _sentinel,
+    Object? relationshipGoals = _sentinel,
+    Object? preferredGender = _sentinel,
     List<Photo>? photos,
     String? bio,
     Object? relationshipPreview = _sentinel,
@@ -106,6 +126,13 @@ class ProfileData {
       college:
           identical(college, _sentinel) ? this.college : college as String?,
       work: identical(work, _sentinel) ? this.work : work as String?,
+      jobTitle: identical(jobTitle, _sentinel) ? this.jobTitle : jobTitle as String?,
+      height: identical(height, _sentinel) ? this.height : height as String?,
+      drinking: identical(drinking, _sentinel) ? this.drinking : drinking as String?,
+      smoking: identical(smoking, _sentinel) ? this.smoking : smoking as String?,
+      diet: identical(diet, _sentinel) ? this.diet : diet as String?,
+      relationshipGoals: identical(relationshipGoals, _sentinel) ? this.relationshipGoals : relationshipGoals as String?,
+      preferredGender: identical(preferredGender, _sentinel) ? this.preferredGender : preferredGender as String?,
       photos: photos ?? this.photos,
       bio: bio ?? this.bio,
       relationshipPreview: identical(relationshipPreview, _sentinel)

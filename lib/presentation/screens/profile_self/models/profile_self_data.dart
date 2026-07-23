@@ -36,6 +36,13 @@ class ProfileSelfData {
   final String? location;
   final String? college;
   final String? company;
+  final String? jobTitle;
+  final String? height;
+  final String? drinking;
+  final String? smoking;
+  final String? diet;
+  final String? relationshipGoals;
+  final String? preferredGender;
   final List<ProfileSelfPhoto> photos;
   final String aboutMe;
   final List<String> interests;
@@ -51,6 +58,13 @@ class ProfileSelfData {
     this.location,
     this.college,
     this.company,
+    this.jobTitle,
+    this.height,
+    this.drinking,
+    this.smoking,
+    this.diet,
+    this.relationshipGoals,
+    this.preferredGender,
     this.photos = const [],
     required this.aboutMe,
     this.interests = const [],
@@ -67,6 +81,13 @@ class ProfileSelfData {
     Object? location = const Object(),
     Object? college = const Object(),
     Object? company = const Object(),
+    Object? jobTitle = const Object(),
+    Object? height = const Object(),
+    Object? drinking = const Object(),
+    Object? smoking = const Object(),
+    Object? diet = const Object(),
+    Object? relationshipGoals = const Object(),
+    Object? preferredGender = const Object(),
     List<ProfileSelfPhoto>? photos,
     String? aboutMe,
     List<String>? interests,
@@ -90,6 +111,27 @@ class ProfileSelfData {
       company: identical(company, sentinel) && company is! String?
           ? this.company
           : company as String?,
+      jobTitle: identical(jobTitle, sentinel) && jobTitle is! String?
+          ? this.jobTitle
+          : jobTitle as String?,
+      height: identical(height, sentinel) && height is! String?
+          ? this.height
+          : height as String?,
+      drinking: identical(drinking, sentinel) && drinking is! String?
+          ? this.drinking
+          : drinking as String?,
+      smoking: identical(smoking, sentinel) && smoking is! String?
+          ? this.smoking
+          : smoking as String?,
+      diet: identical(diet, sentinel) && diet is! String?
+          ? this.diet
+          : diet as String?,
+      relationshipGoals: identical(relationshipGoals, sentinel) && relationshipGoals is! String?
+          ? this.relationshipGoals
+          : relationshipGoals as String?,
+      preferredGender: identical(preferredGender, sentinel) && preferredGender is! String?
+          ? this.preferredGender
+          : preferredGender as String?,
       photos: photos ?? this.photos,
       aboutMe: aboutMe ?? this.aboutMe,
       interests: interests ?? this.interests,

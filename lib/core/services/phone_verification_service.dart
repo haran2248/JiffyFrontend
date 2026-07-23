@@ -40,6 +40,9 @@ class PhoneVerificationService {
   /// In-memory cache for phone verification status.
   /// Key: uid, Value: isPhoneVerified
   static final Map<String, bool> _verificationCache = {};
+  
+  /// In-memory cache for the global phone auth config.
+  static bool? _isPhoneAuthEnabledCache;
 
   /// Check if user's phone is already verified.
   ///
@@ -52,6 +55,14 @@ class PhoneVerificationService {
     required String uid,
     bool forceRefresh = false,
   }) async {
+    // If phone auth is globally disabled, always consider it verified 
+    // so we don't accidentally redirect the user to the verification screen.
+    final isEnabled = await checkPhoneAuthEnabled();
+    if (!isEnabled) {
+      debugPrint('PhoneVerificationService: Phone auth disabled, treating as verified');
+      return true;
+    }
+
     // Check cache first (unless force refresh)
     if (!forceRefresh && _verificationCache.containsKey(uid)) {
       debugPrint('PhoneVerificationService: Cache hit for uid=$uid');
@@ -212,6 +223,10 @@ class PhoneVerificationService {
   }
 
   Future<bool> checkPhoneAuthEnabled() async {
+    if (_isPhoneAuthEnabledCache != null) {
+      return _isPhoneAuthEnabledCache!;
+    }
+
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('config')
@@ -219,7 +234,15 @@ class PhoneVerificationService {
           .get();
 
       if (snapshot.exists && snapshot.data() != null) {
-        return snapshot.data()!['isPhoneAuthEnabled'] as bool? ?? true;
+        final val = snapshot.data()!['isPhoneAuthEnabled'];
+        bool isEnabled = true;
+        if (val is bool) {
+          isEnabled = val;
+        } else if (val is String) {
+          isEnabled = val.toLowerCase() == 'true';
+        }
+        _isPhoneAuthEnabledCache = isEnabled;
+        return isEnabled;
       }
       return true; // Default to true if config doesn't exist
     } catch (e) {
