@@ -32,6 +32,13 @@ class Photo {
   }
 }
 
+class ProfileInsight {
+  final String title;
+  final String description;
+
+  const ProfileInsight({required this.title, required this.description});
+}
+
 class ProfileData {
   final String id;
   final String userId;
@@ -54,6 +61,7 @@ class ProfileData {
       comparisonInsights; // Profile comparison insights
   final List<String> interests; // e.g., ["Hiking", "Photography"]
   final List<String> traits; // Personality traits
+  final List<ProfileInsight> insights; // Dynamic insights from Jiffy
   final String?
       conversationStyle; // e.g., "Playful wit, balancing deep & thoughtful chats"
   final String? conversationStarter; // Prompt text
@@ -82,6 +90,7 @@ class ProfileData {
     this.comparisonInsights = const [],
     this.interests = const [],
     this.traits = const [],
+    this.insights = const [],
     this.conversationStyle,
     this.conversationStarter,
     this.onboardingStatus,
@@ -110,6 +119,7 @@ class ProfileData {
     List<ComparisonInsight>? comparisonInsights,
     List<String>? interests,
     List<String>? traits,
+    List<ProfileInsight>? insights,
     Object? conversationStyle = _sentinel,
     Object? conversationStarter = _sentinel,
     Object? onboardingStatus = _sentinel,
@@ -141,6 +151,7 @@ class ProfileData {
       comparisonInsights: comparisonInsights ?? this.comparisonInsights,
       interests: interests ?? this.interests,
       traits: traits ?? this.traits,
+      insights: insights ?? this.insights,
       conversationStyle: identical(conversationStyle, _sentinel)
           ? this.conversationStyle
           : conversationStyle as String?,

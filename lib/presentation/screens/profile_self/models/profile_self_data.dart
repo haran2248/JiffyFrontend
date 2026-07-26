@@ -28,6 +28,13 @@ class ProfileSelfPhoto {
   }
 }
 
+class ProfileSelfInsight {
+  final String title;
+  final String description;
+
+  const ProfileSelfInsight({required this.title, required this.description});
+}
+
 /// Data model for the self profile (editable view)
 class ProfileSelfData {
   final String id;
@@ -47,6 +54,7 @@ class ProfileSelfData {
   final String aboutMe;
   final List<String> interests;
   final List<String> personalityTraits;
+  final List<ProfileSelfInsight> insights;
   final String conversationStyleTitle;
   final String conversationStyleDescription;
   final String? gender;
@@ -69,6 +77,7 @@ class ProfileSelfData {
     required this.aboutMe,
     this.interests = const [],
     this.personalityTraits = const [],
+    this.insights = const [],
     required this.conversationStyleTitle,
     required this.conversationStyleDescription,
     this.gender,
@@ -92,6 +101,7 @@ class ProfileSelfData {
     String? aboutMe,
     List<String>? interests,
     List<String>? personalityTraits,
+    List<ProfileSelfInsight>? insights,
     String? conversationStyleTitle,
     String? conversationStyleDescription,
     String? gender,
@@ -136,6 +146,7 @@ class ProfileSelfData {
       aboutMe: aboutMe ?? this.aboutMe,
       interests: interests ?? this.interests,
       personalityTraits: personalityTraits ?? this.personalityTraits,
+      insights: insights ?? this.insights,
       conversationStyleTitle:
           conversationStyleTitle ?? this.conversationStyleTitle,
       conversationStyleDescription:

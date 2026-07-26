@@ -98,11 +98,17 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
         photos: selfPhotos,
         aboutMe: fetchedData.bio,
         interests: fetchedData.interests,
+        personalityTraits: fetchedData.traits,
+        insights: fetchedData.insights
+            .map((e) => ProfileSelfInsight(
+                  title: e.title,
+                  description: e.description,
+                ))
+            .toList(),
         conversationStyleTitle: fetchedData.onboardingStatus == 'COMPLETED'
             ? "Your Conversation Style"
             : "Not yet analyzed",
         conversationStyleDescription: fetchedData.conversationStyle ?? '',
-        personalityTraits: fetchedData.traits,
         gender: fetchedData.gender,
       );
 

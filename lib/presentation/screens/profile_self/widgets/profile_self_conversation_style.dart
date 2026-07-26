@@ -1,5 +1,4 @@
 import "package:flutter/material.dart";
-import "profile_self_section_card.dart";
 
 /// Conversation Style section widget for profile self screen.
 ///
@@ -23,31 +22,58 @@ class ProfileSelfConversationStyle extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return ProfileSelfSectionCard(
-      title: "Conversation Style",
-      onEdit: onEdit,
-      ctaText: "Review My Prompt Answers",
-      onCtaTap: onReviewPromptAnswers,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: textTheme.titleSmall?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "YOUR TONE",
+          style: textTheme.labelSmall?.copyWith(
+            color: colorScheme.onSurface.withValues(alpha: 0.6),
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.8),
-              height: 1.5,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '"$description"',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Georgia', // Serif font for quotes
+                ),
+              ),
+              if (onEdit != null) ...[
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: onEdit,
+                  child: Text(
+                    "this feels off — update it",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

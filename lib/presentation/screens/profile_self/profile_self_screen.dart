@@ -6,14 +6,13 @@ import "package:jiffy/core/navigation/app_routes.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_header_card.dart";
-import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_about_me.dart";
-import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_basic_details.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_your_card.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_looking_for.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_insights_card.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_verification_badge.dart";
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
-import "package:jiffy/presentation/widgets/edit_list_dialog.dart";
-import "package:jiffy/presentation/widgets/edit_text_dialog.dart";
 import "package:url_launcher/url_launcher.dart";
 
 /// Profile Self Screen (Editable View)
@@ -61,6 +60,15 @@ class ProfileSelfScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Preview Profile Button
+          IconButton(
+            icon: Icon(
+              Icons.remove_red_eye_outlined,
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            tooltip: 'Preview Profile',
+            onPressed: () => viewModel.onPreviewProfile(context),
+          ),
           // Community Join Button
           if (state.data?.gender != null)
             IconButton(
@@ -182,78 +190,6 @@ class ProfileSelfScreen extends ConsumerWidget {
         currentRoute: AppRoutes.profileSelf,
       ),
     );
-  }
-
-  Future<void> _showEditTraitsDialog(
-    BuildContext context,
-    ProfileSelfViewModel viewModel,
-    List<String> currentTraits,
-  ) async {
-    final result = await EditListDialog.show(
-      context: context,
-      title: 'Edit Personality Traits',
-      items: currentTraits,
-      addHintText: 'Add a trait (e.g., Adventurous)',
-      maxItems: 5,
-      minItems: 1,
-    );
-    if (result != null) {
-      await viewModel.updateTraits(result);
-    }
-  }
-
-  Future<void> _showEditInterestsDialog(
-    BuildContext context,
-    ProfileSelfViewModel viewModel,
-    List<String> currentInterests,
-  ) async {
-    final result = await EditListDialog.show(
-      context: context,
-      title: 'Edit Interests',
-      items: currentInterests,
-      addHintText: 'Add an interest (e.g., Hiking)',
-      maxItems: 8,
-      minItems: 1,
-    );
-    if (result != null) {
-      await viewModel.updateInterests(result);
-    }
-  }
-
-  Future<void> _showEditConversationStyleDialog(
-    BuildContext context,
-    ProfileSelfViewModel viewModel,
-    String currentDescription,
-  ) async {
-    final result = await EditTextDialog.show(
-      context: context,
-      title: 'Edit Conversation Style',
-      text: currentDescription,
-      hintText: 'Describe your conversation style...',
-      maxLength: 500,
-      minLength: 20,
-    );
-    if (result != null) {
-      await viewModel.updateConversationStyle(result);
-    }
-  }
-
-  Future<void> _showEditAboutMeDialog(
-    BuildContext context,
-    ProfileSelfViewModel viewModel,
-    String currentAboutMe,
-  ) async {
-    final result = await EditTextDialog.show(
-      context: context,
-      title: 'Edit About Me',
-      text: currentAboutMe,
-      hintText: 'Tell others about yourself...',
-      maxLength: 500,
-      minLength: 10,
-    );
-    if (result != null) {
-      await viewModel.updateAboutMe(result);
-    }
   }
 
   Widget _buildVerifyProfileButton(BuildContext context) {
@@ -406,45 +342,63 @@ class ProfileSelfScreen extends ConsumerWidget {
                   child: _buildVerifyProfileButton(context),
                 ),
               const SizedBox(height: 24),
-              // Basic Details section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ProfileSelfBasicDetails(
-                  data: data,
-                  onEdit: null, // Basic details are currently edited during onboarding or in settings, not directly here yet
+              
+              // 1. "YOUR CARD" (AI generated bio)
+              if (data.aboutMe.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfYourCard(
+                    aboutMeText: data.aboutMe,
+                    onRegenerate: () {}, // TODO: Regenerate logic
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Personality Traits section (from curated profile)
-              if (data.personalityTraits.isNotEmpty)
+              const SizedBox(height: 24),
+
+              // 2. "WHAT YOU'RE LOOKING FOR"
+              if (data.relationshipGoals != null && data.relationshipGoals!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfLookingFor(
+                    relationshipGoals: data.relationshipGoals,
+                    onEdit: null, // TODO: Update handler
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              // 3. "WHAT JIFFY LEARNED" (Insights)
+              if (data.insights.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfInsightsCard(
+                    insights: data.insights,
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              // 4. "INTERESTS" (Pink chips)
+              if (data.interests.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ProfileSelfInterests(
-                    interests: data.personalityTraits,
+                    interests: data.interests,
                     onEdit: null,
-                    title: "Personality Traits",
                   ),
                 ),
-              if (data.personalityTraits.isNotEmpty) const SizedBox(height: 16),
-              // Interests section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ProfileSelfInterests(
-                  interests: data.interests,
-                  onEdit: null,
+              const SizedBox(height: 24),
+
+              // 5. "YOUR TONE" (Conversation Style)
+              if (data.conversationStyleDescription.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ProfileSelfConversationStyle(
+                    title: data.conversationStyleTitle,
+                    description: data.conversationStyleDescription,
+                    onEdit: null,
+                    onReviewPromptAnswers: null,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Conversation Style section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ProfileSelfConversationStyle(
-                  title: data.conversationStyleTitle,
-                  description: data.conversationStyleDescription,
-                  onEdit: null,
-                  onReviewPromptAnswers: null,
-                ),
-              ),
+              
+              // Basic details fallback (optional if we don't want to show it, but I'll leave it hidden or remove it as it's now meant to be in YOUR CARD, wait, the mockup didn't show BasicDetails anywhere other than Name/Location in header. Let's omit Basic Details widget as per new layout.)
               // Bottom padding for safe area
               const SizedBox(height: 32),
             ],

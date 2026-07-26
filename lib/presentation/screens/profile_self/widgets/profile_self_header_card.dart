@@ -33,15 +33,55 @@ class ProfileSelfHeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Name and Location Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${data.name}, ${data.age}",
+                    style: textTheme.headlineSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (data.location != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      data.location!,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              // Edit Icon for basic details (if needed)
+              IconButton(
+                onPressed: () {}, // TODO: Edit basic info handler
+                icon: Icon(
+                  Icons.edit_outlined,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           // Main photo and secondary photos row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Main photo
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: AspectRatio(
-                  aspectRatio: 3 / 4,
+                  aspectRatio: 2.2 / 3.5,
                   child: Stack(
                     children: [
                       // Photo container
@@ -64,10 +104,10 @@ class ProfileSelfHeaderCard extends StatelessWidget {
                               : _buildPhotoPlaceholder(context, colorScheme),
                         ),
                       ),
-                      // Edit icon on main photo
+                      // Edit icon on main photo (bottom right now)
                       if (onEditMainPhoto != null)
                         Positioned(
-                          top: 12,
+                          bottom: 12,
                           right: 12,
                           child: Material(
                             color: Colors.transparent,
@@ -75,65 +115,20 @@ class ProfileSelfHeaderCard extends StatelessWidget {
                               onTap: onEditMainPhoto,
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: colorScheme.surface.withValues(alpha: 0.8),
+                                  shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.edit_outlined,
-                                  size: 18,
-                                  color: Colors.white,
+                                child: Icon(
+                                  Icons.edit,
+                                  size: 16,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      // Name, age, location overlay
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.7),
-                              ],
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "${data.name}, ${data.age}",
-                                style: textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (data.location != null) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  data.location!,
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -156,39 +151,52 @@ class ProfileSelfHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Preview Profile button
-          if (onPreview != null)
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onPreview,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary,
-                          colorScheme.secondary,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Preview Profile",
-                        style: textTheme.labelLarge?.copyWith(
-                          color: colorScheme.onPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
+          // Manage all photos text
+          Center(
+            child: TextButton(
+              onPressed: () {}, // TODO: handle manage photos
+              child: Text(
+                "Manage all photos",
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          // PROFILE STRENGTH
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "PROFILE STRENGTH",
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "Strong",
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: 0.8, // Example value
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              minHeight: 4,
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );

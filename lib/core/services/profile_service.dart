@@ -357,6 +357,7 @@ class ProfileService {
       String aboutMe = '';
       List<String> interests = [];
       List<String> traits = [];
+      List<ProfileInsight> insights = [];
       String? conversationStyle;
 
       try {
@@ -381,6 +382,16 @@ class ProfileService {
                           ?.map((e) => e.toString())
                           .toList() ??
                       [];
+              insights = (curatedProfileData['insights'] as List<dynamic>?)
+                      ?.map((e) {
+                        final map = e as Map<String, dynamic>;
+                        return ProfileInsight(
+                          title: map['title'] as String? ?? '',
+                          description: map['description'] as String? ?? '',
+                        );
+                      })
+                      .toList() ??
+                  [];
               conversationStyle =
                   curatedProfileData['conversationStyleDescription'] as String?;
             }
@@ -416,6 +427,7 @@ class ProfileService {
         bio: aboutMe,
         interests: interests,
         traits: traits,
+        insights: insights,
         conversationStyle: conversationStyle,
         onboardingStatus: onboardingStatus,
         gender: gender,
