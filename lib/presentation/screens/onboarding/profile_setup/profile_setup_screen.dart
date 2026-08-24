@@ -93,21 +93,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         title: const Text("Profile Setup"),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () {
-              viewModel.skip();
-              // Navigate to permissions after skipping profile setup
-              context.goToRoute(AppRoutes.onboardingPermissions);
-            },
-            child: Text(
-              "Skip",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [
