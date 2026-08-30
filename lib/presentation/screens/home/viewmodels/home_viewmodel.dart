@@ -130,6 +130,7 @@ class HomeViewModel extends _$HomeViewModel {
               relationshipPreview: candidate.relationshipPreview,
               isTopPick: candidate.bucket == BucketType.topPick,
               distanceKm: candidate.distanceKm,
+              matchPitch: candidate.matchPitch,
             );
           }).toList();
         } catch (e) {
@@ -182,6 +183,9 @@ class HomeViewModel extends _$HomeViewModel {
               relationshipPreview:
                   json['matchReason'] as String? ?? 'Matched', // Failover text
               isTopPick: false,
+              matchPitch: json['matchPitch'] != null
+                  ? MatchPitch.fromJson(json['matchPitch'] as Map<String, dynamic>)
+                  : null,
             );
           }).toList();
         } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
+import 'package:jiffy/presentation/screens/home/models/suggestion_candidate.dart';
 
 /// Models for home screen server-driven data
 
@@ -9,9 +10,9 @@ class StoryItem {
   final String userId;
   final String? name;
   final String? imageUrl;
-  final bool isUserStory; // If true, shows "Your Story" with + icon
-  final bool hasActiveStory; // True when the user has actually uploaded a story
-  final StoryType? storyType; // Type of story (dating, regular, etc.)
+  final bool isUserStory;
+  final bool hasActiveStory;
+  final StoryType? storyType;
   final DateTime? createdAt;
 
   const StoryItem({
@@ -42,12 +43,14 @@ class SuggestionCard {
       imageUrl; // Kept for backward compatibility, returns first image
   final List<String> imageUrls; // Full list of images
   final String bio; // Short bio text
-  final String? relationshipPreview; // Full relationship preview text — null until async enrichment completes
+  final String?
+      relationshipPreview; // Full relationship preview text — null until async enrichment completes
   final List<ComparisonInsight>
       comparisonInsights; // Profile comparison insights
   final List<String> interests; // e.g., ["Hiking", "Photography"]
   final bool isTopPick;
   final double? distanceKm;
+  final MatchPitch? matchPitch;
 
   const SuggestionCard({
     required this.id,
@@ -62,6 +65,7 @@ class SuggestionCard {
     this.interests = const [],
     this.isTopPick = false,
     this.distanceKm,
+    this.matchPitch,
   });
 }
 

@@ -45,6 +45,7 @@ class SuggestionCandidate {
   final String? matchReason;
   final String? relationshipPreview;
   final Map<String, dynamic>? scoreBreakdown;
+  final MatchPitch? matchPitch;
 
   SuggestionCandidate({
     required this.candidateUserId,
@@ -66,10 +67,31 @@ class SuggestionCandidate {
     this.matchReason,
     this.relationshipPreview,
     this.scoreBreakdown,
+    this.matchPitch,
   });
 
   factory SuggestionCandidate.fromJson(Map<String, dynamic> json) =>
       _$SuggestionCandidateFromJson(json);
 
   Map<String, dynamic> toJson() => _$SuggestionCandidateToJson(this);
+}
+
+@JsonSerializable()
+class MatchPitch {
+  final String? vibeText;
+  final String? complementText;
+  final String? frictionText;
+  final List<String>? trajectoryOptions;
+  final String? verdictText;
+
+  MatchPitch({
+    this.vibeText,
+    this.complementText,
+    this.frictionText,
+    this.trajectoryOptions,
+    this.verdictText,
+  });
+
+  factory MatchPitch.fromJson(Map<String, dynamic> json) => _$MatchPitchFromJson(json);
+  Map<String, dynamic> toJson() => _$MatchPitchToJson(this);
 }

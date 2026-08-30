@@ -1,3 +1,5 @@
+import 'package:jiffy/presentation/screens/home/models/suggestion_candidate.dart';
+
 const Object _sentinel = Object();
 
 /// Photo model with URL and optional caption
@@ -68,6 +70,7 @@ class ProfileData {
   final String? onboardingStatus; // E.g., 'COMPLETED'
   final String? gender; // E.g., 'Woman', 'Man'
   final bool isWaitlisted;
+  final MatchPitch? matchPitch;
 
   const ProfileData({
     required this.id,
@@ -96,6 +99,7 @@ class ProfileData {
     this.onboardingStatus,
     this.gender,
     this.isWaitlisted = false,
+    this.matchPitch,
   });
 
   ProfileData copyWith({
@@ -123,8 +127,9 @@ class ProfileData {
     Object? conversationStyle = _sentinel,
     Object? conversationStarter = _sentinel,
     Object? onboardingStatus = _sentinel,
-    String? gender,
-    bool? isWaitlisted,
+    Object? gender = _sentinel,
+    Object? isWaitlisted = _sentinel,
+    Object? matchPitch = _sentinel,
   }) {
     return ProfileData(
       id: id ?? this.id,
@@ -161,8 +166,15 @@ class ProfileData {
       onboardingStatus: identical(onboardingStatus, _sentinel)
           ? this.onboardingStatus
           : onboardingStatus as String?,
-      gender: gender ?? this.gender,
-      isWaitlisted: isWaitlisted ?? this.isWaitlisted,
+      gender: identical(gender, _sentinel)
+          ? this.gender
+          : gender as String?,
+      isWaitlisted: identical(isWaitlisted, _sentinel)
+          ? this.isWaitlisted
+          : isWaitlisted as bool,
+      matchPitch: identical(matchPitch, _sentinel)
+          ? this.matchPitch
+          : matchPitch as MatchPitch?,
     );
   }
 }

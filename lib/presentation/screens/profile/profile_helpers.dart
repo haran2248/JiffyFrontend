@@ -81,6 +81,7 @@ class ProfileHelpers {
       traits: [],
       conversationStyle: null,
       conversationStarter: null,
+      matchPitch: suggestion.matchPitch,
     );
   }
 }

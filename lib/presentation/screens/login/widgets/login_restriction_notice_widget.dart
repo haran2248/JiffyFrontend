@@ -29,7 +29,7 @@ class LoginRestrictionNotice extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Jiffy is currently available for folks who have more than 1000 followers on Instagram.\n\nSign in to verify your credibility.',
+              'Jiffy entry requires 1000+ Instagram followers.\n\nSign in to verify your credibility.',
               style: textTheme.bodyMedium?.copyWith(
                 color: colors.onSurface.withValues(alpha: 0.8),
                 height: 1.3,

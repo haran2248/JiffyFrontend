@@ -10,6 +10,7 @@ import "package:jiffy/presentation/screens/matches/viewmodels/matches_viewmodel.
 import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_main_photo.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_preview.dart";
+import "package:jiffy/presentation/screens/profile/widgets/match_analysis_section.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_additional_photos.dart"
     show PhotoWithCaption;
 import "package:jiffy/presentation/screens/profile/widgets/profile_bio.dart";
@@ -232,8 +233,11 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 1. Relationship Preview
+                            // 1. Relationship Preview (Fallback if no MatchPitch)
                             ProfileRelationshipPreview(profile: widget.profile),
+                            
+                            // Match Analysis (If MatchPitch exists)
+                            MatchAnalysisSection(profile: widget.profile),
 
                             const SizedBox(height: 16),
 

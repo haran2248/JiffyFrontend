@@ -601,10 +601,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             backgroundColor: Colors.transparent,
                             builder: (context) => ProfileViewScreen(
                               profile:
-                                  suggestions[index].relationshipPreview != null
+                                  suggestions[index].relationshipPreview != null || suggestions[index].matchPitch != null
                                       ? profileData.copyWith(
                                           relationshipPreview: suggestions[index]
                                               .relationshipPreview,
+                                          matchPitch: suggestions[index].matchPitch,
                                         )
                                       : profileData,
                               isPreview: false,

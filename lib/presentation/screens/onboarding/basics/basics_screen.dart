@@ -115,8 +115,14 @@ class BasicsScreen extends ConsumerWidget {
                               final currentFormData =
                                   ref.read(basicsViewModelProvider);
                               if (success) {
-                                context.pushRoute(
-                                    AppRoutes.onboardingInstagram);
+                                final isWoman = currentFormData.gender?.toLowerCase() == 'woman' || currentFormData.gender?.toLowerCase() == 'female';
+                                if (isWoman) {
+                                  context.pushRoute(
+                                      AppRoutes.onboardingProfessionalDetails);
+                                } else {
+                                  context.pushRoute(
+                                      AppRoutes.onboardingInstagram);
+                                }
                               } else if (currentFormData.error != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
