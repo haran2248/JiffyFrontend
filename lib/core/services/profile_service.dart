@@ -5,7 +5,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/profile/models/conversation_starter_data.dart';
 import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/profile/profile_helpers.dart';
+import 'package:jiffy/core/auth/auth_repository.dart';
 import '../network/dio_provider.dart';
+import 'package:jiffy/presentation/screens/home/models/suggestion_candidate.dart';
 
 part 'profile_service.g.dart';
 
@@ -13,13 +15,15 @@ part 'profile_service.g.dart';
 @riverpod
 ProfileService profileService(Ref ref) {
   final dio = ref.watch(dioProvider);
-  return ProfileService(dio: dio);
+  final authRepo = ref.watch(authRepositoryProvider);
+  return ProfileService(dio, authRepo);
 }
 
 class ProfileService {
   final Dio _dio;
+  final AuthRepository _authRepo;
 
-  ProfileService({required Dio dio}) : _dio = dio;
+  ProfileService(this._dio, this._authRepo);
 
   /// Check if user has completed onboarding
   ///
@@ -288,13 +292,55 @@ class ProfileService {
     try {
       debugPrint("ProfileService: Fetching profile data for user: $userId");
 
-      // 1. Fetch user basic info
-      final userResponse = await _dio.get(
-        '/api/users/getUser',
-        queryParameters: {'uid': userId},
-      );
+      final currentUser = _authRepo.currentUser;
+      final isMatchView = currentUser != null && currentUser.uid != userId;
 
-      final userData = userResponse.data as Map<String, dynamic>?;
+      Map<String, dynamic>? userData;
+      Map<String, dynamic>? curatedDataData;
+      Map<String, dynamic>? contextData;
+
+      if (isMatchView) {
+        try {
+          final profileResponse = await _dio.get(
+            '/api/v1/match/profile',
+            queryParameters: {
+              'uid': currentUser.uid,
+              'matchUid': userId,
+            },
+          );
+          if (profileResponse.statusCode == 200) {
+            final data = profileResponse.data as Map<String, dynamic>;
+            userData = data['user'] as Map<String, dynamic>?;
+            curatedDataData = {'curatedProfile': data['curatedProfile']};
+            contextData = data['matchContext'] as Map<String, dynamic>?;
+          }
+        } catch (e) {
+          debugPrint(
+              "ProfileService: Error fetching match profile for $userId: $e");
+        }
+      } else {
+        // Fetch self user basic info
+        final userResponse = await _dio.get(
+          '/api/users/getUser',
+          queryParameters: {'uid': userId},
+        );
+        userData = userResponse.data as Map<String, dynamic>?;
+
+        // Fetch self curated profile data
+        try {
+          final curatedResponse = await _dio.get(
+            '/api/onboarding/curated-profile',
+            queryParameters: {'uid': userId},
+          );
+          if (curatedResponse.statusCode == 200) {
+            curatedDataData = curatedResponse.data as Map<String, dynamic>?;
+          }
+        } catch (e) {
+          debugPrint(
+              "ProfileService: Error fetching curated profile for $userId: $e");
+        }
+      }
+
       if (userData == null) return null;
 
       // Parse basic details
@@ -316,7 +362,8 @@ class ProfileService {
       final onboardingStatus = onboardingStatusRaw?.toString().toUpperCase();
 
       // Parse professional details
-      final professionalDetails = userData['professionalDetails'] as Map<String, dynamic>?;
+      final professionalDetails =
+          userData['professionalDetails'] as Map<String, dynamic>?;
       final college = professionalDetails?['university'] as String?;
       final company = professionalDetails?['companyName'] as String?;
       final jobTitle = professionalDetails?['titleCompany'] as String?;
@@ -353,54 +400,54 @@ class ProfileService {
         }
       }
 
-      // 2. Fetch curated profile data if available
+      // 2. Parse curated profile data if available
       String aboutMe = '';
       List<String> interests = [];
       List<String> traits = [];
       List<ProfileInsight> insights = [];
       String? conversationStyle;
 
-      try {
-        final curatedResponse = await _dio.get(
-          '/api/onboarding/curated-profile',
-          queryParameters: {'uid': userId},
-        );
+      if (curatedDataData != null) {
+        final curatedProfileData =
+            curatedDataData['curatedProfile'] as Map<String, dynamic>?;
+        if (curatedProfileData != null) {
+          aboutMe = curatedProfileData['aboutMe'] as String? ?? '';
+          interests = (curatedProfileData['interests'] as List<dynamic>?)
+                  ?.map((e) => e.toString())
+                  .toList() ??
+              [];
+          traits = (curatedProfileData['personalityTraits'] as List<dynamic>?)
+                  ?.map((e) => e.toString())
+                  .toList() ??
+              [];
+          insights =
+              (curatedProfileData['insights'] as List<dynamic>?)?.map((e) {
+                    final map = e as Map<String, dynamic>;
+                    return ProfileInsight(
+                      title: map['title'] as String? ?? '',
+                      description: map['description'] as String? ?? '',
+                    );
+                  }).toList() ??
+                  [];
+          conversationStyle =
+              curatedProfileData['conversationStyleDescription'] as String?;
+        }
+      }
 
-        if (curatedResponse.statusCode == 200) {
-          final curatedDataData = curatedResponse.data as Map<String, dynamic>?;
-          if (curatedDataData != null) {
-            final curatedProfileData =
-                curatedDataData['curatedProfile'] as Map<String, dynamic>?;
-            if (curatedProfileData != null) {
-              aboutMe = curatedProfileData['aboutMe'] as String? ?? '';
-              interests = (curatedProfileData['interests'] as List<dynamic>?)
-                      ?.map((e) => e.toString())
-                      .toList() ??
-                  [];
-              traits =
-                  (curatedProfileData['personalityTraits'] as List<dynamic>?)
-                          ?.map((e) => e.toString())
-                          .toList() ??
-                      [];
-              insights = (curatedProfileData['insights'] as List<dynamic>?)
-                      ?.map((e) {
-                        final map = e as Map<String, dynamic>;
-                        return ProfileInsight(
-                          title: map['title'] as String? ?? '',
-                          description: map['description'] as String? ?? '',
-                        );
-                      })
-                      .toList() ??
-                  [];
-              conversationStyle =
-                  curatedProfileData['conversationStyleDescription'] as String?;
-            }
+      // 3. Parse match context if this is a match
+      String? relationshipPreview;
+      MatchPitch? matchPitch;
+
+      if (contextData != null) {
+        relationshipPreview = contextData['relationshipPreview'] as String?;
+        final rawPitch = contextData['matchPitch'];
+        if (rawPitch is Map<String, dynamic>) {
+          try {
+            matchPitch = MatchPitch.fromJson(rawPitch);
+          } catch (e) {
+            debugPrint("ProfileService: Error parsing matchPitch: $e");
           }
         }
-      } catch (e) {
-        debugPrint(
-            "ProfileService: Error fetching curated profile for $userId: $e");
-        // Non-fatal, continue with what we have
       }
 
       // If no aboutMe, fallback to bio if available in root
@@ -432,6 +479,8 @@ class ProfileService {
         onboardingStatus: onboardingStatus,
         gender: gender,
         isWaitlisted: userData['isWaitlisted'] == true,
+        relationshipPreview: relationshipPreview,
+        matchPitch: matchPitch,
       );
     } catch (e) {
       debugPrint("ProfileService: Error fetching user profile: $e");

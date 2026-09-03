@@ -45,9 +45,34 @@ class ConversationStarterDialog extends StatefulWidget {
 
 class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
   final TextEditingController _messageController = TextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _messageFocusNode.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    if (_messageFocusNode.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _messageFocusNode.removeListener(_handleFocusChange);
+    _messageFocusNode.dispose();
+    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
   }
@@ -64,12 +89,15 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final screenHeight = MediaQuery.of(context).size.height;
     final viewInsets = MediaQuery.of(context).viewInsets;
+    final isKeyboardVisible = viewInsets.bottom > 0;
 
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: screenHeight * 0.75,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          height: isKeyboardVisible ? screenHeight * 0.92 : screenHeight * 0.75,
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: const BorderRadius.only(
@@ -83,27 +111,31 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
               padding: EdgeInsets.only(bottom: viewInsets.bottom),
               child: Column(
                 children: [
-                  // Header
+                  // Fixed Header
                   ConversationStarterHeader(
                     profileName: widget.profile.name,
                     onClose: () => Navigator.of(context).pop(),
                   ),
 
-                  // Profile info
-                  ConversationStarterProfileInfo(
-                    profile: widget.profile,
-                    isOnline: widget.conversationData.isOnline,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Spark Ideas section
+                  // Scrollable body containing profile info, spark ideas, and message input
                   Expanded(
                     child: SingleChildScrollView(
+                      controller: _scrollController,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Profile info
+                          ConversationStarterProfileInfo(
+                            profile: widget.profile,
+                            isOnline: widget.conversationData.isOnline,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Spark Ideas section
                           ConversationStarterSparkIdeas(
                             conversationData: widget.conversationData,
                             onCardTap: (message) {
@@ -117,22 +149,23 @@ class _ConversationStarterDialogState extends State<ConversationStarterDialog> {
                             },
                           ),
 
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
 
                           // Custom message input
                           ConversationStarterMessageInput(
                             controller: _messageController,
+                            focusNode: _messageFocusNode,
                             maxLength: widget.conversationData.maxMessageLength,
                             onChanged: () => setState(() {}),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
                   ),
 
-                  // Send Spark button
+                  // Send Spark button pinned right above keyboard
                   ConversationStarterSendButton(
                     messageController: _messageController,
                     onSend: _handleSendSpark,

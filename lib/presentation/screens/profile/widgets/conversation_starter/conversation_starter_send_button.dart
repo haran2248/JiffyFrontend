@@ -15,13 +15,14 @@ class ConversationStarterSendButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Container(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
-        top: 16,
-        bottom: MediaQuery.of(context).padding.bottom + 16,
+        top: isKeyboardOpen ? 10 : 16,
+        bottom: isKeyboardOpen ? 10 : (MediaQuery.of(context).padding.bottom + 16),
       ),
       decoration: BoxDecoration(
         color: colorScheme.surface,

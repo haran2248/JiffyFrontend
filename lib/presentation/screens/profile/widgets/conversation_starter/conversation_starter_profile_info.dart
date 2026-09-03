@@ -5,11 +5,13 @@ import "package:jiffy/presentation/screens/profile/models/profile_data.dart";
 class ConversationStarterProfileInfo extends StatelessWidget {
   final ProfileData profile;
   final bool isOnline;
+  final EdgeInsetsGeometry padding;
 
   const ConversationStarterProfileInfo({
     super.key,
     required this.profile,
     this.isOnline = false,
+    this.padding = EdgeInsets.zero,
   });
 
   @override
@@ -18,7 +20,7 @@ class ConversationStarterProfileInfo extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: padding,
       child: Row(
         children: [
           // Profile picture

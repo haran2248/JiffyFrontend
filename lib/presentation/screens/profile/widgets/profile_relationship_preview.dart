@@ -16,9 +16,9 @@ class ProfileRelationshipPreview extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    if (profile.relationshipPreview == null) {
-      return const SizedBox.shrink();
-    }
+    // If matchPitch is populated, it provides richer analysis — no need to show this
+    if (profile.matchPitch != null) return const SizedBox.shrink();
+    if (profile.relationshipPreview == null) return const SizedBox.shrink();
 
     return SystemCard(
       padding: const EdgeInsets.all(16),

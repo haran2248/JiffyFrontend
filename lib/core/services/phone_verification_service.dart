@@ -9,12 +9,6 @@ import '../../presentation/screens/phone_verification_ui/models/phone_verificati
 
 part 'phone_verification_service.g.dart';
 
-/// Service for phone verification API calls.
-///
-/// Endpoints:
-/// - POST /api/users/updatePhoneNumber - Send verification code
-/// - POST /api/users/verifyOtp - Verify OTP code
-/// - GET /api/users/getUser - Check verification status
 @riverpod
 PhoneVerificationService phoneVerificationService(Ref ref) {
   final dio = ref.watch(dioProvider);
@@ -26,21 +20,8 @@ class PhoneVerificationService {
 
   PhoneVerificationService({required Dio dio}) : _dio = dio;
 
-  // ============================================================
-  // PHONE VERIFICATION STATUS CHECK WITH CACHING
-  // ============================================================
-  //
-  //
-  // CURRENT CACHING IMPLEMENTATION:
-  //    - Static in-memory cache shared across instances
-  //    - Cleared after successful OTP verification
-  //    - Force refresh option for explicit cache bypass
-  // ============================================================
-
-  /// In-memory cache for phone verification status.
-  /// Key: uid, Value: isPhoneVerified
   static final Map<String, bool> _verificationCache = {};
-  
+
   /// In-memory cache for the global phone auth config.
   static bool? _isPhoneAuthEnabledCache;
 
@@ -55,11 +36,12 @@ class PhoneVerificationService {
     required String uid,
     bool forceRefresh = false,
   }) async {
-    // If phone auth is globally disabled, always consider it verified 
+    // If phone auth is globally disabled, always consider it verified
     // so we don't accidentally redirect the user to the verification screen.
     final isEnabled = await checkPhoneAuthEnabled();
     if (!isEnabled) {
-      debugPrint('PhoneVerificationService: Phone auth disabled, treating as verified');
+      debugPrint(
+          'PhoneVerificationService: Phone auth disabled, treating as verified');
       return true;
     }
 

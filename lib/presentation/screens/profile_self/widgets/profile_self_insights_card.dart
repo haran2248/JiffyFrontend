@@ -35,10 +35,11 @@ class ProfileSelfInsightsCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              color: colorScheme.primary.withValues(alpha: 0.2), // Neon Pink Border
+              width: 1.5,
             ),
           ),
           child: Column(
