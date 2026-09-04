@@ -5,10 +5,10 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter_riverpod/flutter_riverpod.dart' show Ref;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../network/dio_provider.dart';
@@ -32,6 +32,9 @@ class AuthRepository {
   final Dio _dio;
 
   AuthRepository({required Dio dio}) : _dio = dio;
+
+  /// SharedPreferences key for caching OAuth prepopulated first name
+  static const String prepopulatedFirstNameKey = 'auth_prepopulated_first_name';
 
   /// Get the current authenticated user value
   User? get currentUser => FirebaseAuth.instance.currentUser;
@@ -63,7 +66,22 @@ class AuthRepository {
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
 
-      return userCredential.user;
+      final user = userCredential.user;
+      if (user != null &&
+          user.displayName != null &&
+          user.displayName!.isNotEmpty) {
+        final firstName = user.displayName!.split(' ').first.trim();
+        if (firstName.isNotEmpty) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(prepopulatedFirstNameKey, firstName);
+          } catch (e) {
+            debugPrint('Failed to cache prepopulated first name from Google: $e');
+          }
+        }
+      }
+
+      return user;
     } catch (e) {
       throw AuthException(
         code: 'google-sign-in-failed',
@@ -113,18 +131,44 @@ class AuthRepository {
 
       // Apple only sends the name on first sign-in, so update profile if needed
       final user = userCredential.user;
-      if (user != null &&
-          (user.displayName == null || user.displayName!.isEmpty)) {
-        final givenName = appleCredential.givenName ?? '';
-        final familyName = appleCredential.familyName ?? '';
-        final fullName = '$givenName $familyName'.trim();
+      final givenName = appleCredential.givenName?.trim();
+      final familyName = appleCredential.familyName?.trim();
+      final fullName = [
+        if (givenName != null && givenName.isNotEmpty) givenName,
+        if (familyName != null && familyName.isNotEmpty) familyName,
+      ].join(' ').trim();
 
-        if (fullName.isNotEmpty) {
+      if (user != null) {
+        if (fullName.isNotEmpty &&
+            (user.displayName == null || user.displayName!.isEmpty)) {
           await user.updateDisplayName(fullName);
+          await user.reload();
+        }
+
+        // Determine first name to cache for onboarding pre-population
+        String? firstNameToCache;
+        if (givenName != null && givenName.isNotEmpty) {
+          firstNameToCache = givenName;
+        } else {
+          final effectiveUser = FirebaseAuth.instance.currentUser ?? user;
+          if (effectiveUser.displayName != null &&
+              effectiveUser.displayName!.isNotEmpty) {
+            firstNameToCache =
+                effectiveUser.displayName!.split(' ').first.trim();
+          }
+        }
+
+        if (firstNameToCache != null && firstNameToCache.isNotEmpty) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(prepopulatedFirstNameKey, firstNameToCache);
+          } catch (e) {
+            debugPrint('Failed to cache prepopulated first name from Apple: $e');
+          }
         }
       }
 
-      return user;
+      return FirebaseAuth.instance.currentUser ?? user;
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         return null; // User cancelled
@@ -172,6 +216,10 @@ class AuthRepository {
 
   /// Sign out from Firebase.
   Future<void> signOut() async {
+    try {
+      await clearPrepopulatedFirstName();
+    } catch (_) {}
+
     // Sign out from Google if signed in via Google
     try {
       await GoogleSignIn().signOut();
@@ -181,6 +229,24 @@ class AuthRepository {
 
     // Sign out from Firebase
     await FirebaseAuth.instance.signOut();
+  }
+
+  /// Get the pre-populated first name cached from OAuth login (Apple or Google).
+  Future<String?> getPrepopulatedFirstName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(prepopulatedFirstNameKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Clear the pre-populated first name cache.
+  Future<void> clearPrepopulatedFirstName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(prepopulatedFirstNameKey);
+    } catch (_) {}
   }
 
   /// Generates a cryptographically secure random nonce.

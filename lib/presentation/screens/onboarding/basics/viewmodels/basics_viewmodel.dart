@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/basic_details.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart';
+import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/core/auth/auth_viewmodel.dart';
 import 'package:jiffy/core/services/waitlist_service.dart';
 import '../models/basics_form_data.dart';
@@ -11,7 +13,32 @@ part 'basics_viewmodel.g.dart';
 class BasicsViewModel extends _$BasicsViewModel {
   @override
   BasicsFormData build() {
-    return const BasicsFormData();
+    final authDisplayName = ref.watch(authViewModelProvider).displayName;
+    final firebaseDisplayName = FirebaseAuth.instance.currentUser?.displayName;
+    final candidateName = (authDisplayName != null && authDisplayName.trim().isNotEmpty)
+        ? authDisplayName.trim().split(' ').first
+        : (firebaseDisplayName != null && firebaseDisplayName.trim().isNotEmpty)
+            ? firebaseDisplayName.trim().split(' ').first
+            : null;
+
+    if (candidateName == null || candidateName.isEmpty) {
+      Future.microtask(() => _loadPrepopulatedName());
+    }
+
+    return BasicsFormData(firstName: candidateName);
+  }
+
+  Future<void> _loadPrepopulatedName() async {
+    if (state.firstName != null && state.firstName!.isNotEmpty) return;
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final cachedName = await repo.getPrepopulatedFirstName();
+      if (cachedName != null && cachedName.trim().isNotEmpty) {
+        if (state.firstName == null || state.firstName!.isEmpty) {
+          state = state.copyWith(firstName: cachedName.trim());
+        }
+      }
+    } catch (_) {}
   }
 
   void updateFirstName(String? value) {

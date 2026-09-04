@@ -80,11 +80,20 @@ class AuthViewModel extends _$AuthViewModel {
         return false;
       }
 
+      // Update auth state with refreshed user info
+      final currentUser = FirebaseAuth.instance.currentUser ?? user;
+      state = AuthState.authenticated(
+        userId: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        photoUrl: currentUser.photoURL,
+      );
+
       // Verify token with backend
       await _verifyWithBackend(repository);
 
       // Mark session start — fire-and-forget
-      _pingLastActive(user.uid);
+      _pingLastActive(currentUser.uid);
 
       // Reset loading state - auth state listener will update status
       state = state.copyWith(isGoogleLoading: false);
@@ -117,11 +126,20 @@ class AuthViewModel extends _$AuthViewModel {
         return false;
       }
 
+      // Update auth state with refreshed user info
+      final currentUser = FirebaseAuth.instance.currentUser ?? user;
+      state = AuthState.authenticated(
+        userId: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        photoUrl: currentUser.photoURL,
+      );
+
       // Verify token with backend
       await _verifyWithBackend(repository);
 
       // Mark session start — fire-and-forget
-      _pingLastActive(user.uid);
+      _pingLastActive(currentUser.uid);
 
       // Reset loading state - auth state listener will update status
       state = state.copyWith(isAppleLoading: false);
