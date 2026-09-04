@@ -4,9 +4,11 @@ class AppColors {
   // Primary (Rich & Premium)
   static const Color primaryRaspberry = Color(0xFFD81B60); // Deep Raspberry
   static const Color primaryViolet = Color(0xFF8E24AA); // Royal Violet
+  static const Color neonPink = Color(0xFFEE2B8C); // Neon Pulse Pink
 
   // Surfaces (Deep & Rich)
   static const Color midnightPlum = Color(0xFF0D0B14); // Main Background
+  static const Color backgroundDark = Color(0xFF221019); // Neon Pulse Dark Plum
   static const Color noir = Color(0xFF1A1125); // Secondary Bg
   static const Color surfacePlum = Color(0xFF2A1B3D); // Cards/Inputs
   static const Color surfacePlumLight =

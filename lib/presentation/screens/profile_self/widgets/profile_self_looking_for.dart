@@ -46,14 +46,14 @@ class ProfileSelfLookingFor extends StatelessWidget {
                 color: colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Text(
                 goal,
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.primary,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             );

@@ -3,12 +3,14 @@ import "package:flutter/material.dart";
 /// Custom message input section
 class ConversationStarterMessageInput extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode? focusNode;
   final int maxLength;
   final VoidCallback onChanged;
 
   const ConversationStarterMessageInput({
     super.key,
     required this.controller,
+    this.focusNode,
     required this.maxLength,
     required this.onChanged,
   });
@@ -38,9 +40,11 @@ class ConversationStarterMessageInput extends StatelessWidget {
               ),
               child: TextField(
                 controller: controller,
+                focusNode: focusNode,
                 maxLength: maxLength,
-                maxLines: 5,
-                minLines: 3,
+                maxLines: 4,
+                minLines: 2,
+                scrollPadding: const EdgeInsets.only(bottom: 100),
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface,
                 ),
