@@ -1,32 +1,15 @@
-/// Environment configuration for the networking layer.
-///
-/// Using a sealed class provides:
-/// - Compile-time exhaustiveness when switching on environment type
-/// - Clear separation between environment-specific values
-/// - Immutability - environment doesn't change at runtime
-///
-/// Usage:
-/// ```dart
-/// final environment = Environment.dev();
-/// debugPrint(environment.baseUrl); // https://dev-api.jiffy.ai
-/// ```
 sealed class Environment {
   /// The base URL for API requests.
   String get baseUrl;
 
-  /// Human-readable name for logging.
   String get name;
 
-  /// Timeout for establishing a connection.
   Duration get connectTimeout;
 
-  /// Timeout for receiving data from the server.
   Duration get receiveTimeout;
 
-  /// Timeout for sending data to the server.
   Duration get sendTimeout;
 
-  /// Whether debug logging is enabled.
   bool get enableLogging;
 
   const Environment();
@@ -57,7 +40,8 @@ final class DevEnvironment extends Environment {
   const DevEnvironment();
 
   @override
-  String get baseUrl => 'http://192.168.0.105:5004';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'development';
@@ -80,7 +64,8 @@ final class StagingEnvironment extends Environment {
   const StagingEnvironment();
 
   @override
-  String get baseUrl => 'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'staging';
@@ -103,7 +88,8 @@ final class ProdEnvironment extends Environment {
   const ProdEnvironment();
 
   @override
-  String get baseUrl => 'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
+  String get baseUrl =>
+      'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com';
 
   @override
   String get name => 'production';

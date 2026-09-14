@@ -119,6 +119,14 @@ class HomeViewModel extends _$HomeViewModel {
                       : 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$url'));
             }
 
+            final work = candidate.work ??
+                (candidate.company != null && candidate.company!.isNotEmpty
+                    ? (candidate.jobTitle != null &&
+                            candidate.jobTitle!.isNotEmpty
+                        ? '${candidate.jobTitle} at ${candidate.company}'
+                        : candidate.company)
+                    : null);
+
             return SuggestionCard(
               id: candidate.candidateUserId,
               userId: candidate.candidateUserId,
@@ -131,6 +139,8 @@ class HomeViewModel extends _$HomeViewModel {
               isTopPick: candidate.bucket == BucketType.topPick,
               distanceKm: candidate.distanceKm,
               matchPitch: candidate.matchPitch,
+              college: candidate.college,
+              work: work,
             );
           }).toList();
         } catch (e) {

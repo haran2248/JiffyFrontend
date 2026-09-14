@@ -6,11 +6,11 @@ import "package:jiffy/core/navigation/app_routes.dart";
 import "package:jiffy/presentation/screens/profile_self/models/profile_self_state.dart";
 import "package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_viewmodel.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_header_card.dart";
-import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_your_card.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_looking_for.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_insights_card.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_interests.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_conversation_style.dart";
+import "package:jiffy/presentation/screens/profile_self/widgets/profile_self_basic_details.dart";
 import "package:jiffy/presentation/screens/profile_self/widgets/profile_verification_badge.dart";
 import "package:jiffy/presentation/widgets/bottom_navigation_bar.dart";
 import "package:url_launcher/url_launcher.dart";
@@ -342,20 +342,20 @@ class ProfileSelfScreen extends ConsumerWidget {
                   child: _buildVerifyProfileButton(context),
                 ),
               const SizedBox(height: 24),
-              
-              // 1. "YOUR CARD" (AI generated bio)
-              if (data.aboutMe.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ProfileSelfYourCard(
-                    aboutMeText: data.aboutMe,
-                    onRegenerate: () {}, // TODO: Regenerate logic
-                  ),
+
+              // Basic Details (Work, College, Lifestyle)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ProfileSelfBasicDetails(
+                  data: data,
+                  onEdit: null,
                 ),
+              ),
               const SizedBox(height: 24),
 
               // 2. "WHAT YOU'RE LOOKING FOR"
-              if (data.relationshipGoals != null && data.relationshipGoals!.isNotEmpty)
+              if (data.relationshipGoals != null &&
+                  data.relationshipGoals!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ProfileSelfLookingFor(
@@ -397,7 +397,7 @@ class ProfileSelfScreen extends ConsumerWidget {
                     onReviewPromptAnswers: null,
                   ),
                 ),
-              
+
               // Basic details fallback (optional if we don't want to show it, but I'll leave it hidden or remove it as it's now meant to be in YOUR CARD, wait, the mockup didn't show BasicDetails anywhere other than Name/Location in header. Let's omit Basic Details widget as per new layout.)
               // Bottom padding for safe area
               const SizedBox(height: 32),

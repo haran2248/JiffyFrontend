@@ -51,7 +51,7 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      'University and Graduation Year are required.',
+                      'College, Graduation Year, and Work are required.',
                       style: textTheme.bodyLarge?.copyWith(
                         color: colors.onSurface.withValues(alpha: 0.6),
                       ),
@@ -84,10 +84,10 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
 
                     const SizedBox(height: 24),
 
-                    // Work field (optional)
+                    // Work field
                     _DetailsField(
-                      label: 'Work / Company (optional)',
-                      hint: 'e.g. Google, Jiffy',
+                      label: 'Work / Company',
+                      hint: 'Where do you work? (e.g. Google, Student, Freelance)',
                       icon: Icons.work_outline_rounded,
                       initialValue: formData.companyName,
                       onChanged: viewModel.updateCompanyName,

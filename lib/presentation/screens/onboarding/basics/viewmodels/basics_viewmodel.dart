@@ -133,6 +133,12 @@ class BasicsViewModel extends _$BasicsViewModel {
 
   Future<bool> saveProfessionalDetails() async {
     if (state.isSaving) return false;
+    if (!isStep3Valid) {
+      state = state.copyWith(
+        error: () => 'Please enter your College, Graduation Year, and Work.',
+      );
+      return false;
+    }
 
     state = state.copyWith(isSaving: true, error: () => null);
     try {
@@ -201,7 +207,8 @@ class BasicsViewModel extends _$BasicsViewModel {
 
   bool get isStep3Valid =>
       (state.university?.trim().isNotEmpty ?? false) &&
-      (state.graduationYear?.trim().isNotEmpty ?? false);
+      (state.graduationYear?.trim().isNotEmpty ?? false) &&
+      (state.companyName?.trim().isNotEmpty ?? false);
 
   bool get isFormValid => isStep1Valid && isStep2Valid && isStep3Valid;
 }

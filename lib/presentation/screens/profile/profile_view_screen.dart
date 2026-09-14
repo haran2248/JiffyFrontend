@@ -13,7 +13,6 @@ import "package:jiffy/presentation/screens/profile/widgets/profile_relationship_
 import "package:jiffy/presentation/screens/profile/widgets/match_analysis_section.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_additional_photos.dart"
     show PhotoWithCaption;
-import "package:jiffy/presentation/screens/profile/widgets/profile_bio.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_personality_section.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_style.dart";
 import "package:jiffy/presentation/screens/profile/widgets/profile_conversation_starter.dart";
@@ -239,10 +238,8 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
                             // Match Analysis (If MatchPitch exists)
                             MatchAnalysisSection(profile: widget.profile),
 
-                            const SizedBox(height: 16),
-
-                            // 2. Bio
-                            ProfileBio(profile: widget.profile),
+                            // Work & College
+                            _buildWorkEducationSection(context),
 
                             const SizedBox(height: 24),
 
@@ -334,7 +331,123 @@ class _ProfileViewScreenState extends ConsumerState<ProfileViewScreen> {
               ],
             ),
           ),
-        ));
+        ),
+      );
+  }
+
+  Widget _buildWorkEducationSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final hasWork =
+        widget.profile.work != null && widget.profile.work!.isNotEmpty;
+    final hasCollege =
+        widget.profile.college != null && widget.profile.college!.isNotEmpty;
+
+    if (!hasWork && !hasCollege) return const SizedBox.shrink();
+
+    final workText = widget.profile.jobTitle != null &&
+            widget.profile.jobTitle!.isNotEmpty
+        ? "${widget.profile.jobTitle} at ${widget.profile.work}"
+        : widget.profile.work;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasWork && workText != null)
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.work_outline_rounded,
+                      size: 18, color: colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Work",
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        workText,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          if (hasWork && hasCollege)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Divider(
+                  height: 1,
+                  color: colorScheme.outline.withValues(alpha: 0.1)),
+            ),
+          if (hasCollege)
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.school_outlined,
+                      size: 18, color: colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "College / Education",
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.profile.college!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
 

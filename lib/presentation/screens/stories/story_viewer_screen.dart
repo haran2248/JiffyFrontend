@@ -617,6 +617,7 @@ class _StoryContentPageState extends State<_StoryContentPage> {
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
+                  debugPrint('Error loading story image (${content.imageUrl}): $error');
                   // On error, still unblock the timer so the story progresses
                   if (!_hasCalledImageLoaded && widget.onImageLoaded != null) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {

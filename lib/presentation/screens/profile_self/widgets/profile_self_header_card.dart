@@ -38,27 +38,96 @@ class ProfileSelfHeaderCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${data.name}, ${data.age}",
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (data.location != null) ...[
-                    const SizedBox(height: 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      data.location!,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      "${data.name}, ${data.age}",
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
+                    if (data.location != null && data.location!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 15,
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              data.location!,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color:
+                                    colorScheme.onSurface.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (data.company != null && data.company!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.work_outline_rounded,
+                            size: 15,
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              data.jobTitle != null &&
+                                      data.jobTitle!.isNotEmpty
+                                  ? "${data.jobTitle} at ${data.company}"
+                                  : data.company!,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color:
+                                    colorScheme.onSurface.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (data.college != null && data.college!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.school_outlined,
+                            size: 15,
+                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              data.college!,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color:
+                                    colorScheme.onSurface.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
+              const SizedBox(width: 8),
               // Edit Icon for basic details (if needed)
               IconButton(
                 onPressed: () {}, // TODO: Edit basic info handler

@@ -23,9 +23,9 @@ android {
     defaultConfig {
         applicationId = "com.jiffydating.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
-        versionCode = 49
-        versionName = "1.0.49"
+        targetSdk = 36
+        versionCode = 53
+        versionName = "1.0.53"
         multiDexEnabled true
     }
 

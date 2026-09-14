@@ -74,13 +74,75 @@ class ProfileMainPhoto extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (profile.location != null) ...[
+                        if (profile.location != null && profile.location!.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(
-                            profile.location!,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  profile.location!,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (profile.work != null && profile.work!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.work_outline_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  profile.jobTitle != null && profile.jobTitle!.isNotEmpty
+                                      ? "${profile.jobTitle} at ${profile.work}"
+                                      : profile.work!,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (profile.college != null && profile.college!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.school_outlined,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  profile.college!,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ],

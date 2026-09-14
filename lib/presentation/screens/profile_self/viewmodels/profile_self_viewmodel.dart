@@ -377,6 +377,7 @@ class ProfileSelfViewModel extends _$ProfileSelfViewModel {
       location: currentData.location,
       college: currentData.college,
       work: currentData.company,
+      jobTitle: currentData.jobTitle,
       bio: currentData.aboutMe,
       // Map photos: ProfileSelfPhoto -> Photo
       photos: currentData.photos

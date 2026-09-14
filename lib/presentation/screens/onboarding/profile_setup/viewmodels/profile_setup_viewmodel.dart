@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -168,6 +167,19 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
                   isTyping: false,
                 );
               }
+            } else if (parsed.containsKey('error')) {
+              final errorMsg = parsed['error'].toString();
+              debugPrint('❌ [ProfileSetupViewModel] Error from agent stream: $errorMsg');
+              final currentMessages = List<ChatMessage>.from(state.messages);
+              currentMessages.add(ChatMessage(
+                text: "I'm having trouble responding right now. Please try again in a moment.",
+                isFromUser: false,
+                timestamp: DateTime.now(),
+              ));
+              state = state.copyWith(
+                messages: currentMessages,
+                isTyping: false,
+              );
             }
           }
         } catch (e) {

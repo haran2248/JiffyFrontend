@@ -105,11 +105,15 @@ class ProfileSelfBasicDetails extends StatelessWidget {
             color: colorScheme.secondary,
           ),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
+          Flexible(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

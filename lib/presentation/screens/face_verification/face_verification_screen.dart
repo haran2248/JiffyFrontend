@@ -9,10 +9,6 @@ import 'package:jiffy/presentation/screens/profile_self/viewmodels/profile_self_
 import 'models/face_verification_state.dart';
 import 'viewmodels/face_verification_viewmodel.dart';
 
-/// Screen for face verification flow.
-///
-/// Displays reference image, allows user to capture selfie,
-/// and shows match result.
 class FaceVerificationScreen extends ConsumerWidget {
   const FaceVerificationScreen({super.key});
 

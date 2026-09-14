@@ -72,7 +72,7 @@ class SuggestionCardWidget extends StatelessWidget {
                             errorBuilder: (context, error, stackTrace) {
                               // Return transparent sized widget to maintain layout
                               // Base icon will show through from the layer below
-                              return SizedBox(
+                              return const SizedBox(
                                 width: double.infinity,
                                 height: 200,
                               );
@@ -135,6 +135,62 @@ class SuggestionCardWidget extends StatelessWidget {
                                           color: Colors.white
                                               .withValues(alpha: 0.9),
                                           fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (suggestion.work != null &&
+                                  suggestion.work!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.work_outline_rounded,
+                                        size: 13,
+                                        color:
+                                            Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          suggestion.work!,
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.9),
+                                            fontSize: 11,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else if (suggestion.college != null &&
+                                  suggestion.college!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.school_outlined,
+                                        size: 13,
+                                        color:
+                                            Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          suggestion.college!,
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.9),
+                                            fontSize: 11,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],

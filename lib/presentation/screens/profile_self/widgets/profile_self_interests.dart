@@ -55,7 +55,8 @@ class ProfileSelfInterests extends StatelessWidget {
                 runSpacing: 8,
                 children: interests.map((interest) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),

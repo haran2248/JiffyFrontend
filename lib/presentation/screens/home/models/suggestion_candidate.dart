@@ -46,6 +46,10 @@ class SuggestionCandidate {
   final String? relationshipPreview;
   final Map<String, dynamic>? scoreBreakdown;
   final MatchPitch? matchPitch;
+  final String? college;
+  final String? work;
+  final String? company;
+  final String? jobTitle;
 
   SuggestionCandidate({
     required this.candidateUserId,
@@ -68,6 +72,10 @@ class SuggestionCandidate {
     this.relationshipPreview,
     this.scoreBreakdown,
     this.matchPitch,
+    this.college,
+    this.work,
+    this.company,
+    this.jobTitle,
   });
 
   factory SuggestionCandidate.fromJson(Map<String, dynamic> json) =>

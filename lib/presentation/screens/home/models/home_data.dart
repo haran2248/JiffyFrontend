@@ -51,6 +51,8 @@ class SuggestionCard {
   final bool isTopPick;
   final double? distanceKm;
   final MatchPitch? matchPitch;
+  final String? college;
+  final String? work;
 
   const SuggestionCard({
     required this.id,
@@ -66,6 +68,8 @@ class SuggestionCard {
     this.isTopPick = false,
     this.distanceKm,
     this.matchPitch,
+    this.college,
+    this.work,
   });
 }
 

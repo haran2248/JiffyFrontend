@@ -36,8 +36,8 @@ class PreferencesViewModel extends _$PreferencesViewModel {
       // Get basics data from the BasicsViewModel
       final basicsData = ref.read(basicsViewModelProvider);
 
-      // Map UI model to DTO - include all basics data along with preferred gender
-      final preferredGender = state.selectedGender!.label;
+      // Map UI model to DTO - send backend-compatible value ('Woman', 'Man', etc.)
+      final preferredGender = state.selectedGender!.backendValue;
 
       // First, upload the profile image if one was selected
       if (basicsData.photoUrl != null && basicsData.photoUrl!.isNotEmpty) {
