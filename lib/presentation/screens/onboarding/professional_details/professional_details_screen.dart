@@ -127,7 +127,7 @@ class ProfessionalDetailsScreen extends ConsumerWidget {
                                 ref.read(basicsViewModelProvider);
                             if (success) {
                               context.pushRoute(
-                                  AppRoutes.onboardingPreferredGender);
+                                  AppRoutes.onboardingRelationshipGoals);
                             } else if (currentFormData.error != null) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(currentFormData.error!)),

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/presentation/widgets/button.dart';
 import 'package:jiffy/presentation/widgets/progress_bar.dart';
+import '../basics/viewmodels/basics_viewmodel.dart';
 import 'viewmodels/preferences_viewmodel.dart';
 import 'models/gender_preference.dart';
 
@@ -116,7 +118,7 @@ class PreferredGenderScreen extends ConsumerWidget {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
@@ -130,7 +132,18 @@ class PreferredGenderScreen extends ConsumerWidget {
                         final success = await viewModel.saveGenderPreferences();
                         if (context.mounted) {
                           if (success) {
-                            context.push(AppRoutes.onboardingRelationshipGoals);
+                            final paramIsWoman =
+                                GoRouterState.of(context).uri.queryParameters['isWoman'] == 'true';
+                            final basicsGender =
+                                ref.read(basicsViewModelProvider).gender?.toLowerCase();
+                            final isWoman =
+                                paramIsWoman || basicsGender == 'woman' || basicsGender == 'female';
+
+                            if (isWoman) {
+                              context.pushRoute(AppRoutes.onboardingProfessionalDetails);
+                            } else {
+                              context.pushRoute(AppRoutes.onboardingInstagram);
+                            }
                           } else if (state.errorMessage != null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(state.errorMessage!)),

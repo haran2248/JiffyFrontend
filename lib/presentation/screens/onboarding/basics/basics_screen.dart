@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/navigation/navigation_service.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/services/service_providers.dart';
-import 'package:jiffy/core/services/permission_service.dart';
 import 'package:jiffy/core/config/image_size_config.dart';
 import '../../../widgets/button.dart';
 import '../../../widgets/progress_bar.dart';
@@ -116,13 +115,10 @@ class BasicsScreen extends ConsumerWidget {
                                   ref.read(basicsViewModelProvider);
                               if (success) {
                                 final isWoman = currentFormData.gender?.toLowerCase() == 'woman' || currentFormData.gender?.toLowerCase() == 'female';
-                                if (isWoman) {
-                                  context.pushRoute(
-                                      AppRoutes.onboardingProfessionalDetails);
-                                } else {
-                                  context.pushRoute(
-                                      AppRoutes.onboardingInstagram);
-                                }
+                                context.pushRoute(
+                                  AppRoutes.onboardingPreferredGender,
+                                  queryParameters: {'isWoman': isWoman ? 'true' : 'false'},
+                                );
                               } else if (currentFormData.error != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
