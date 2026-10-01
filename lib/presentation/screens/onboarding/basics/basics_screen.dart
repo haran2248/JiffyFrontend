@@ -114,10 +114,8 @@ class BasicsScreen extends ConsumerWidget {
                               final currentFormData =
                                   ref.read(basicsViewModelProvider);
                               if (success) {
-                                final isWoman = currentFormData.gender?.toLowerCase() == 'woman' || currentFormData.gender?.toLowerCase() == 'female';
                                 context.pushRoute(
                                   AppRoutes.onboardingPreferredGender,
-                                  queryParameters: {'isWoman': isWoman ? 'true' : 'false'},
                                 );
                               } else if (currentFormData.error != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(

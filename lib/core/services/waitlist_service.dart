@@ -14,12 +14,13 @@ class WaitlistService extends _$WaitlistService {
   Dio get _dio => ref.read(dioProvider);
 
   /// Notifies the backend that a user has been waitlisted.
-  Future<bool> notifyWaitlisted(String userId, {String? instagramHandle, int? instagramFollowerCount}) async {
+  Future<bool> notifyWaitlisted(String userId, {String? instagramHandle, int? instagramFollowerCount, String? gender}) async {
     try {
       final queryParams = {'uid': userId};
       final data = <String, dynamic>{};
       if (instagramHandle != null) data['instagramHandle'] = instagramHandle;
       if (instagramFollowerCount != null) data['instagramFollowerCount'] = instagramFollowerCount;
+      if (gender != null) data['gender'] = gender;
 
       final response = await _dio.post('/api/waitlist', queryParameters: queryParams, data: data);
       debugPrint(
