@@ -44,11 +44,14 @@ class StoryApiHelpers {
       isLocal: false,
     );
 
+    final userName = json['userName'] as String?;
+    final userImageUrl = json['userImageUrl'] as String?;
+
     return Story(
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
-      userName: null, // User name not in Story API response
-      userImageUrl: null, // User avatar not in Story API response
+      userName: userName,
+      userImageUrl: userImageUrl,
       contents: [content],
       createdAt: createdAt,
       expiresAt: expiresAt,
@@ -80,10 +83,15 @@ class StoryApiHelpers {
       throw ArgumentError('No stories found for userId: $userId');
     }
 
-    // Combine all contents from all stories
+    // Combine all contents from all stories and resolve author details
     final allContents = <StoryContent>[];
+    String? resolvedUserName;
+    String? resolvedUserImageUrl;
+
     for (final story in userStories) {
       allContents.addAll(story.contents);
+      resolvedUserName ??= story.userName;
+      resolvedUserImageUrl ??= story.userImageUrl;
     }
 
     // Use the first story's metadata as the base
@@ -102,8 +110,8 @@ class StoryApiHelpers {
     return Story(
       id: firstStory.id, // Use first story's ID
       userId: userId,
-      userName: firstStory.userName,
-      userImageUrl: firstStory.userImageUrl,
+      userName: resolvedUserName ?? firstStory.userName,
+      userImageUrl: resolvedUserImageUrl ?? firstStory.userImageUrl,
       contents: allContents,
       createdAt: firstStory.createdAt, // Use earliest createdAt
       expiresAt: maxExpiresAt, // Use maximum expiresAt across all stories

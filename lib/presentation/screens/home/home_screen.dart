@@ -275,10 +275,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (userStories.isNotEmpty) {
                       try {
                         // Group multiple stories into one Story object with multiple contents
-                        final groupedStory = StoryApiHelpers.groupStoriesByUser(
+                        var groupedStory = StoryApiHelpers.groupStoriesByUser(
                           userStories,
                           story.userId,
                         );
+
+                        if ((groupedStory.userName == null || groupedStory.userName!.isEmpty) && story.name != 'Unknown') {
+                          groupedStory = groupedStory.copyWith(userName: story.name);
+                        }
+                        if ((groupedStory.userImageUrl == null || groupedStory.userImageUrl!.isEmpty) && story.imageUrl != null) {
+                          groupedStory = groupedStory.copyWith(userImageUrl: story.imageUrl);
+                        }
 
                         context.navigation.pushNamed(
                           RouteNames.storyViewer,
@@ -292,10 +299,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         // Handle ArgumentError from groupStoriesByUser
                         debugPrint('Error grouping match stories: $e');
                         // Fallback: use ungrouped stories
+                        final enrichedFallback = userStories.map((s) {
+                          var u = s;
+                          if ((u.userName == null || u.userName!.isEmpty) && story.name != 'Unknown') {
+                            u = u.copyWith(userName: story.name);
+                          }
+                          if ((u.userImageUrl == null || u.userImageUrl!.isEmpty) && story.imageUrl != null) {
+                            u = u.copyWith(userImageUrl: story.imageUrl);
+                          }
+                          return u;
+                        }).toList();
+
                         context.navigation.pushNamed(
                           RouteNames.storyViewer,
                           extra: {
-                            'stories': userStories,
+                            'stories': enrichedFallback,
                             'initialStoryIndex': 0,
                             'initialContentIndex': 0,
                           },
@@ -305,10 +323,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         debugPrint(
                             'Unexpected error grouping match stories: $e');
                         // Fallback: use ungrouped stories
+                        final enrichedFallback = userStories.map((s) {
+                          var u = s;
+                          if ((u.userName == null || u.userName!.isEmpty) && story.name != 'Unknown') {
+                            u = u.copyWith(userName: story.name);
+                          }
+                          if ((u.userImageUrl == null || u.userImageUrl!.isEmpty) && story.imageUrl != null) {
+                            u = u.copyWith(userImageUrl: story.imageUrl);
+                          }
+                          return u;
+                        }).toList();
+
                         context.navigation.pushNamed(
                           RouteNames.storyViewer,
                           extra: {
-                            'stories': userStories,
+                            'stories': enrichedFallback,
                             'initialStoryIndex': 0,
                             'initialContentIndex': 0,
                           },

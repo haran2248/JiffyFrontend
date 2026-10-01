@@ -3,7 +3,6 @@ import 'package:flutter/material.dart' show debugPrint, Icons;
 import 'package:jiffy/core/auth/auth_repository.dart';
 import 'package:jiffy/presentation/screens/home/models/home_data.dart';
 import 'package:jiffy/presentation/screens/home/models/suggestion_response.dart';
-import 'package:jiffy/presentation/screens/profile/models/profile_data.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
 import 'package:jiffy/presentation/screens/matches/data/matches_repository.dart';
 
@@ -174,17 +173,29 @@ class HomeService {
         ),
       ];
 
-      // Add matched users' stories
+      // Add stories (from matches and preferred gender discovery)
       for (final entry in storiesByUser.entries) {
         final userId = entry.key;
         final story = entry.value;
         final matchInfo = matchesMap[userId];
 
-        final name = matchInfo?['name'] as String? ?? 'Unknown';
-        // Note: MatchResponse provides imageId, not imageUrl. For now, we leave imageUrl as null.
-        // The Avatar widget will show a default icon when imageUrl is null.
-        // TODO: Convert imageId to presigned URL if profile images are needed for story previews
-        const String? imageUrl = null;
+        // Resolves for BOTH matches and non-matches:
+        // Priority 1: Direct author info from story response
+        // Priority 2: Match info lookup
+        final storyUserName = story['userName'] as String?;
+        final storyUserImageUrl = story['userImageUrl'] as String?;
+
+        final name = storyUserName ?? matchInfo?['name'] as String? ?? 'Unknown';
+
+        final matchImageId = matchInfo?['imageId'] as String?;
+        final matchImageUrl = (matchInfo?['imageUrl'] as String?) ??
+            ((matchImageId != null && matchImageId.isNotEmpty)
+                ? (matchImageId.startsWith('http')
+                    ? matchImageId
+                    : 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$matchImageId')
+                : null);
+
+        final imageUrl = storyUserImageUrl ?? matchImageUrl;
 
         final createdAt = story['createdAt'];
         DateTime? createdAtDate;
