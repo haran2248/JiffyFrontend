@@ -173,8 +173,35 @@ class HomeService {
         ),
       ];
 
-      // Add stories (from matches and preferred gender discovery)
+      // Separate entries into matches and non-matches so matches appear first
+      final matchEntries = <MapEntry<String, Map<String, dynamic>>>[];
+      final nonMatchEntries = <MapEntry<String, Map<String, dynamic>>>[];
+
       for (final entry in storiesByUser.entries) {
+        if (matchesMap.containsKey(entry.key)) {
+          matchEntries.add(entry);
+        } else {
+          nonMatchEntries.add(entry);
+        }
+      }
+
+      // Sort both groups by most recent story first
+      int compareTimestamps(
+        MapEntry<String, Map<String, dynamic>> a,
+        MapEntry<String, Map<String, dynamic>> b,
+      ) {
+        final tsA = _parseTimestamp(a.value['createdAt']) ?? 0;
+        final tsB = _parseTimestamp(b.value['createdAt']) ?? 0;
+        return tsB.compareTo(tsA);
+      }
+
+      matchEntries.sort(compareTimestamps);
+      nonMatchEntries.sort(compareTimestamps);
+
+      final orderedEntries = [...matchEntries, ...nonMatchEntries];
+
+      // Add stories (matches first, then non-matches)
+      for (final entry in orderedEntries) {
         final userId = entry.key;
         final story = entry.value;
         final matchInfo = matchesMap[userId];

@@ -2,15 +2,6 @@ import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 
 /// Helper functions for converting API responses to Story models
 class StoryApiHelpers {
-  /// Convert API response (Map) to Story model
-  ///
-  /// The backend returns Story objects with:
-  /// - id: String
-  /// - userId: String
-  /// - mediaUrl: String (presigned URL)
-  /// - mediaType: String ("IMAGE" or "VIDEO")
-  /// - createdAt: Date (milliseconds since epoch or ISO string)
-  /// - expiresAt: Date (milliseconds since epoch or ISO string)
   static Story storyFromApiJson(Map<String, dynamic> json) {
     // Parse dates - handle both milliseconds and ISO strings
     // Epoch timestamps are UTC-based, so use UTC when parsing
