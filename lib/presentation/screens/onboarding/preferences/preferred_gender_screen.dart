@@ -128,8 +128,14 @@ class PreferredGenderScreen extends ConsumerWidget {
                 onTap: state.selectedGender != null
                     ? () async {
                         final success = await viewModel.saveGenderPreferences();
-                        if (success && context.mounted) {
-                          context.push(AppRoutes.onboardingRelationshipGoals);
+                        if (context.mounted) {
+                          if (success) {
+                            context.push(AppRoutes.onboardingRelationshipGoals);
+                          } else if (state.errorMessage != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(state.errorMessage!)),
+                            );
+                          }
                         }
                       }
                     : () {}, // Disable if empty

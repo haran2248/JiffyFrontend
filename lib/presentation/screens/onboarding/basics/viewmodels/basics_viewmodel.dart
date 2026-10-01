@@ -90,12 +90,19 @@ class BasicsViewModel extends _$BasicsViewModel {
         }
       }
 
-      // Save user info
+      // Save user info with sensible default preferredGender (can be customized in preferences step)
+      final defaultPreferredGender =
+          (state.gender?.toLowerCase() == 'man' || state.gender?.toLowerCase() == 'male')
+              ? 'Woman'
+              : (state.gender?.toLowerCase() == 'woman' || state.gender?.toLowerCase() == 'female')
+                  ? 'Man'
+                  : 'Everyone';
+
       await repo.saveUserInformation(BasicDetails(
         name: state.firstName,
         gender: state.gender,
         birthDate: state.dateOfBirth,
-        preferredGender: null, // Will be set in next step
+        preferredGender: defaultPreferredGender,
       ));
 
       // Eligibility check

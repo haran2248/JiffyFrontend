@@ -1,8 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/basic_details.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/models/desired_qualities.dart';
 import 'package:jiffy/presentation/screens/onboarding/data/repository/onboarding_repository.dart';
-import 'package:jiffy/presentation/screens/onboarding/basics/viewmodels/basics_viewmodel.dart';
 import '../models/preferences_state.dart';
 import '../models/gender_preference.dart';
 import '../models/relationship_goal.dart';
@@ -33,38 +33,18 @@ class PreferencesViewModel extends _$PreferencesViewModel {
     try {
       final repo = ref.read(onboardingRepositoryProvider);
 
-      // Get basics data from the BasicsViewModel
-      final basicsData = ref.read(basicsViewModelProvider);
-
       // Map UI model to DTO - send backend-compatible value ('Woman', 'Man', etc.)
       final preferredGender = state.selectedGender!.backendValue;
 
-      // First, upload the profile image if one was selected
-      if (basicsData.photoUrl != null && basicsData.photoUrl!.isNotEmpty) {
-        // Check if it's a local file path (not http/https)
-        // This handles file://, content://, and path-based locals like /path/to/file
-        final uri = Uri.parse(basicsData.photoUrl!);
-        final isLocalUri = uri.scheme.isEmpty ||
-            (uri.scheme != 'http' && uri.scheme != 'https');
-        if (isLocalUri) {
-          await repo.uploadProfileImage(
-            basicsData.photoUrl!,
-            name: basicsData.firstName,
-          );
-        }
-      }
-
-      // Then save the user information
+      // Save preferred gender directly
       await repo.saveUserInformation(BasicDetails(
-        name: basicsData.firstName,
-        gender: basicsData.gender,
-        birthDate: basicsData.dateOfBirth,
         preferredGender: preferredGender,
       ));
 
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
+      debugPrint('PreferencesViewModel: Error saving gender preference: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
       return false;
     }
