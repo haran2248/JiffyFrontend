@@ -252,9 +252,17 @@ class AcquisitionService {
     } on DioException catch (e) {
       // Surface meaningful backend error messages (e.g. "Invalid invite code",
       // "You cannot use your own invite code") from 400 responses.
+      // Spring Boot serializes ResponseStatusException as:
+      //   {"timestamp":...,"status":400,"error":"Bad Request","message":"...","path":"..."}
       if (e.response?.statusCode == 400) {
         final body = e.response?.data;
-        final serverMsg = body is String && body.isNotEmpty ? body : null;
+        String? serverMsg;
+        if (body is String && body.isNotEmpty) {
+          serverMsg = body;
+        } else if (body is Map) {
+          final msg = body['message'];
+          if (msg is String && msg.isNotEmpty) serverMsg = msg;
+        }
         debugPrint('[AcquisitionService] Invite code rejected by server: $serverMsg');
         return (success: false, message: serverMsg ?? "That code doesn't look right");
       }
