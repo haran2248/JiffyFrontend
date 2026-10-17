@@ -12,6 +12,7 @@ import 'package:jiffy/presentation/screens/home/widgets/suggestion_card_widget.d
 import 'package:jiffy/core/services/profile_service.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import 'package:jiffy/presentation/screens/stories/data/stories_repository.dart';
+import 'package:jiffy/presentation/screens/stories/models/story_models.dart';
 import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
@@ -244,7 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   if (context.mounted) {
                     if (userStoriesJson.isNotEmpty) {
                       // User has stories - show options to view or add new
-                      _showUserStoryOptions(context, ref, userStoriesJson);
+                      _showUserStoryOptions(context, ref, userStoriesJson, stories);
                     } else {
                       // No stories - open creation screen directly
                       context.navigation.pushNamed(RouteNames.storyCreation);
@@ -267,78 +268,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final allStories =
                         StoryApiHelpers.storiesFromApiJson(storiesJson);
 
-                    // Filter stories for this specific user and group them
-                    final userStories = allStories
-                        .where((s) => s.userId == story.userId)
-                        .toList();
-
-                    if (userStories.isNotEmpty) {
-                      try {
-                        // Group multiple stories into one Story object with multiple contents
-                        var groupedStory = StoryApiHelpers.groupStoriesByUser(
-                          userStories,
-                          story.userId,
-                        );
-
-                        if ((groupedStory.userName == null || groupedStory.userName!.isEmpty) && story.name != 'Unknown') {
-                          groupedStory = groupedStory.copyWith(userName: story.name);
+                    if (allStories.isNotEmpty) {
+                      // Collect all unique user IDs preserving tray order
+                      final userIdsInOrder = <String>[];
+                      for (final item in stories) {
+                        if (!item.isUserStory && !userIdsInOrder.contains(item.userId)) {
+                          userIdsInOrder.add(item.userId);
                         }
-                        if ((groupedStory.userImageUrl == null || groupedStory.userImageUrl!.isEmpty) && story.imageUrl != null) {
-                          groupedStory = groupedStory.copyWith(userImageUrl: story.imageUrl);
+                      }
+                      for (final s in allStories) {
+                        if (!userIdsInOrder.contains(s.userId)) {
+                          userIdsInOrder.add(s.userId);
                         }
+                      }
+
+                      final allGroupedStories = <Story>[];
+                      for (final uid in userIdsInOrder) {
+                        final uStories = allStories.where((s) => s.userId == uid).toList();
+                        if (uStories.isEmpty) continue;
+                        try {
+                          var groupedStory = StoryApiHelpers.groupStoriesByUser(
+                            uStories,
+                            uid,
+                          );
+
+                          final trayItem = stories.firstWhere(
+                            (item) => item.userId == uid,
+                            orElse: () => StoryItem(id: uid, userId: uid),
+                          );
+                          if ((groupedStory.userName == null || groupedStory.userName!.isEmpty) &&
+                              trayItem.name != null &&
+                              trayItem.name != 'Unknown') {
+                            groupedStory = groupedStory.copyWith(userName: trayItem.name);
+                          }
+                          if ((groupedStory.userImageUrl == null || groupedStory.userImageUrl!.isEmpty) &&
+                              trayItem.imageUrl != null) {
+                            groupedStory = groupedStory.copyWith(userImageUrl: trayItem.imageUrl);
+                          }
+
+                          allGroupedStories.add(groupedStory);
+                        } catch (e) {
+                          debugPrint('Error grouping match stories for user $uid: $e');
+                          allGroupedStories.addAll(uStories);
+                        }
+                      }
+
+                      if (allGroupedStories.isNotEmpty) {
+                        int initialIndex =
+                            allGroupedStories.indexWhere((s) => s.userId == story.userId);
+                        if (initialIndex < 0) initialIndex = 0;
 
                         context.navigation.pushNamed(
                           RouteNames.storyViewer,
                           extra: {
-                            'stories': [groupedStory],
-                            'initialStoryIndex': 0,
-                            'initialContentIndex': 0,
-                          },
-                        );
-                      } on ArgumentError catch (e) {
-                        // Handle ArgumentError from groupStoriesByUser
-                        debugPrint('Error grouping match stories: $e');
-                        // Fallback: use ungrouped stories
-                        final enrichedFallback = userStories.map((s) {
-                          var u = s;
-                          if ((u.userName == null || u.userName!.isEmpty) && story.name != 'Unknown') {
-                            u = u.copyWith(userName: story.name);
-                          }
-                          if ((u.userImageUrl == null || u.userImageUrl!.isEmpty) && story.imageUrl != null) {
-                            u = u.copyWith(userImageUrl: story.imageUrl);
-                          }
-                          return u;
-                        }).toList();
-
-                        context.navigation.pushNamed(
-                          RouteNames.storyViewer,
-                          extra: {
-                            'stories': enrichedFallback,
-                            'initialStoryIndex': 0,
-                            'initialContentIndex': 0,
-                          },
-                        );
-                      } catch (e) {
-                        // Handle any other exception
-                        debugPrint(
-                            'Unexpected error grouping match stories: $e');
-                        // Fallback: use ungrouped stories
-                        final enrichedFallback = userStories.map((s) {
-                          var u = s;
-                          if ((u.userName == null || u.userName!.isEmpty) && story.name != 'Unknown') {
-                            u = u.copyWith(userName: story.name);
-                          }
-                          if ((u.userImageUrl == null || u.userImageUrl!.isEmpty) && story.imageUrl != null) {
-                            u = u.copyWith(userImageUrl: story.imageUrl);
-                          }
-                          return u;
-                        }).toList();
-
-                        context.navigation.pushNamed(
-                          RouteNames.storyViewer,
-                          extra: {
-                            'stories': enrichedFallback,
-                            'initialStoryIndex': 0,
+                            'stories': allGroupedStories,
+                            'initialStoryIndex': initialIndex,
                             'initialContentIndex': 0,
                           },
                         );
@@ -360,8 +344,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _showUserStoryOptions(
     BuildContext context,
     WidgetRef ref,
-    List<Map<String, dynamic>> userStoriesJson,
-  ) {
+    List<Map<String, dynamic>> userStoriesJson, [
+    List<StoryItem>? trayStories,
+  ]) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     // Capture stable context for navigation (outer screen context, not builder context)
@@ -398,7 +383,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: colorScheme.onSurface,
                   ),
                 ),
-                onTap: () {
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+
                   // Convert stories before popping
                   final allUserStories = userStoriesJson
                       .map((json) => StoryApiHelpers.storyFromApiJson(json))
@@ -420,59 +407,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         currentUser.uid,
                       );
 
-                      Navigator.of(sheetContext).pop();
-                      // Use stable context for navigation
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (stableContext.mounted) {
-                          stableContext.navigation.pushNamed(
-                            RouteNames.storyViewer,
-                            extra: {
-                              'stories': [groupedStory],
-                              'initialStoryIndex': 0,
-                              'initialContentIndex': 0,
-                            },
-                          );
+                      final allGroupedStories = <Story>[groupedStory];
+
+                      // Also load matches' stories so user can seamlessly swipe through all stories
+                      try {
+                        final repository = ref.read(storiesRepositoryProvider);
+                        final matchStoriesJson = await repository.fetchStories();
+                        final matchStories =
+                            StoryApiHelpers.storiesFromApiJson(matchStoriesJson);
+
+                        if (matchStories.isNotEmpty) {
+                          final userIdsInOrder = <String>[];
+                          if (trayStories != null) {
+                            for (final item in trayStories) {
+                              if (!item.isUserStory &&
+                                  item.userId != currentUser.uid &&
+                                  !userIdsInOrder.contains(item.userId)) {
+                                userIdsInOrder.add(item.userId);
+                              }
+                            }
+                          }
+                          for (final s in matchStories) {
+                            if (s.userId != currentUser.uid &&
+                                !userIdsInOrder.contains(s.userId)) {
+                              userIdsInOrder.add(s.userId);
+                            }
+                          }
+
+                          for (final uid in userIdsInOrder) {
+                            final userGroup =
+                                matchStories.where((s) => s.userId == uid).toList();
+                            if (userGroup.isNotEmpty) {
+                              allGroupedStories.add(
+                                StoryApiHelpers.groupStoriesByUser(
+                                  userGroup,
+                                  uid,
+                                ),
+                              );
+                            }
+                          }
                         }
-                      });
+                      } catch (e) {
+                        debugPrint('Error fetching subsequent stories: $e');
+                      }
+
+                      // Use stable context for navigation
+                      if (stableContext.mounted) {
+                        stableContext.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': allGroupedStories,
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      }
                     } on ArgumentError catch (e) {
                       // Handle ArgumentError from groupStoriesByUser
                       debugPrint('Error grouping stories: $e');
                       // Fallback: use original behavior if grouping fails
-                      Navigator.of(sheetContext).pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (stableContext.mounted) {
-                          stableContext.navigation.pushNamed(
-                            RouteNames.storyViewer,
-                            extra: {
-                              'stories': allUserStories,
-                              'initialStoryIndex': 0,
-                              'initialContentIndex': 0,
-                            },
-                          );
-                        }
-                      });
-                    } catch (e) {
-                      // Handle any other exception
-                      debugPrint('Unexpected error grouping stories: $e');
-                      // Fallback: use original behavior if grouping fails
-                      Navigator.of(sheetContext).pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (stableContext.mounted) {
-                          stableContext.navigation.pushNamed(
-                            RouteNames.storyViewer,
-                            extra: {
-                              'stories': allUserStories,
-                              'initialStoryIndex': 0,
-                              'initialContentIndex': 0,
-                            },
-                          );
-                        }
-                      });
-                    }
-                  } else {
-                    // Fallback: use original behavior if no user or no stories
-                    Navigator.of(sheetContext).pop();
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (stableContext.mounted) {
                         stableContext.navigation.pushNamed(
                           RouteNames.storyViewer,
@@ -483,7 +476,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           },
                         );
                       }
-                    });
+                    } catch (e) {
+                      // Handle any other exception
+                      debugPrint('Unexpected error grouping stories: $e');
+                      // Fallback: use original behavior if grouping fails
+                      if (stableContext.mounted) {
+                        stableContext.navigation.pushNamed(
+                          RouteNames.storyViewer,
+                          extra: {
+                            'stories': allUserStories,
+                            'initialStoryIndex': 0,
+                            'initialContentIndex': 0,
+                          },
+                        );
+                      }
+                    }
+                  } else {
+                    // Fallback: use original behavior if no user or no stories
+                    if (stableContext.mounted) {
+                      stableContext.navigation.pushNamed(
+                        RouteNames.storyViewer,
+                        extra: {
+                          'stories': allUserStories,
+                          'initialStoryIndex': 0,
+                          'initialContentIndex': 0,
+                        },
+                      );
+                    }
                   }
                 },
               ),
