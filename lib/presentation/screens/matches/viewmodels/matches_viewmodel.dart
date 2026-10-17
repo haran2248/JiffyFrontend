@@ -49,10 +49,12 @@ class MatchesState {
       // Apply filter
       switch (currentFilter) {
         case MatchesFilter.currentChats:
-          // Only matches with existing conversations WHERE the user has replied/started, plus Jiffy AI
-          return match.currentUserHasSentMessage || match.isJiffyAi;
+          // Show active conversations with any sent or received messages, plus Jiffy AI
+          return (match.lastMessage != null && match.lastMessage!.isNotEmpty) ||
+              match.currentUserHasSentMessage ||
+              match.isJiffyAi;
         case MatchesFilter.waitingForYou:
-          // Matches WHERE current user hasn't sent a message (excluding Jiffy AI as it's a "chat")
+          // Matches WHERE current user hasn't sent a message (excluding Jiffy AI)
           return !match.currentUserHasSentMessage && !match.isJiffyAi;
       }
     }).toList();

@@ -9,6 +9,8 @@ import "widgets/chat_action_chip.dart";
 import "widgets/typing_indicator.dart";
 import "models/chat_state.dart";
 import "package:jiffy/presentation/screens/profile/widgets/report_unmatch_menu_button.dart";
+import "package:jiffy/core/services/profile_service.dart";
+import "package:jiffy/presentation/screens/profile/profile_view_screen.dart";
 import "chat_constants.dart";
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -64,27 +66,73 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: widget.otherUserImage != null
-                  ? NetworkImage(widget.otherUserImage!)
-                  : null,
-              child: widget.otherUserImage == null
-                  ? Text(widget.otherUserName[0].toUpperCase())
-                  : null,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.otherUserName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        title: GestureDetector(
+          onTap: () async {
+            if (widget.otherUserId == ChatConstants.jiffyBotId) return;
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) =>
+                  const Center(child: CircularProgressIndicator()),
+            );
+
+            try {
+              final profileService = ref.read(profileServiceProvider);
+              final profileData =
+                  await profileService.fetchUserProfile(widget.otherUserId);
+
+              if (context.mounted) Navigator.pop(context); // pop loading
+
+              if (profileData != null && context.mounted) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  useRootNavigator: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => ProfileViewScreen(
+                    profile: profileData,
+                    isPreview: false,
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not load profile')),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                Navigator.pop(context); // pop loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error loading profile: $e')),
+                );
+              }
+            }
+          },
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundImage: widget.otherUserImage != null
+                    ? NetworkImage(widget.otherUserImage!)
+                    : null,
+                child: widget.otherUserImage == null
+                    ? Text(widget.otherUserName.isNotEmpty
+                        ? widget.otherUserName[0].toUpperCase()
+                        : 'U')
+                    : null,
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                widget.otherUserName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
         centerTitle: true,
         actions: [
