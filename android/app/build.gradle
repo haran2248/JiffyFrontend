@@ -5,6 +5,25 @@ plugins {
     id "com.google.gms.google-services"
 }
 
+def dartDefines = [:]
+if (project.hasProperty('dart-defines')) {
+    dartDefines = dartDefines + project.property('dart-defines')
+        .split(',')
+        .collectEntries { entry ->
+            try {
+                def decoded = new String(entry.decodeBase64(), 'UTF-8')
+                def pair = decoded.split('=', 2)
+                [(pair[0]): pair.length > 1 ? pair[1] : '']
+            } catch (Exception e) {
+                [:]
+            }
+        }
+}
+
+def metaAppId = dartDefines['META_APP_ID'] ?: System.getenv('META_APP_ID') ?: ''
+def metaClientToken = dartDefines['META_CLIENT_TOKEN'] ?: System.getenv('META_CLIENT_TOKEN') ?: ''
+def metaDisplayName = dartDefines['META_DISPLAY_NAME'] ?: System.getenv('META_DISPLAY_NAME') ?: 'Jiffy'
+
 android {
     namespace = "com.jiffydating.app"
     compileSdk = 36
@@ -27,6 +46,10 @@ android {
         versionCode = 54
         versionName = "1.0.54"
         multiDexEnabled true
+
+        resValue "string", "facebook_app_id", metaAppId
+        resValue "string", "facebook_client_token", metaClientToken
+        resValue "string", "facebook_display_name", metaDisplayName
     }
 
     packaging {
@@ -66,5 +89,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation 'com.android.installreferrer:installreferrer:2.2'
 }
 

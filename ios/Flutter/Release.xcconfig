@@ -1,3 +1,8 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
 #include "Generated.xcconfig"
+
+META_APP_ID =
+META_CLIENT_TOKEN =
+META_DISPLAY_NAME = Jiffy
+

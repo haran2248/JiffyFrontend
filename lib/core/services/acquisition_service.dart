@@ -279,7 +279,8 @@ class AcquisitionService {
   Future<void> reportFirstMessageMilestone() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final alreadyReported = prefs.getBool(keyFirstMessageReported) ?? false;
+      final alreadyReported = (prefs.getBool(keyFirstMessageReported) ?? false) ||
+          (prefs.getBool('firstMessageReported') ?? false);
       if (alreadyReported) {
         return;
       }
@@ -302,6 +303,7 @@ class AcquisitionService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         debugPrint('[AcquisitionService] First message milestone marked successfully.');
         await prefs.setBool(keyFirstMessageReported, true);
+        await prefs.setBool('firstMessageReported', true);
       }
     } catch (e) {
       debugPrint('[AcquisitionService] Failed to report first message milestone (will retry on next send): $e');

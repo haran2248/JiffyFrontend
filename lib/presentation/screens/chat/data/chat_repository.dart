@@ -51,5 +51,6 @@ class ChatRepository {
 @Riverpod(keepAlive: true)
 ChatRepository chatRepository(Ref ref) {
   final dio = ref.watch(dioProvider);
-  return ChatRepository(ChatService(dio: dio));
+  final acquisition = ref.watch(acquisitionServiceProvider);
+  return ChatRepository(ChatService(dio: dio, acquisitionService: acquisition));
 }
