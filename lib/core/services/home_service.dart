@@ -38,13 +38,13 @@ class HomeService {
     debugPrint('HomeService: Fetching home data from backend...');
 
     // Fetch stories from matched users
-    List<StoryItem> stories = await _fetchStories();
+    final List<StoryItem> stories = await _fetchStories();
 
     // Mock data for other sections - TODO: Replace with actual API calls
     return HomeData(
       stories: stories,
       suggestions: [], // Suggestions now fetched separately via fetchSuggestions
-      trendingItems: [
+      trendingItems: const [
         TrendingItem(
           id: 'trending-1',
           title: 'Hot Take: Pineapple on Pizza',
@@ -53,7 +53,7 @@ class HomeService {
           iconData: Icons.local_fire_department,
         ),
       ],
-      currentPrompt: MatchPrompt(
+      currentPrompt: const MatchPrompt(
         id: 'prompt-1',
         promptText: 'What\'s a small thing that brings you immense joy?',
         isNew: true,
@@ -125,7 +125,7 @@ class HomeService {
         }
       }
 
-      int? _parseTimestamp(dynamic timestamp) {
+      int? parseTimestamp(dynamic timestamp) {
         if (timestamp == null) return null;
         if (timestamp is int) return timestamp;
         if (timestamp is String) {
@@ -146,8 +146,8 @@ class HomeService {
           storiesByUser[userId] = story;
         } else {
           // Compare createdAt to keep the most recent
-          final existingTs = _parseTimestamp(existingStory['createdAt']);
-          final currentTs = _parseTimestamp(story['createdAt']);
+          final existingTs = parseTimestamp(existingStory['createdAt']);
+          final currentTs = parseTimestamp(story['createdAt']);
           if (currentTs != null &&
               (existingTs == null || currentTs > existingTs)) {
             storiesByUser[userId] = story;
@@ -155,10 +155,16 @@ class HomeService {
         }
       }
 
-      // Check if the current user has an active story in the feed
-      final currentUserHasStory = storiesJson.any(
-        (s) => (s['userId'] as String?) == user.uid,
-      );
+      // Check if the current user has an active story
+      bool currentUserHasStory = false;
+      try {
+        final myStories = await _storiesRepository.fetchUserStories();
+        currentUserHasStory = myStories.isNotEmpty;
+      } catch (_) {
+        currentUserHasStory = storiesJson.any(
+          (s) => (s['userId'] as String?) == user.uid,
+        );
+      }
 
       // Convert to StoryItem objects
       final storyItems = <StoryItem>[
@@ -190,8 +196,8 @@ class HomeService {
         MapEntry<String, Map<String, dynamic>> a,
         MapEntry<String, Map<String, dynamic>> b,
       ) {
-        final tsA = _parseTimestamp(a.value['createdAt']) ?? 0;
-        final tsB = _parseTimestamp(b.value['createdAt']) ?? 0;
+        final tsA = parseTimestamp(a.value['createdAt']) ?? 0;
+        final tsB = parseTimestamp(b.value['createdAt']) ?? 0;
         return tsB.compareTo(tsA);
       }
 

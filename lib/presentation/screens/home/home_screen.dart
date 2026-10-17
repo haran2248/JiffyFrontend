@@ -17,7 +17,6 @@ import 'package:jiffy/presentation/screens/stories/story_api_helpers.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/widgets/card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jiffy/presentation/screens/home/widgets/first_time_story_prompt_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,19 +30,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndShowStoryPrompt();
+      _checkAndShowInitialStoryToast();
     });
   }
 
-  Future<void> _checkAndShowStoryPrompt() async {
+  Future<void> _checkAndShowInitialStoryToast() async {
     if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
-    final hasSeen = prefs.getBool('has_seen_story_prompt') ?? false;
+    final currentUser = ref.read(authRepositoryProvider).currentUser;
+    final userKey = currentUser != null
+        ? 'has_shown_initial_story_toast_${currentUser.uid}'
+        : 'has_shown_initial_story_toast';
+    final hasShown = prefs.getBool(userKey) ?? false;
 
-    if (!hasSeen && mounted) {
-      await prefs.setBool('has_seen_story_prompt', true);
+    if (!hasShown && mounted) {
+      await prefs.setBool(userKey, true);
       if (mounted) {
-        FirstTimeStoryPromptSheet.show(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Your initial image has been posted as a story, welcome to jiffy.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF1E1E1E),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
