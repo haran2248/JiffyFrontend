@@ -101,13 +101,13 @@ class MatchesRepository {
 
       final response = await _dio.post(
         '/api/users/removeMatch',
-        data: {
+        queryParameters: {
           'uid': uid,
           'matchedUid': matchUid,
         },
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 204) {
         throw ApiError(
           type: ApiErrorType.server,
           message: "Failed to remove match: ${response.statusCode}",

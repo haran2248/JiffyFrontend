@@ -5,6 +5,7 @@ import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/services/profile_service.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
+import 'models/matches_filter.dart';
 import 'viewmodels/matches_viewmodel.dart';
 import 'widgets/matches_tab_bar.dart';
 import 'widgets/match_card_widget.dart';
@@ -108,30 +109,40 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
     final matches = state.filteredMatches;
 
     if (matches.isEmpty) {
+      final isRequestedTab = state.currentFilter == MatchesFilter.requested;
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.people_outline,
-              size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No matches found',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Check back later for new matches',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                  ),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isRequestedTab
+                    ? Icons.mark_email_unread_outlined
+                    : Icons.chat_bubble_outline,
+                size: 64,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isRequestedTab ? 'No pending requests' : 'No active chats',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isRequestedTab
+                    ? 'Message requests from stories and suggestions will appear here'
+                    : 'When you reply to requests or start chatting, conversations will appear here',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
