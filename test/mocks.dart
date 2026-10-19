@@ -7,22 +7,28 @@ class MockPermissionService implements PermissionService {
 
   @override
   Future<bool> checkLocationStatus() async => _locationGranted;
+
+  @override
+  Future<bool> isLocationPermanentlyDenied() async => false;
+
   @override
   Future<bool> checkNotificationStatus() async => _notificationGranted;
+
   @override
-  Future<bool> requestLocationPermission() async {
+  Future<PermissionResult> requestLocationPermission() async {
     _locationGranted = true;
-    return true;
+    return PermissionResult.granted;
   }
 
   @override
-  Future<bool> requestNotificationPermission() async {
+  Future<PermissionResult> requestNotificationPermission() async {
     _notificationGranted = true;
-    return true;
+    return PermissionResult.granted;
   }
 
   @override
-  Future<bool> requestCameraPermission() async => true;
+  Future<PermissionResult> requestCameraPermission() async =>
+      PermissionResult.granted;
 
   @override
   Future<bool> checkCameraStatus() async => true;

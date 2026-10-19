@@ -1,4 +1,5 @@
 import 'package:jiffy/core/services/chat_service.dart';
+import 'package:jiffy/core/services/service_providers.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
 import '../models/chat_message.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

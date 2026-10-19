@@ -95,7 +95,7 @@ class WaitlistScreen extends ConsumerWidget {
 
                 // Description
                 Text(
-                  "Jiffy is currently invite-only or exclusive to users with 1,000+ followers. We've added you to our waitlist.",
+                  "Jiffy requires 1,000+ followers or a college email ID based sign in. We've added you to our waitlist.",
                   style: textTheme.bodyLarge?.copyWith(
                     color: colors.onSurface.withValues(alpha: 0.7),
                     height: 1.4,
@@ -134,6 +134,11 @@ class WaitlistScreen extends ConsumerWidget {
                       const _EligibilityItem(
                         icon: Icons.people_outline,
                         text: "1000+ Instagram Followers",
+                      ),
+                      const SizedBox(height: 8),
+                      const _EligibilityItem(
+                        icon: Icons.school_outlined,
+                        text: "College Email ID",
                       ),
                     ],
                   ),
