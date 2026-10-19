@@ -42,7 +42,8 @@ final class DevEnvironment extends Environment {
   @override
   String get baseUrl => const String.fromEnvironment(
         'BASE_URL',
-        defaultValue: 'http://192.168.0.108:5005',
+        defaultValue:
+            'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com',
       );
 
   @override
@@ -68,7 +69,8 @@ final class StagingEnvironment extends Environment {
   @override
   String get baseUrl => const String.fromEnvironment(
         'BASE_URL',
-        defaultValue: 'http://192.168.0.108:5005',
+        defaultValue:
+            'https://limitless-sea-53782-2c45e56f3e92.herokuapp.com',
       );
 
   @override
