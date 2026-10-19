@@ -2,14 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:jiffy/core/network/errors/api_error.dart';
+import 'acquisition_service.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Dio? _dio;
+  final AcquisitionService? _acquisitionService;
 
-  ChatService({Dio? dio}) : _dio = dio;
+  ChatService({Dio? dio, AcquisitionService? acquisitionService})
+      : _dio = dio,
+        _acquisitionService = acquisitionService;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -23,7 +26,7 @@ class ChatService {
       final String currentUserID = currentUser.uid;
       final Timestamp timestamp = Timestamp.now();
 
-      Map<String, dynamic> newMessage = {
+      final Map<String, dynamic> newMessage = {
         'senderID': currentUserID,
         'receiverID': receiverID,
         'message': message,
@@ -32,9 +35,9 @@ class ChatService {
         'type': 'text',
       };
 
-      List<String> ids = [currentUserID, receiverID];
+      final List<String> ids = [currentUserID, receiverID];
       ids.sort();
-      String chatroomID = ids.join("_");
+      final String chatroomID = ids.join("_");
       debugPrint(
         "ChatService SEND MESSAGE: current=$currentUserID, receiver=$receiverID -> chatroomID=$chatroomID",
       );
@@ -48,9 +51,23 @@ class ChatService {
 
       // Fire-and-forget: notify the receiver via push notification
       _sendChatNotification(receiverID, currentUserID, message);
+
+      // Fire-and-forget: report first-message milestone if not already reported
+      _reportFirstMessageMilestone();
     } catch (e) {
       debugPrint("Error sending message: $e");
       rethrow;
+    }
+  }
+
+  /// Fire-and-forget ping to mark first-message milestone on the backend.
+  /// Delegates directly to AcquisitionService.
+  void _reportFirstMessageMilestone() async {
+    try {
+      final acq = _acquisitionService ?? AcquisitionService(dio: _dio);
+      await acq.reportFirstMessageMilestone();
+    } catch (e) {
+      debugPrint('[ChatService] Error reporting first message milestone: $e');
     }
   }
 
@@ -102,7 +119,7 @@ class ChatService {
     try {
       final Timestamp timestamp = Timestamp.now();
 
-      Map<String, dynamic> newMessage = {
+      final Map<String, dynamic> newMessage = {
         'senderID': senderID,
         'receiverID': receiverID,
         'message': message,
@@ -111,9 +128,9 @@ class ChatService {
         'type': 'text',
       };
 
-      List<String> ids = [senderID, receiverID];
+      final List<String> ids = [senderID, receiverID];
       ids.sort();
-      String chatroomID = ids.join("_");
+      final String chatroomID = ids.join("_");
 
       // Add to Firestore
       await _firestore
@@ -134,10 +151,10 @@ class ChatService {
       // Return a failing stream instead of throwing synchronously
       return Stream.error(Exception("No authenticated user found."));
     }
-    String currentUserID = currentUser.uid;
-    List<String> ids = [currentUserID, otherUserID];
+    final String currentUserID = currentUser.uid;
+    final List<String> ids = [currentUserID, otherUserID];
     ids.sort();
-    String chatroomID = ids.join("_");
+    final String chatroomID = ids.join("_");
     debugPrint(
       "ChatService GET MESSAGES STREAM: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
     );
@@ -155,9 +172,9 @@ class ChatService {
     String currentUserID,
     String otherUserID,
   ) async {
-    List<String> ids = [currentUserID, otherUserID];
+    final List<String> ids = [currentUserID, otherUserID];
     ids.sort();
-    String chatroomID = ids.join("_");
+    final String chatroomID = ids.join("_");
     debugPrint(
       "ChatService GET LAST MESSAGE: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
     );
@@ -187,9 +204,9 @@ class ChatService {
     String currentUserID,
     String otherUserID,
   ) async {
-    List<String> ids = [currentUserID, otherUserID];
+    final List<String> ids = [currentUserID, otherUserID];
     ids.sort();
-    String chatroomID = ids.join("_");
+    final String chatroomID = ids.join("_");
     debugPrint(
       "ChatService HAS USER SENT MSG: current=$currentUserID, other=$otherUserID -> chatroomID=$chatroomID",
     );
@@ -218,10 +235,10 @@ class ChatService {
         throw Exception("No authenticated user found.");
       }
 
-      String currentUserID = currentUser.uid;
-      List<String> ids = [currentUserID, otherUserID];
+      final String currentUserID = currentUser.uid;
+      final List<String> ids = [currentUserID, otherUserID];
       ids.sort();
-      String chatroomID = ids.join("_");
+      final String chatroomID = ids.join("_");
 
       // Querying by isRead: false first to likely avoid composite index issues.
       // Then filtering by receiverID in memory to ensure we only update messages meant for us.

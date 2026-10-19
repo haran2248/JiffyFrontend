@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -25,9 +26,10 @@ Dio dio(Ref ref) {
   // Get the token provider
   final tokenProvider = ref.read(firebaseTokenProviderProvider.notifier);
 
-  // Create the API config with the current environment
-  // TODO: Make environment configurable via a provider
-  const config = ApiConfig(environment: StagingEnvironment());
+  // Automatically use ProdEnvironment in release builds (disables verbose HTTP logging)
+  const config = ApiConfig(
+    environment: kReleaseMode ? ProdEnvironment() : StagingEnvironment(),
+  );
 
   // Create and return the configured Dio instance
   return MyDio(

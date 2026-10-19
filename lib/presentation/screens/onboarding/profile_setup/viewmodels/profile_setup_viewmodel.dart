@@ -146,12 +146,49 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
                   text: lastMsg.text + textChunk,
                 );
               }
+
+              // Check if the current message contains the completion marker
+              final lastMsg = currentMessages.last;
+              if (lastMsg.text.contains('<<<COMPLETE>>>')) {
+                final cleanedText =
+                    lastMsg.text.replaceAll('<<<COMPLETE>>>', '').trimRight();
+                currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
+                  text: cleanedText,
+                );
+
+                if (!state.showCompletionDialog) {
+                  debugPrint(
+                      '🏁 [ProfileSetupViewModel] <<<COMPLETE>>> detected in stream, triggering completion immediately');
+                  final completionMessage = ChatMessage(
+                    text:
+                        "Perfect! I've got everything I need. Your profile is looking great! 🎉",
+                    isFromUser: false,
+                    timestamp: DateTime.now(),
+                  );
+
+                  state = state.copyWith(
+                    messages: [...currentMessages, completionMessage],
+                    showCompletionDialog: true,
+                    isCompleting: false,
+                    isTyping: false,
+                  );
+                  return;
+                }
+              }
+
               state = state.copyWith(messages: currentMessages);
-            } else if (parsed.containsKey('is_complete')) {
-              final isComplete = parsed['is_complete'] as bool? ?? false;
-              if (isComplete) {
+            } else if (parsed.containsKey('is_complete_early')) {
+              if (!state.showCompletionDialog) {
                 debugPrint(
-                    '🏁 [ProfileSetupViewModel] Onboarding complete signal received');
+                    '🏁 [ProfileSetupViewModel] is_complete_early received, triggering completion immediately');
+                final currentMessages = List<ChatMessage>.from(state.messages);
+                if (currentMessages.isNotEmpty &&
+                    !currentMessages.last.isFromUser) {
+                  final lastMsg = currentMessages.last;
+                  currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
+                    text: lastMsg.text.replaceAll('<<<COMPLETE>>>', '').trimRight(),
+                  );
+                }
 
                 final completionMessage = ChatMessage(
                   text:
@@ -161,7 +198,36 @@ class ProfileSetupViewModel extends _$ProfileSetupViewModel {
                 );
 
                 state = state.copyWith(
-                  messages: [...state.messages, completionMessage],
+                  messages: [...currentMessages, completionMessage],
+                  showCompletionDialog: true,
+                  isCompleting: false,
+                  isTyping: false,
+                );
+              }
+            } else if (parsed.containsKey('is_complete')) {
+              final isComplete = parsed['is_complete'] as bool? ?? false;
+              if (isComplete && !state.showCompletionDialog) {
+                debugPrint(
+                    '🏁 [ProfileSetupViewModel] Onboarding complete signal received');
+
+                final currentMessages = List<ChatMessage>.from(state.messages);
+                if (currentMessages.isNotEmpty &&
+                    !currentMessages.last.isFromUser) {
+                  final lastMsg = currentMessages.last;
+                  currentMessages[currentMessages.length - 1] = lastMsg.copyWith(
+                    text: lastMsg.text.replaceAll('<<<COMPLETE>>>', '').trimRight(),
+                  );
+                }
+
+                final completionMessage = ChatMessage(
+                  text:
+                      "Perfect! I've got everything I need. Your profile is looking great! 🎉",
+                  isFromUser: false,
+                  timestamp: DateTime.now(),
+                );
+
+                state = state.copyWith(
+                  messages: [...currentMessages, completionMessage],
                   showCompletionDialog: true,
                   isCompleting: false,
                   isTyping: false,

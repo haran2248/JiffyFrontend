@@ -43,6 +43,7 @@ dependencies:
   record: ^6.2.1
   web_socket_channel: ^3.0.3
   flutter_dotenv: ^6.0.1
+  facebook_app_events: ^0.30.5
 
 dev_dependencies:
   flutter_test:

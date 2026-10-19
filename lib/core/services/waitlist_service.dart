@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jiffy/core/network/dio_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -14,13 +13,19 @@ class WaitlistService extends _$WaitlistService {
   Dio get _dio => ref.read(dioProvider);
 
   /// Notifies the backend that a user has been waitlisted.
-  Future<bool> notifyWaitlisted(String userId, {String? instagramHandle, int? instagramFollowerCount, String? gender}) async {
+  Future<bool> notifyWaitlisted(String userId, {
+    String? instagramHandle,
+    int? instagramFollowerCount,
+    String? gender,
+    bool? hasInviteCode,
+  }) async {
     try {
       final queryParams = {'uid': userId};
       final data = <String, dynamic>{};
       if (instagramHandle != null) data['instagramHandle'] = instagramHandle;
       if (instagramFollowerCount != null) data['instagramFollowerCount'] = instagramFollowerCount;
       if (gender != null) data['gender'] = gender;
+      if (hasInviteCode != null) data['hasInviteCode'] = hasInviteCode;
 
       final response = await _dio.post('/api/waitlist', queryParameters: queryParams, data: data);
       debugPrint(

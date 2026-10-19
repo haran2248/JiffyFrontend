@@ -3,8 +3,8 @@ enum MatchesFilter {
   /// Existing conversations with messages
   currentChats,
 
-  /// All matched users (new and existing)
-  waitingForYou,
+  /// Incoming requests from stories and suggestions where recipient hasn't replied yet
+  requested,
 }
 
 /// Extension to provide display labels for each filter.
@@ -13,8 +13,8 @@ extension MatchesFilterExtension on MatchesFilter {
     switch (this) {
       case MatchesFilter.currentChats:
         return 'Current Chats';
-      case MatchesFilter.waitingForYou:
-        return 'Waiting For You';
+      case MatchesFilter.requested:
+        return 'Requested';
     }
   }
 }

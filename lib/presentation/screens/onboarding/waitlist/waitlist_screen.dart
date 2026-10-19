@@ -3,6 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jiffy/core/auth/auth_viewmodel.dart';
+import 'package:jiffy/core/navigation/app_routes.dart';
+import 'package:jiffy/core/navigation/navigation_service.dart';
+import 'package:jiffy/core/services/service_providers.dart';
 import 'package:jiffy/core/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,6 +41,7 @@ class WaitlistScreen extends ConsumerWidget {
     return Scaffold(
       body: Container(
         width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -50,12 +54,13 @@ class WaitlistScreen extends ConsumerWidget {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Spacer(),
+                const SizedBox(height: 16),
                 // Icon or Logo
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -69,12 +74,12 @@ class WaitlistScreen extends ConsumerWidget {
                   ),
                   child: const Icon(
                     Icons.hourglass_empty_rounded,
-                    size: 64,
+                    size: 56,
                     color: AppColors.primaryRaspberry,
                   ),
                 ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
                 // Title
                 Text(
@@ -86,23 +91,23 @@ class WaitlistScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Description
                 Text(
-                  "Jiffy is currently exclusive to users with strong Instagram credibility. We've added you to our waitlist.",
+                  "Jiffy requires 1,000+ followers or a college email ID based sign in. We've added you to our waitlist.",
                   style: textTheme.bodyLarge?.copyWith(
                     color: colors.onSurface.withValues(alpha: 0.7),
-                    height: 1.5,
+                    height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Eligibility reminder box
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
@@ -113,7 +118,7 @@ class WaitlistScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       Text(
-                        "Exclusive Access",
+                        "ENTRY CRITERIA",
                         style: textTheme.labelLarge?.copyWith(
                           color: AppColors.primaryRaspberry,
                           fontWeight: FontWeight.bold,
@@ -122,19 +127,29 @@ class WaitlistScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       const _EligibilityItem(
-                        icon: Icons.star_outline,
-                        text: "High Instagram Credibility",
+                        icon: Icons.vpn_key_outlined,
+                        text: "Invite / Referral Code",
                       ),
                       const SizedBox(height: 8),
                       const _EligibilityItem(
                         icon: Icons.people_outline,
-                        text: "1000+ Followers",
+                        text: "1000+ Instagram Followers",
+                      ),
+                      const SizedBox(height: 8),
+                      const _EligibilityItem(
+                        icon: Icons.school_outlined,
+                        text: "College Email ID",
                       ),
                     ],
                   ),
-                ).animate().fadeIn(delay: 600.ms),
+                ).animate().fadeIn(delay: 500.ms),
 
-                const Spacer(),
+                const SizedBox(height: 24),
+
+                // Invite code redemption card to unlock immediate access
+                const _InviteCodeCard().animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 28),
 
                 // WhatsApp Early Access
                 Column(
@@ -146,12 +161,12 @@ class WaitlistScreen extends ConsumerWidget {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     GestureDetector(
                       onTap: () => _launchWhatsApp(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 28, vertical: 14),
+                            horizontal: 24, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF25D366), // WhatsApp Green
                           borderRadius: BorderRadius.circular(30),
@@ -159,8 +174,8 @@ class WaitlistScreen extends ConsumerWidget {
                             BoxShadow(
                               color: const Color(0xFF25D366)
                                   .withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
@@ -169,15 +184,15 @@ class WaitlistScreen extends ConsumerWidget {
                           children: [
                             SvgPicture.asset(
                               'assets/icons/whatsapp-icon.svg',
-                              width: 24,
-                              height: 24,
+                              width: 22,
+                              height: 22,
                               colorFilter: const ColorFilter.mode(
                                   Colors.white, BlendMode.srcIn),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 10),
                             Text(
                               "Early Access Group",
-                              style: textTheme.titleMedium?.copyWith(
+                              style: textTheme.titleSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -185,11 +200,11 @@ class WaitlistScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
+                    ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
                   ],
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Back to Login
                 const _SignOutButton(),
@@ -199,6 +214,215 @@ class WaitlistScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InviteCodeCard extends ConsumerStatefulWidget {
+  const _InviteCodeCard();
+
+  @override
+  ConsumerState<_InviteCodeCard> createState() => _InviteCodeCardState();
+}
+
+class _InviteCodeCardState extends ConsumerState<_InviteCodeCard> {
+  final TextEditingController _controller = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitCode() async {
+    final code = _controller.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() => _errorMessage = "Please enter an invite code");
+      return;
+    }
+
+    if (!RegExp(r'^[A-Z0-9_]{3,40}$').hasMatch(code)) {
+      setState(() => _errorMessage = "Code must be 3-40 alphanumeric characters");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await ref.read(acquisitionServiceProvider).submitInviteCode(code);
+
+    if (!mounted) return;
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: AppColors.primaryRaspberry,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      // Immediately navigate forward to onboarding flow
+      context.goToRoute(AppRoutes.onboardingProfessionalDetails);
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = result.message;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryRaspberry.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryRaspberry.withValues(alpha: 0.1),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.vpn_key_rounded,
+                color: AppColors.primaryRaspberry,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Have an invite code?",
+                style: textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Enter your referral or invite code to get instant entry and skip the waitlist.",
+            style: textTheme.bodySmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.7),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  textCapitalization: TextCapitalization.characters,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submitCode(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: "INVITE CODE",
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                    filled: true,
+                    fillColor: Colors.black.withValues(alpha: 0.35),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryRaspberry,
+                        width: 1.8,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitCode,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRaspberry,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    elevation: 4,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          "Unlock",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(
+                color: Color(0xFFFF6B6B),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -265,3 +489,4 @@ class _SignOutButton extends ConsumerWidget {
     ).animate().fadeIn(delay: 1000.ms);
   }
 }
+

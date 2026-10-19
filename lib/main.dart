@@ -4,12 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/services/service_providers.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/app_theme.dart';
 import 'core/navigation/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'core/services/acquisition_service.dart';
 
 bool isFirebaseInitialized = false;
 
@@ -19,6 +20,13 @@ void main() async {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint('Failed to load .env file: $e');
+  }
+
+  // Initialize Meta SDK as early as possible on startup (non-blocking, fail-safe)
+  try {
+    AcquisitionService().initialize();
+  } catch (e) {
+    debugPrint('AcquisitionService early init failed: $e');
   }
 
   try {
@@ -54,6 +62,12 @@ class _JiffyAppState extends ConsumerState<JiffyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Non-blocking: send any pending play_referrer source on app start
+    Future.microtask(() {
+      try {
+        ref.read(acquisitionServiceProvider).sendPendingSourceAfterLogin();
+      } catch (_) {}
+    });
   }
 
   @override
@@ -72,6 +86,7 @@ class _JiffyAppState extends ConsumerState<JiffyApp>
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
         ref.read(homeServiceProvider).updateLastActive(uid);
+        ref.read(acquisitionServiceProvider).sendPendingSourceAfterLogin();
       }
     }
   }

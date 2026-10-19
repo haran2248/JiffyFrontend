@@ -58,16 +58,24 @@ class ChatBubble extends StatelessWidget {
           fontWeight: isMe ? FontWeight.w600 : FontWeight.normal,
         );
 
-    const prefix = ChatConstants.storyReplyPrefix;
-    if (text.startsWith(prefix)) {
-      final actualMessage = text.substring(prefix.length);
+    const recipientPrefix = ChatConstants.storyReplyPrefix;
+    const senderPrefix = ChatConstants.storyReplySenderPrefix;
+
+    if (text.startsWith(recipientPrefix) || text.startsWith(senderPrefix)) {
+      final actualMessage = text.startsWith(recipientPrefix)
+          ? text.substring(recipientPrefix.length)
+          : text.substring(senderPrefix.length);
+
+      final displayPrefix =
+          isMe ? 'Replied to story:' : 'Replied to your story:';
+
       return Text.rich(
         TextSpan(
           style: baseStyle,
           children: [
-            const TextSpan(
-              text: '$prefix\n',
-              style: TextStyle(fontStyle: FontStyle.italic),
+            TextSpan(
+              text: '$displayPrefix\n',
+              style: const TextStyle(fontStyle: FontStyle.italic),
             ),
             TextSpan(text: actualMessage),
           ],

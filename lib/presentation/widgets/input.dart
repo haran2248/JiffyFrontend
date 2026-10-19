@@ -9,6 +9,8 @@ class ThemedInput extends StatelessWidget {
   final String? Function(String?)? validator;
   final String? initialValue;
   final ValueChanged<String>? onChanged;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const ThemedInput({
     super.key,
@@ -20,6 +22,8 @@ class ThemedInput extends StatelessWidget {
     this.validator,
     this.initialValue,
     this.onChanged,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -39,6 +43,8 @@ class ThemedInput extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onFieldSubmitted: onFieldSubmitted,
           validator: validator,
           onChanged: onChanged,
           style: Theme.of(context).textTheme.bodyLarge,

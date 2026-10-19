@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/instagram_state.dart';
 import 'package:jiffy/core/services/waitlist_service.dart';
+import 'package:jiffy/core/services/service_providers.dart';
 import 'package:jiffy/core/auth/auth_viewmodel.dart';
 import '../../basics/viewmodels/basics_viewmodel.dart';
 
@@ -31,6 +32,9 @@ class InstagramViewModel extends _$InstagramViewModel {
       final basicsGender = ref.read(basicsViewModelProvider).gender?.toLowerCase();
       final isWoman = basicsGender == 'woman' || basicsGender == 'female' || basicsGender == 'women';
       
+      // Check if user has an invite/referral code applied
+      final hasInvite = await ref.read(acquisitionServiceProvider).hasInviteCodeSet();
+
       final authState = ref.read(authViewModelProvider);
       if (authState.isAuthenticated && authState.userId != null) {
         final backendWaitlisted = await ref.read(waitlistServiceProvider.notifier).notifyWaitlisted(
@@ -38,15 +42,18 @@ class InstagramViewModel extends _$InstagramViewModel {
           instagramHandle: state.handle,
           instagramFollowerCount: followers,
           gender: basicsGender,
+          hasInviteCode: hasInvite,
         );
 
-        // Women bypass the follower count restriction. Men require at least 1,000 followers.
-        final isWaitlisted = isWoman ? false : (followers < 1000 ? true : backendWaitlisted);
+        // Entry criteria:
+        // - For a woman: doesn't matter if 1,000 followers or not -> gets entry directly.
+        // - For a man: either invite-based entry OR 1,000+ follower benchmark -> gets entry.
+        final isWaitlisted = isWoman ? false : ((hasInvite || followers >= 1000) ? false : backendWaitlisted);
         state = state.copyWith(isSaving: false, isWaitlisted: isWaitlisted);
         return true;
       }
       
-      final isWaitlisted = isWoman ? false : (followers < 1000);
+      final isWaitlisted = isWoman ? false : ((hasInvite || followers >= 1000) ? false : true);
       state = state.copyWith(isSaving: false, isWaitlisted: isWaitlisted);
       return true;
     } catch (e) {

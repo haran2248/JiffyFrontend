@@ -99,6 +99,41 @@ class MatchItem {
   /// Helper to check if this match has a conversation started
   bool get hasConversation => lastMessage != null && lastMessage!.isNotEmpty;
 
+  /// When this request was initiated (first message time or match time)
+  DateTime? get requestTime => lastMessageTime ?? matchedAt;
+
+  /// Expiration deadline for requested conversations (48 hours from request time)
+  DateTime? get expirationDeadline {
+    if (requestTime == null) return null;
+    return requestTime!.add(const Duration(hours: 48));
+  }
+
+  /// Remaining duration before this request expires
+  Duration? get timeUntilExpiration {
+    if (expirationDeadline == null) return null;
+    return expirationDeadline!.difference(DateTime.now());
+  }
+
+  /// Whether this request has expired (>48 hours without reply)
+  bool get isExpired {
+    final remaining = timeUntilExpiration;
+    if (remaining == null) return false;
+    return remaining.isNegative;
+  }
+
+  /// Formatted expiration string for display (e.g., 'Expires in 32h', 'Expires in 45m')
+  String? get expirationText {
+    final remaining = timeUntilExpiration;
+    if (remaining == null) return null;
+    if (remaining.isNegative) return 'Expired';
+    if (remaining.inHours >= 1) {
+      return 'Expires in ${remaining.inHours}h';
+    } else {
+      final mins = remaining.inMinutes;
+      return 'Expires in ${mins > 0 ? mins : 1}m';
+    }
+  }
+
   /// Formatted time ago string for display
   String get timeAgo {
     if (lastMessageTime == null) return '';

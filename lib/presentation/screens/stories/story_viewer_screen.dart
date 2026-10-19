@@ -58,8 +58,9 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
   }
 
   void _startTimer() {
-    if (_isPaused || !_isImageLoaded)
+    if (_isPaused || !_isImageLoaded) {
       return; // Don't start timer if paused or image not loaded
+    }
 
     _timer?.cancel();
     _timer = Timer(_storyDuration, () {
@@ -78,7 +79,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
         _currentContentIndex++;
         _isImageLoaded = false; // Reset image loaded state
       });
-      // Don't start timer here - wait for image to load
+      _precacheAdjacentImages();
     } else {
       // Move to next story
       _nextStory();
@@ -92,7 +93,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
         _currentContentIndex--;
         _isImageLoaded = false; // Reset image loaded state
       });
-      // Don't start timer here - wait for image to load
+      _precacheAdjacentImages();
     } else {
       // Move to previous story
       _previousStory();
@@ -101,9 +102,10 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
   void _nextStory() {
     if (_currentStoryIndex < widget.stories.length - 1) {
+      _timer?.cancel();
       _storyPageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
       );
     } else {
       // Last story, close viewer
@@ -113,9 +115,10 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
 
   void _previousStory() {
     if (_currentStoryIndex > 0) {
+      _timer?.cancel();
       _storyPageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
       );
     } else {
       // First story, close viewer
@@ -143,7 +146,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
       _currentContentIndex = 0;
       _isImageLoaded = false; // Reset image loaded state
     });
-    // Don't start timer here - wait for image to load
+    _precacheAdjacentImages();
   }
 
   void _onImageLoaded() {
@@ -153,6 +156,30 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
     });
     // Start timer after image is loaded
     _startTimer();
+    _precacheAdjacentImages();
+  }
+
+  void _precacheAdjacentImages() {
+    if (!mounted) return;
+    try {
+      final currentStory = widget.stories[_currentStoryIndex];
+      // Precache next content in current story
+      if (_currentContentIndex < currentStory.contents.length - 1) {
+        final nextContent = currentStory.contents[_currentContentIndex + 1];
+        if (nextContent.imageUrl.isNotEmpty && !nextContent.isLocal) {
+          precacheImage(NetworkImage(nextContent.imageUrl), context).catchError((_) {});
+        }
+      } else if (_currentStoryIndex < widget.stories.length - 1) {
+        // Precache first content of next story
+        final nextStory = widget.stories[_currentStoryIndex + 1];
+        if (nextStory.contents.isNotEmpty && !nextStory.contents.first.isLocal) {
+          final nextUrl = nextStory.contents.first.imageUrl;
+          if (nextUrl.isNotEmpty) {
+            precacheImage(NetworkImage(nextUrl), context).catchError((_) {});
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   /// Build tap zone indicators (left/right chevrons) when paused
@@ -293,7 +320,7 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               right: 0,
               child: _StoryProgressIndicator(
                 key: ValueKey(
-                    'progress_${_currentStoryIndex}_${_currentContentIndex}'),
+                    'progress_${_currentStoryIndex}_$_currentContentIndex'),
                 story: widget.stories[_currentStoryIndex],
                 currentIndex: _currentContentIndex,
                 isPaused: _isPaused ||
@@ -340,8 +367,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
               ),
             ),
 
-            // Pause/loading indicator (shows play icon when paused, hourglass when loading)
-            if (_isPaused || !_isImageLoaded)
+            // Pause indicator (shows play icon only when paused)
+            if (_isPaused)
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -356,10 +383,8 @@ class _StoryViewerScreenState extends ConsumerState<StoryViewerScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    // Show play icon if paused (regardless of loading state),
-                    // or hourglass if not paused but still loading
-                    _isPaused ? Icons.play_arrow : Icons.hourglass_empty,
+                  child: const Icon(
+                    Icons.play_arrow,
                     color: Colors.white,
                     size: 24,
                   ),
@@ -589,6 +614,7 @@ class _StoryContentPageState extends State<_StoryContentPage> {
             : Image.network(
                 content.imageUrl,
                 fit: BoxFit.cover,
+                gaplessPlayback: true,
                 // frameBuilder fires when the first frame is actually painted —
                 // this is the correct moment to start the timer.
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

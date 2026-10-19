@@ -400,6 +400,21 @@ class ProfileService {
         }
       }
 
+      // Also fallback to imageIds list if additional photos are present
+      final rawImageIds = userData['imageIds'] as List<dynamic>?;
+      if (rawImageIds != null && rawImageIds.isNotEmpty) {
+        for (int i = 0; i < rawImageIds.length; i++) {
+          final id = rawImageIds[i]?.toString();
+          if (id != null && id.isNotEmpty && !photos.any((p) => p.id == id)) {
+            photos.add(Photo(
+              url: 'https://jiffystorebucket.s3.ap-south-1.amazonaws.com/$id',
+              id: id,
+              backendSlot: photos.length + 1,
+            ));
+          }
+        }
+      }
+
       // 2. Parse curated profile data if available
       String aboutMe = '';
       List<String> interests = [];

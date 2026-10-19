@@ -8,6 +8,7 @@ import "../chat_constants.dart";
 import "../data/chat_repository.dart";
 import "../models/chat_message.dart";
 import "../models/chat_state.dart";
+import "../../matches/viewmodels/matches_viewmodel.dart";
 
 part "chat_viewmodel.g.dart";
 
@@ -149,6 +150,7 @@ class ChatViewModel extends _$ChatViewModel {
       } else {
         // Regular user-to-user chat: send directly to Firestore
         await _repository.sendMessage(otherUserId, text);
+        ref.invalidate(matchesViewModelProvider);
       }
     } catch (e) {
       _handleSendError(pendingMsg);

@@ -57,7 +57,12 @@ class MatchCardWidget extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (match.timeAgo.isNotEmpty)
+                        if (!match.currentUserHasSentMessage &&
+                            !match.isJiffyAi &&
+                            match.expirationText != null) ...[
+                          const SizedBox(width: 8),
+                          _buildExpirationBadge(context),
+                        ] else if (match.timeAgo.isNotEmpty)
                           Text(
                             match.timeAgo,
                             style: textTheme.bodySmall?.copyWith(
@@ -181,6 +186,43 @@ class MatchCardWidget extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildExpirationBadge(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final badgeBg = isDark
+        ? const Color(0xFFFF9800).withValues(alpha: 0.2)
+        : const Color(0xFFFFF3E0);
+    final badgeTextColor = isDark
+        ? const Color(0xFFFFB74D)
+        : const Color(0xFFE65100);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: badgeBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: badgeTextColor.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 12, color: badgeTextColor),
+          const SizedBox(width: 3),
+          Text(
+            match.expirationText!,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: badgeTextColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

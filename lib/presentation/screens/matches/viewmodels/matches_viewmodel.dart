@@ -49,11 +49,13 @@ class MatchesState {
       // Apply filter
       switch (currentFilter) {
         case MatchesFilter.currentChats:
-          // Only matches with existing conversations WHERE the user has replied/started, plus Jiffy AI
+          // Show active conversations where current user has replied, or Jiffy AI
           return match.currentUserHasSentMessage || match.isJiffyAi;
-        case MatchesFilter.waitingForYou:
-          // Matches WHERE current user hasn't sent a message (excluding Jiffy AI as it's a "chat")
-          return !match.currentUserHasSentMessage && !match.isJiffyAi;
+        case MatchesFilter.requested:
+          // Matches where current user hasn't replied yet (excluding Jiffy AI and expired items)
+          return !match.currentUserHasSentMessage &&
+              !match.isJiffyAi &&
+              !match.isExpired;
       }
     }).toList();
 
@@ -78,13 +80,11 @@ class MatchesState {
           return bTime.compareTo(aTime);
         });
         break;
-      case MatchesFilter.waitingForYou:
-        // Sort by match date (newest first)
+      case MatchesFilter.requested:
+        // Sort by request time (newest first)
         result.sort((a, b) {
-          if (a.isJiffyAi) return -1;
-          if (b.isJiffyAi) return 1;
-          final aTime = a.matchedAt ?? DateTime(1970);
-          final bTime = b.matchedAt ?? DateTime(1970);
+          final aTime = a.requestTime ?? a.matchedAt ?? DateTime(1970);
+          final bTime = b.requestTime ?? b.matchedAt ?? DateTime(1970);
           return bTime.compareTo(aTime);
         });
         break;
@@ -173,7 +173,7 @@ class MatchesViewModel extends _$MatchesViewModel {
           lastMessageTime: lastMessageTime,
           isJiffyAi: false,
           compatibilityScore: 0.0,
-          matchedAt: DateTime.now(), // Not available in basic endpoint
+          matchedAt: lastMessageTime ?? DateTime.now(),
           hasUnread: false,
           currentUserHasSentMessage: hasSentMessage,
         );
@@ -182,6 +182,24 @@ class MatchesViewModel extends _$MatchesViewModel {
       final results = await Future.wait(matchFutures);
       final List<MatchItem> matchItems =
           results.whereType<MatchItem>().toList();
+
+      // Auto-cleanup expired matches (>48 hours without reply)
+      final expiredMatches = matchItems
+          .where((m) =>
+              !m.isJiffyAi && !m.currentUserHasSentMessage && m.isExpired)
+          .toList();
+      for (final expired in expiredMatches) {
+        matchesRepo.removeMatch(expired.id).catchError((err) {
+          debugPrint(
+              'MatchesViewModel: Failed to remove expired match ${expired.id}: $err');
+        });
+      }
+
+      // Filter out expired matches so they don't appear in the UI
+      final List<MatchItem> activeMatchItems = matchItems
+          .where((m) =>
+              m.isJiffyAi || m.currentUserHasSentMessage || !m.isExpired)
+          .toList();
 
       // Add Jiffy AI manually with real chat data
       final now = DateTime.now();
@@ -197,7 +215,7 @@ class MatchesViewModel extends _$MatchesViewModel {
         }
       } catch (_) {}
 
-      matchItems.insert(
+      activeMatchItems.insert(
           0,
           MatchItem(
             id: ChatConstants.jiffyBotId,
@@ -214,7 +232,7 @@ class MatchesViewModel extends _$MatchesViewModel {
           ));
 
       state = state.copyWith(
-        matches: matchItems,
+        matches: activeMatchItems,
         isLoading: false,
         error: () => null,
       );

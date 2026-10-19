@@ -58,6 +58,7 @@ class AuthViewModel extends _$AuthViewModel {
         displayName: user.displayName,
         photoUrl: user.photoURL,
       );
+      _sendPendingAcquisitionSource();
     } else {
       state = AuthState.unauthenticated();
     }
@@ -170,6 +171,18 @@ class AuthViewModel extends _$AuthViewModel {
   void _pingLastActive(String uid) {
     ref.read(homeServiceProvider).updateLastActive(uid);
     _setupNotifications();
+    _sendPendingAcquisitionSource();
+  }
+
+  /// Fire-and-forget sending of pending acquisition source (e.g. Play Referrer)
+  void _sendPendingAcquisitionSource() {
+    Future.microtask(() async {
+      try {
+        await ref.read(acquisitionServiceProvider).sendPendingSourceAfterLogin();
+      } catch (e) {
+        debugPrint("AuthViewModel: Pending acquisition source send failed: $e");
+      }
+    });
   }
 
   /// Setup notifications for the newly logged-in user

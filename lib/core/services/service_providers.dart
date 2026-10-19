@@ -3,6 +3,7 @@ import "package:jiffy/core/network/dio_provider.dart";
 import "package:jiffy/presentation/screens/matches/data/matches_repository.dart";
 import "package:jiffy/presentation/screens/stories/data/stories_repository.dart";
 import "package:riverpod_annotation/riverpod_annotation.dart";
+import "acquisition_service.dart";
 import "ai_chat_service.dart";
 import "home_service.dart";
 import "location_service.dart";
@@ -60,3 +61,10 @@ LocationService locationService(Ref ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return LocationService(dio: dio, authRepository: authRepository);
 }
+
+@riverpod
+AcquisitionService acquisitionService(Ref ref) {
+  final dio = ref.watch(dioProvider);
+  return AcquisitionService(dio: dio);
+}
+
