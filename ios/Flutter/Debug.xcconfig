@@ -1,7 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
 
-META_APP_ID =
-META_CLIENT_TOKEN =
-META_DISPLAY_NAME = Jiffy
+META_APP_ID = 2253348865235149
+META_CLIENT_TOKEN = 0dca8a67d7d3ef293a63dd7a8678e433
+META_DISPLAY_NAME = jiffy
 

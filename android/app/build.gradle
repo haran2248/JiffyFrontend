@@ -20,9 +20,9 @@ if (project.hasProperty('dart-defines')) {
         }
 }
 
-def metaAppId = dartDefines['META_APP_ID'] ?: System.getenv('META_APP_ID') ?: ''
-def metaClientToken = dartDefines['META_CLIENT_TOKEN'] ?: System.getenv('META_CLIENT_TOKEN') ?: ''
-def metaDisplayName = dartDefines['META_DISPLAY_NAME'] ?: System.getenv('META_DISPLAY_NAME') ?: 'Jiffy'
+def metaAppId = dartDefines['META_APP_ID'] ?: System.getenv('META_APP_ID') ?: '2253348865235149'
+def metaClientToken = dartDefines['META_CLIENT_TOKEN'] ?: System.getenv('META_CLIENT_TOKEN') ?: '0dca8a67d7d3ef293a63dd7a8678e433'
+def metaDisplayName = dartDefines['META_DISPLAY_NAME'] ?: System.getenv('META_DISPLAY_NAME') ?: 'jiffy'
 
 android {
     namespace = "com.jiffydating.app"
