@@ -2,7 +2,7 @@ name: jiffy
 description: "Jiffy AI app Flutter frontend"
 publish_to: 'none'
 
-version: 1.0.54+54
+version: 1.0.56+56
 
 environment:
   sdk: ">=3.0.0"

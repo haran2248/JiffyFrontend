@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:firebase_auth/firebase_auth.dart";
 import "package:jiffy/core/services/service_providers.dart";
+import "package:jiffy/core/services/share_service.dart";
 import "package:jiffy/presentation/widgets/chat_bubble.dart";
 import "package:jiffy/presentation/widgets/chat_input_field.dart";
 import "viewmodels/chat_viewmodel.dart";
@@ -41,6 +42,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final viewModel =
           ref.read(chatViewModelProvider(widget.otherUserId).notifier);
       viewModel.markAsRead();
+
+      ShareService.getReferralCode(ref);
 
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
@@ -136,6 +139,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         centerTitle: true,
         actions: [
+          Builder(
+            builder: (btnContext) => IconButton(
+              icon: const Icon(Icons.share_outlined, color: Colors.white),
+              tooltip: 'Share Jiffy',
+              onPressed: () {
+                final box = btnContext.findRenderObject() as RenderBox?;
+                ShareService.shareApp(
+                  context,
+                  ref,
+                  sharePositionOrigin: box != null
+                      ? box.localToGlobal(Offset.zero) & box.size
+                      : null,
+                );
+              },
+            ),
+          ),
           if (FirebaseAuth.instance.currentUser?.uid != null &&
               FirebaseAuth.instance.currentUser!.uid.isNotEmpty &&
               widget.otherUserId != ChatConstants.jiffyBotId)

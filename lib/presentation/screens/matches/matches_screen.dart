@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jiffy/core/navigation/app_routes.dart';
 import 'package:jiffy/core/services/profile_service.dart';
+import 'package:jiffy/core/services/share_service.dart';
 import 'package:jiffy/presentation/widgets/bottom_navigation_bar.dart';
 import 'package:jiffy/presentation/screens/profile/profile_view_screen.dart';
 import 'models/matches_filter.dart';
@@ -25,6 +26,14 @@ class MatchesScreen extends ConsumerStatefulWidget {
 
 class _MatchesScreenState extends ConsumerState<MatchesScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ShareService.getReferralCode(ref);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(matchesViewModelProvider);
     final viewModel = ref.read(matchesViewModelProvider.notifier);
@@ -43,6 +52,22 @@ class _MatchesScreenState extends ConsumerState<MatchesScreen> {
               ),
         ),
         actions: [
+          Builder(
+            builder: (btnContext) => IconButton(
+              icon: Icon(Icons.share_outlined, color: colorScheme.onSurface),
+              tooltip: 'Share Jiffy',
+              onPressed: () {
+                final box = btnContext.findRenderObject() as RenderBox?;
+                ShareService.shareApp(
+                  context,
+                  ref,
+                  sharePositionOrigin: box != null
+                      ? box.localToGlobal(Offset.zero) & box.size
+                      : null,
+                );
+              },
+            ),
+          ),
           IconButton(
             icon: Icon(Icons.search, color: colorScheme.onSurface),
             onPressed: () {

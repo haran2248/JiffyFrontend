@@ -43,8 +43,8 @@ android {
         applicationId = "com.jiffydating.app"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 54
-        versionName = "1.0.54"
+        versionCode = 56
+        versionName = "1.0.56"
         multiDexEnabled true
 
         resValue "string", "facebook_app_id", metaAppId
